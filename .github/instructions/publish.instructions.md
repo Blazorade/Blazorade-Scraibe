@@ -87,7 +87,9 @@ If `title` is missing, derive it from the first `# Heading` in the markdown body
 
 ## HTML page template
 
-Every generated page is built from the template at `/templates/web-app/wwwroot/page.html`. **Always read this file at the start of every publish run** — do not hardcode the template structure in the publish pipeline.
+Each generated page is built from a layout template in `{WebAppPath}/PageLayouts/`. The layout is determined by the `layout` frontmatter field of the source page; if the field is absent, `default` is assumed. The resolved layout name maps to `{WebAppPath}/PageLayouts/{layout}.html`. **Always read the correct layout file per page** — do not hardcode the template structure in the publish pipeline.
+
+If a `layout` value is specified in frontmatter but `{WebAppPath}/PageLayouts/{layout}.html` does not exist, **the publish process must fail** for that page with a clear error message identifying the page and the missing layout file. Do not fall back silently to `default`.
 
 The template uses two kinds of tokens:
 
@@ -331,7 +333,7 @@ For each published page, add a route entry that rewrites the clean URL to the `.
 
 ## NavMenu.razor generation
 
-After `sitemap.xml` is written, also regenerate `{WebAppPath}/Layout/NavMenu.razor` so the top navbar stays in sync with the published pages. **Always overwrite the existing file — regenerate it unconditionally on every publish run, regardless of whether any page titles or structure changed.**
+After `sitemap.xml` is written, also regenerate `{WebAppPath}/Components/NavMenu.razor` so the top navbar stays in sync with the published pages. **Always overwrite the existing file — regenerate it unconditionally on every publish run, regardless of whether any page titles or structure changed.**
 
 ### Navigation structure rules
 
@@ -347,7 +349,7 @@ The Home page at `/home.html` must render its link with `href="/"` (not `/home`)
 
 ### Generated file structure
 
-Use `/templates/web-app/Layout/NavMenu.razor` as the scaffold. It contains the full component structure with comment markers showing where flat-page `<li>` items and subdirectory dropdown `<li>` items are inserted. Generate the nav items dynamically from the published page list, then write the result to `{WebAppPath}/Layout/NavMenu.razor`.
+Use `/templates/web-app/Components/NavMenu.razor` as the scaffold. It contains the full component structure with comment markers showing where flat-page `<li>` items and subdirectory dropdown `<li>` items are inserted. Generate the nav items dynamically from the published page list, then write the result to `{WebAppPath}/Components/NavMenu.razor`.
 
 Omit the dropdown helper methods (`ToggleDropdown`, `CloseDropdown`, `IsDropdownOpen`) and the `_openDropdownKey` field entirely if no subdirectory pages are present.
 
@@ -358,5 +360,5 @@ When the publishing run is complete, report:
 - Number of pages successfully published.
 - List of any skipped/blocked files and the reason.
 - Confirmation that `sitemap.xml` was updated.
-- Confirmation that `NavMenu.razor` was regenerated.
+- Confirmation that `Components/NavMenu.razor` was regenerated.
 - The full output path of every file written.
