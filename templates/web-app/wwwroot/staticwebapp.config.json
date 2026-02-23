@@ -1,0 +1,17 @@
+{
+  "routes": [
+    { "route": "/", "rewrite": "/home.html" },
+    { "route": "/{slug}", "rewrite": "/{slug}.html" }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/*.html",
+      "/css/*",
+      "/js/*",
+      "/lib/*",
+      "/sitemap.xml",
+      "/*.{png,ico,svg,gif,woff,woff2,ttf,json}"
+    ]
+  }
+}

@@ -1,0 +1,82 @@
+@page "/{**slug}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@using {{WebAppName}}.Utilities
+
+<PageTitle>@_pageTitle</PageTitle>
+
+@if (!string.IsNullOrEmpty(_headMeta))
+{
+    <HeadContent>
+        @((MarkupString)_headMeta)
+    </HeadContent>
+}
+
+@if (_loading)
+{
+    <div class="content-loading">
+        <p>Loading&hellip;</p>
+    </div>
+}
+else if (_notFound)
+{
+    <h1>Page not found</h1>
+    <p>The page you are looking for does not exist.</p>
+}
+else
+{
+    <ContentRenderer Html="@_content" />
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private string _content = "";
+    private string _headMeta = "";
+    private string _pageTitle = "";
+    private bool _loading = true;
+    private bool _notFound = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadContentAsync();
+    }
+
+    private async Task LoadContentAsync()
+    {
+        _loading = true;
+        _notFound = false;
+        _content = "";
+        _headMeta = "";
+        _pageTitle = "";
+        StateHasChanged();
+
+        var trimmedSlug = Slug?.Trim('/') ?? string.Empty;
+        var effectiveSlug = string.IsNullOrWhiteSpace(trimmedSlug) ? "home" : trimmedSlug;
+        var url = $"/{effectiveSlug}.html";
+        try
+        {
+            var html = await Http.GetStringAsync(url);
+            var main = await JS.InvokeAsync<string?>("blazoradePublisher.extractMain", html);
+            if (string.IsNullOrEmpty(main))
+            {
+                _notFound = true;
+            }
+            else
+            {
+                _content = main;
+                _pageTitle = PageContentUtilities.ExtractTitle(html);
+                _headMeta = await JS.InvokeAsync<string>("blazoradePublisher.extractHeadMeta", html);
+            }
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _notFound = true;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+}

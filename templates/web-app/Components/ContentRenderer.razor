@@ -1,0 +1,72 @@
+@using Microsoft.AspNetCore.Components.Rendering
+
+@RenderNodes(_nodes)
+
+@code {
+    /// <summary>
+    /// The inner HTML string to render. Typically the <c>innerHTML</c> of the
+    /// <c>&lt;main&gt;</c> element extracted from a published static page.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Html { get; set; } = "";
+
+    private List<ContentNode> _nodes = [];
+
+    protected override void OnParametersSet()
+    {
+        _nodes = ContentSegmentParser.Parse(Html);
+    }
+
+    // -------------------------------------------------------------------------
+    // Recursive rendering
+    // -------------------------------------------------------------------------
+
+    private RenderFragment RenderNodes(List<ContentNode> nodes) => builder =>
+    {
+        var seq = 0;
+        foreach (var node in nodes)
+            RenderNode(builder, node, ref seq);
+    };
+
+    private void RenderNode(RenderTreeBuilder builder, ContentNode node, ref int seq)
+    {
+        if (node is HtmlNode html)
+        {
+            builder.AddContent(seq++, (MarkupString)html.Html);
+        }
+        else if (node is ComponentNode comp)
+        {
+            // Copy the explicit parameters and, when children exist, synthesise
+            // a ChildContent RenderFragment so the host component can render them.
+            var parameters = new Dictionary<string, object?>(comp.Parameters);
+
+            if (comp.Children.Count > 0)
+            {
+                var children = comp.Children; // capture for the closure
+                parameters["ChildContent"] = (RenderFragment)(cb =>
+                {
+                    var s = 0;
+                    foreach (var child in children)
+                        RenderNode(cb, child, ref s);
+                });
+            }
+
+            builder.OpenComponent<DynamicComponent>(seq++);
+            builder.AddAttribute(seq++, "Type", comp.ComponentType);
+            builder.AddAttribute(seq++, "Parameters", parameters);
+            builder.CloseComponent();
+        }
+        else if (node is ElementNode elem)
+        {
+            // An HTML element that contains at least one ComponentNode descendant.
+            // Use OpenElement/CloseElement so the render tree has a real element frame
+            // into which live components can be inserted as proper siblings.
+            builder.OpenElement(seq++, elem.TagName);
+            foreach (var (attrName, attrValue) in elem.Attributes)
+                builder.AddAttribute(seq++, attrName, attrValue);
+            foreach (var child in elem.Children)
+                RenderNode(builder, child, ref seq);
+            builder.CloseElement();
+        }
+    }
+}
