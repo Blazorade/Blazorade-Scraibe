@@ -21,9 +21,8 @@ The first-run process does the following:
 2. Create the Razor component library under `src/`.
 3. Create the Blazor WebAssembly application under `src/`, with a project reference to the component library.
 4. Copy and configure the template files from `/templates/` into the new projects.
-5. Generate the scoped instruction bridge files in `.github/instructions/`.
-6. Set up the `content/` folder with sample pages.
-7. Write `blazorade.config.md` to the repository root — **only after all previous steps have succeeded**.
+5. Set up the `content/` folder and initialise the todo system.
+6. Write `blazorade.config.md` to the repository root — **only after all previous steps have succeeded**.
 
 ## Step 1 — Collect site identity
 
@@ -103,33 +102,50 @@ Files to copy from `/templates/component-library/` → `src/{AppName}.Components
 
 After copying, build the solution to verify everything compiles before continuing.
 
-## Step 5 — Generate scoped instruction bridge files
+## Step 5 — Verify the `content/` folder and initialise the todo system
 
-Create the following two files in `.github/instructions/`. These files have the correct `applyTo` glob pattern for this site and link through to the generic instruction files that contain the full content.
+Check that a `content/` folder exists at the repository root. If it does not exist, create it.
 
-**`.github/instructions/{AppName}-component-library.instructions.md`:**
+If `content/home.md` does not exist, create it with the following content, substituting the actual `{DisplayName}` value collected in step 1:
+
 ```markdown
 ---
-applyTo: "src/{AppName}.Components/**"
+title: {DisplayName}
+description: Welcome to {DisplayName}.
 ---
 
-For instructions on working with this project, see [component-library.instructions.md](component-library.instructions.md).
+# {DisplayName}
 ```
 
-**`.github/instructions/{AppName}-web-app.instructions.md`:**
+Do not create or modify any other files inside `content/`.
+
+Then initialise the todo system if it has not already been set up. The main instructions reference the `/todo` folder and its files with specific structural rules, so both anchor files must exist before any task tracking begins.
+
+Create `/todo/home.md` if it does not already exist:
+
 ```markdown
----
-applyTo: "src/{AppName}.Web/**"
----
+# Todo
 
-For instructions on working with this project, see [web-app.instructions.md](web-app.instructions.md).
+## Active tasks
+
+Ongoing and planned tasks. Each item links to a detail document with full context, decisions made, and next steps.
+
+## Backlog
+
+Quick ideas and future possibilities. No detail document required — just add a bullet. Items here are never auto-promoted; bring one up when you are ready to work on it.
 ```
 
-## Step 6 — Verify the `content/` folder
+Create `/todo/completed.md` if it does not already exist:
 
-Check that a `content/` folder exists at the repository root. If it does not exist, create it. Do not create or modify any files inside it.
+```markdown
+# Completed Tasks
 
-## Step 7 — Write `blazorade.config.md`
+A permanent log of completed tasks. One short paragraph per task: name, date completed, and what was done. This file is never deleted.
+```
+
+Do not add any task rows or detail documents — neither file should contain site-specific content at this point.
+
+## Step 6 — Write `blazorade.config.md`
 
 **Only execute this step if all previous steps have completed successfully.** If any earlier step failed or was skipped, do not write this file.
 
@@ -145,6 +161,10 @@ This file stores the configuration for this site. It is read by the AI agent to 
 - `HostName`: {HostName}
 - `WebAppPath`: src/{AppName}.Web
 - `ComponentLibraryPath`: src/{AppName}.Components
+
+## Excluded Content
+
+The paths listed below are relative to `/content` and are skipped entirely during publishing. Add a path here to stop it from being published; remove a path to include it again.
 ```
 
 Writing this file marks the first-run process as complete. These instructions must not be followed again unless this file is deleted.

@@ -1,3 +1,7 @@
+---
+applyTo: "src/*.Web/**"
+---
+
 # Web App — Application Layer Guidelines
 
 The web app project (at the path specified by `WebAppPath` in `blazorade.config.md`) is the Blazor WASM application. It references the component library (`ComponentLibraryPath`) for all reusable UI components.

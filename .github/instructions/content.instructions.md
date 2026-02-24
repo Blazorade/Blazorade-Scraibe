@@ -17,9 +17,6 @@ Every content file should begin with a YAML frontmatter block. All fields are op
 title: Page Title                  # Required. Used in <title>, <h1 class="page-title">, og:title.
 description: Short description     # Used in <meta name="description"> and og:description.
 slug: about                        # Overrides the filename-derived URL slug if present.
-redirect_to: /                     # Overrides the browser address bar URL after the page loads.
-                                   # Must be set to / for the root home page.
-                                   # Must be set to /{folder} for folder home pages.
 keywords: keyword1, keyword2       # Injected into <meta name="keywords">.
 author: Jane Smith                 # Injected into <meta name="author">.
 date: 2026-02-20                   # Publication date in YYYY-MM-DD format.
@@ -37,8 +34,9 @@ If `title` is missing, it is derived from the first `# Heading` in the body. If 
 
 - **`index.md`** is blocked at every level — it would overwrite the Blazor app shell (`index.html`).
 - **`home.md`** is the designated landing page for its containing directory:
-  - `content/home.md` — root home page. Must have `redirect_to: /` in frontmatter.
-  - `content/{folder}/home.md` — folder landing page. Must have `redirect_to: /{folder}` in frontmatter.
+  - `content/home.md` — root home page. Routes to `/`.
+  - `content/{a}/home.md` — folder landing page. Routes to `/{a}`, **not** `/{a}/home`.
+  - This applies at any nesting depth: `content/{a}/{b}/home.md` routes to `/{a}/{b}`, `content/{a}/{b}/{c}/home.md` routes to `/{a}/{b}/{c}`, and so on.
 - A flat `.md` file and a same-named subdirectory cannot coexist at the same level (e.g. `products.md` and `products/` together is an error).
 
 ## Shortcode syntax

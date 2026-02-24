@@ -25,13 +25,29 @@ Do not hardcode any of these values. Always read them from `blazorade.config.md`
 1. Walk all `.md` files recursively under `/content`.
 2. **Always re-read every `.md` file from disk before processing it.** Never assume a file is unchanged based on prior context or memory of a previous publish run. The content must be read fresh every time.
 3. For each file, parse the YAML frontmatter and the markdown body.
-3. For each file, parse the YAML frontmatter and the markdown body.
 4. **Process shortcodes** in the Markdown body: scan line by line, resolve known components from `{ComponentLibraryName}.ShortCodes`, and replace shortcode lines with `<x-shortcode>` sentinel elements. This step must run before Markdown-to-HTML conversion. See the **Shortcode processing** section below for full rules.
 5. Convert the processed Markdown body to well-structured HTML.
 6. Wrap it in the standard HTML page template (see below).
 7. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure.
-8. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
-9. Regenerate `{WebAppPath}/wwwroot/staticwebapp.config.json` with per-page rewrite rules (see below).
+8. **Delete stale HTML files** — remove any `.html` files under `{WebAppPath}/wwwroot/` that do not correspond to a page in the current publish set. See the **Stale file cleanup** section below.
+9. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
+10. Regenerate `{WebAppPath}/wwwroot/staticwebapp.config.json` with per-page rewrite rules (see below).
+
+## Excluded content
+
+Before walking the `/content` tree, read the `## Excluded Content` section of `blazorade.config.md`. Any bullet-list entries in that section are paths relative to `/content` that must be skipped entirely — no files under those paths are processed and no output is written for them. Apply exclusions silently; do not emit warnings for excluded files.
+
+Example: if `blazorade-docs` is listed, skip all files under `/content/blazorade-docs/` without processing or reporting them.
+
+## Stale file cleanup
+
+After writing all output files for the current publish run, delete any `.html` files under `{WebAppPath}/wwwroot/` that are **not** in the set of pages just published. This covers pages that were deleted from `/content`, pages whose source folder was added to the exclusion list, and any other previously published file that no longer has a corresponding source document.
+
+**Rules:**
+- Never delete `index.html` — it is the Blazor application shell and is not managed by the publish pipeline.
+- After deleting `.html` files, delete any subdirectories under `{WebAppPath}/wwwroot/` that are now empty (recursively, bottom-up). Never delete the `wwwroot/` root itself.
+- `sitemap.xml`, `staticwebapp.config.json`, and everything under `css/`, `js/`, `lib/`, and `_framework/` are not managed by publishing — never touch them during cleanup.
+- Report the list of deleted files in the post-publish summary.
 
 ## Blocked files
 
@@ -55,8 +71,6 @@ Each markdown document should have a YAML frontmatter block at the top. All fiel
 title: Page Title                  # Required. Used in <title>, <h1 class="page-title">, og:title
 description: Short description     # Used in <meta name="description"> and og:description
 slug: about                        # Overrides the filename-derived URL slug if present
-redirect_to: /                     # Overrides the JS redirect target (default: /{slug})
-                                   # Use this for the home page: redirect_to: /
 keywords: keyword1, keyword2       # Injected into <meta name="keywords">
 author: Jane Smith                 # Injected into <meta name="author">
 date: 2026-02-20                   # Publication date, injected as <meta name="date">
@@ -75,14 +89,14 @@ If `title` is missing, derive it from the first `# Heading` in the markdown body
 - `/content/contacts/team.md` → `{WebAppPath}/wwwroot/contacts/team.html`
 - If the frontmatter specifies a `slug` field, use that as the filename instead of the original filename, but preserve the directory path.
 - The canonical URL for a page is `https://{HostName}/{relative-path-without-extension}.html`.
-- The `history.replaceState` target defaults to `/{relative-path-without-extension}` (no `.html`), unless `redirect_to` is specified in frontmatter.
+- The `{redirect_to}` token value is always auto-derived from the file path: `/{relative-path-without-extension}` (no `.html`). For `home.md` files the trailing `/home` segment is stripped — `content/home.md` → `/`, `content/products/home.md` → `/products`, `content/contacts/finland/home.md` → `/contacts/finland`. This applies at any nesting depth.
 
 ### Folder home pages
 
 `home.md` (case-insensitive) is the designated landing page for its containing directory. It follows these special rules:
 
-- `/content/home.md` is the root home page. Its `redirect_to` must be `/` (set explicitly in frontmatter). It generates `/wwwroot/home.html` with the route `/` → `/home.html`.
-- `/content/{folder}/home.md` is the landing page for that folder section. It generates `/wwwroot/{folder}/home.html`. Its route is `/{folder}` → `/{folder}/home.html` — **not** `/{folder}/home`. The `history.replaceState` target for a folder `home.md` must be set explicitly via `redirect_to: /{folder}` in frontmatter, since the default derivation (`/{folder}/home`) would be wrong.
+- `/content/home.md` is the root home page. It generates `/wwwroot/home.html`. The `{redirect_to}` token value is `/`.
+- `/content/{path}/home.md` (at any nesting depth) is the landing page for its containing directory. It generates `/wwwroot/{path}/home.html`. The `{redirect_to}` token value is `/{path}` — **not** `/{path}/home`. For example, `content/contacts/finland/home.md` generates `wwwroot/contacts/finland/home.html` with `{redirect_to}` set to `/contacts/finland`.
 - Folder `home.md` files follow all the same rules as other pages (shortcodes, HTML template, metadata, sitemap entry) except for the routing convention above.
 
 ## HTML page template
@@ -309,8 +323,8 @@ The following examples illustrate how source documents map to generated output f
 |---|---|---|
 | `content/about.md` | `wwwroot/about.html` | `/about` |
 | `content/blog/my-post.md` | `wwwroot/blog/my-post.html` | `/blog/my-post` |
-| `content/home.md` (with `redirect_to: /`) | `wwwroot/home.html` | `/` |
-| `content/products/home.md` (with `redirect_to: /products`) | `wwwroot/products/home.html` | `/products` |
+| `content/home.md` | `wwwroot/home.html` | `/` |
+| `content/products/home.md` | `wwwroot/products/home.html` | `/products` |
 | `content/products/widget.md` | `wwwroot/products/widget.html` | `/products/widget` |
 
 ## staticwebapp.config.json regeneration
@@ -321,10 +335,10 @@ For each published page, add a route entry that rewrites the clean URL to the `.
 
 ### Route generation rules
 
-- The `route` value is the `redirect_to` value from frontmatter (the clean Blazor URL).
+- The `route` value is the auto-derived clean Blazor URL: `/{relative-path-without-extension}`, with the `/home` suffix stripped for `home.md` files at any nesting depth (e.g. `content/home.md` → `/`, `content/products/home.md` → `/products`, `content/contacts/finland/home.md` → `/contacts/finland`).
 - The `rewrite` value is the path to the generated `.html` file (e.g. `/about.html`, `/blog/my-post.html`).
 - **Always include the root home page** as the first route entry: `{ "route": "/", "rewrite": "/home.html" }`. This ensures `/` is served directly from the content bootstrapper on Azure. The `navigationFallback` (pointing to `/index.html`) then acts as a true 404/unknown-route safety net and is never reached for known pages.
-- **Folder home pages** generate a route from the folder path to the `home.html` file: `{ "route": "/products", "rewrite": "/products/home.html" }`. The route is the `redirect_to` value set in frontmatter (`/products`), not the file path (`/products/home`).
+- **Folder home pages** generate a route from the folder path to the `home.html` file, at any nesting depth. Examples: `{ "route": "/products", "rewrite": "/products/home.html" }`, `{ "route": "/contacts/finland", "rewrite": "/contacts/finland/home.html" }`. The route is always the auto-derived clean URL (the directory path), never the file path ending in `/home`.
 - Subdirectory non-home pages use their full path: `/products/widget` → `/products/widget.html`.
 - The `navigationFallback` block is always included unchanged — it is the safety net for any route not explicitly listed (including unknown/404 routes).
 - The `exclude` array is always included unchanged.
@@ -357,6 +371,7 @@ When the publishing run is complete, report:
 
 - Number of pages successfully published.
 - List of any skipped/blocked files and the reason.
+- List of any stale `.html` files deleted during cleanup (or confirmation that none needed to be deleted).
 - Confirmation that `sitemap.xml` was updated.
 - Confirmation that `Components/NavMenu.razor` was regenerated.
 - The full output path of every file written.

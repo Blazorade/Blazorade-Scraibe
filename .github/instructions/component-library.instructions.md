@@ -1,3 +1,7 @@
+---
+applyTo: "src/*.Components/**"
+---
+
 # Component Library — Protection Rules
 
 The component library project (at the path specified by `ComponentLibraryPath` in `blazorade.config.md`) is a Blazor Razor Class Library containing reusable UI components for this website. It is intentionally developed and maintained separately from the application layer.
