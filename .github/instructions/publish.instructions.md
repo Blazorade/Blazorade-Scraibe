@@ -87,9 +87,7 @@ If `title` is missing, derive it from the first `# Heading` in the markdown body
 
 ## HTML page template
 
-Each generated page is built from a layout template in `{WebAppPath}/PageLayouts/`. The layout is determined by the `layout` frontmatter field of the source page; if the field is absent, `default` is assumed. The resolved layout name maps to `{WebAppPath}/PageLayouts/{layout}.html`. **Always read the correct layout file per page** — do not hardcode the template structure in the publish pipeline.
-
-If a `layout` value is specified in frontmatter but `{WebAppPath}/PageLayouts/{layout}.html` does not exist, **the publish process must fail** for that page with a clear error message identifying the page and the missing layout file. Do not fall back silently to `default`.
+Each generated page is built from the single page shell template at `{WebAppPath}/page-template.html`. **Always read this file** — do not hardcode the template structure in the publish pipeline.
 
 The template uses two kinds of tokens:
 
