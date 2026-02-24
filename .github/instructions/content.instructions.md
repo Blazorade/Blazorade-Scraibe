@@ -103,6 +103,7 @@ Content of slide 2.
 - String values are quoted: `Param="value"`.
 - Boolean and numeric values are unquoted: `Flag=true`, `Count=5`.
 - A `[...]` expression that doesn't match any shortcode pattern is never treated as a shortcode — it passes through as plain text.
+- Shortcode detection is skipped inside Markdown code contexts: inline code spans, fenced code blocks (with or without a language hint), and indented code blocks all remain literal.
 
 ## Content quality guidelines
 

@@ -75,7 +75,7 @@ After creating the project, clean it up:
 
 Wire up the following:
 - Add a project reference from `{AppName}.Web` to `{AppName}.Components`.
-- Ensure the solution file (if one exists) includes both projects.
+- Ensure the solution file (if one exists) includes both projects. Add both projects directly to the solution root — do **not** create any solution folders (e.g. `src`). The `NestedProjects` global section must not be present in the solution file.
 
 Then add the following NuGet package to the web app project. **Before adding it, check NuGet for the latest stable published version** (no prerelease) and use that version number. The version shown below was current at the time these instructions were written and is provided as a fallback only.
 

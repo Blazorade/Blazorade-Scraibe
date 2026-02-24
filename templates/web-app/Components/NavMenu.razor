@@ -12,16 +12,7 @@
                 <li class="nav-item">
                     <NavLink class="nav-link" href="/{slug}" Match="NavLinkMatch.All" @onclick="CloseNav">{title}</NavLink>
                 </li>
-                <!-- Subdirectory dropdown — one <li class="dropdown"> per subdirectory -->
-                <li class="nav-item dropdown @(IsDropdownOpen("{folder}") ? "show" : string.Empty)" @onmouseleave="() => CloseDropdown("{folder}")">
-                    <button class="nav-link dropdown-toggle" type="button" aria-expanded="@IsDropdownOpen("{folder}")" @onclick="() => ToggleDropdown("{folder}")">{folder-home-title}</button>
-                    <ul class="dropdown-menu @(IsDropdownOpen("{folder}") ? "show" : string.Empty)">
-                        <!-- One <li> per page in the subfolder -->
-                        <li>
-                            <NavLink class="dropdown-item" href="/{slug}" @onclick="CloseNav">{title}</NavLink>
-                        </li>
-                    </ul>
-                </li>
+                <!-- Subdirectory dropdowns are generated here by publish -->
             </ul>
         </div>
     </div>

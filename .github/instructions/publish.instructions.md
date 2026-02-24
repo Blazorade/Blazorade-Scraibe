@@ -210,6 +210,13 @@ This is the content of the second slide.
 - String values are quoted (`Param="value"`), bool and numeric values are unquoted (`Flag=true Count=5`).
 - A line that does not match any shortcode pattern is never treated as a shortcode — it passes through as plain text.
 
+### Code spans and code blocks — skip shortcode detection
+
+- Do not scan for shortcodes inside Markdown code contexts. Anything that the Markdown parser treats as code must remain literal and bypass shortcode detection entirely.
+- **Inline code spans** (single backticks) are emitted verbatim; `[Badge ui="pill"]` inside backticks stays as text.
+- **Fenced code blocks** (with or without a language hint) and **indented code blocks** are passed through unchanged; shortcode-like text is not tokenised there.
+- Only non-code regions of the Markdown body are eligible for shortcode parsing.
+
 ### Component resolution
 
 - **Before reflecting over the component library, build the project** by running `dotnet build` on `{ComponentLibraryPath}/{ComponentLibraryName}.csproj`. This ensures any components added or modified since the last build are compiled into the assembly before the registry is populated. If the build fails, abort the publish run and report the build errors.

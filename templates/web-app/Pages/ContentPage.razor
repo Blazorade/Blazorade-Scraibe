@@ -53,20 +53,43 @@ else
 
         var trimmedSlug = Slug?.Trim('/') ?? string.Empty;
         var effectiveSlug = string.IsNullOrWhiteSpace(trimmedSlug) ? "home" : trimmedSlug;
-        var url = $"/{effectiveSlug}.html";
+
+        // Candidate URLs: try /{slug}.html first, then /{slug}/home.html for directory home pages.
+        var candidates = new[] { $"/{effectiveSlug}.html", $"/{effectiveSlug}/home.html" };
+
+        string? resolvedHtml = null;
+        foreach (var url in candidates)
+        {
+            try
+            {
+                resolvedHtml = await Http.GetStringAsync(url);
+                break;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // try next candidate
+            }
+        }
+
         try
         {
-            var html = await Http.GetStringAsync(url);
-            var main = await JS.InvokeAsync<string?>("blazoradePublisher.extractMain", html);
-            if (string.IsNullOrEmpty(main))
+            if (resolvedHtml is null)
             {
                 _notFound = true;
             }
             else
             {
-                _content = main;
-                _pageTitle = PageContentUtilities.ExtractTitle(html);
-                _headMeta = await JS.InvokeAsync<string>("blazoradePublisher.extractHeadMeta", html);
+                var main = await JS.InvokeAsync<string?>("blazoradePublisher.extractMain", resolvedHtml);
+                if (string.IsNullOrEmpty(main))
+                {
+                    _notFound = true;
+                }
+                else
+                {
+                    _content = main;
+                    _pageTitle = PageContentUtilities.ExtractTitle(resolvedHtml);
+                    _headMeta = await JS.InvokeAsync<string>("blazoradePublisher.extractHeadMeta", resolvedHtml);
+                }
             }
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
