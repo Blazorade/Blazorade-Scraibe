@@ -73,7 +73,9 @@ description: Short description     # Used in <meta name="description"> and og:de
 slug: about                        # Overrides the filename-derived URL slug if present
 keywords: keyword1, keyword2       # Injected into <meta name="keywords">
 author: Jane Smith                 # Injected into <meta name="author">
-date: 2026-02-20                   # Publication date, injected as <meta name="date">
+date: 2026-02-20                   # Optional. When present, used verbatim on every publish run.
+                                   # When absent, the file's last-modified timestamp on disk is used instead.
+                                   # The pipeline never writes back to frontmatter. Injected as <meta name="date">.
 ai_instructions: |                 # Free-form instructions for this page's HTML generation.
   Wrap each major section in a <section> with a descriptive aria-label.
   Include a <nav aria-label="On this page"> TOC if there are more than 3 headings.
@@ -309,7 +311,11 @@ After all pages are written, generate `{WebAppPath}/wwwroot/sitemap.xml` listing
 Use `/templates/web-app/wwwroot/sitemap.xml` as the structural template. It contains a single `<url>` block with per-page tokens. Repeat that block once for each published page, substituting all tokens, and wrap the result in the `<urlset>` element shown in the template.
 
 - `<loc>` uses the canonical HTTPS URL: `https://{HostName}/{slug}.html` (no `/pages/` prefix).
-- `<lastmod>` uses the `date` frontmatter field if present, otherwise today's date in `YYYY-MM-DD` format.
+- `<lastmod>` is determined as follows:
+  - If `date` is set in frontmatter, use that value verbatim.
+  - If `date` is absent, read the source `.md` file's last-modified timestamp from disk (e.g. `File.GetLastWriteTime` or equivalent) and format it as `YYYY-MM-DD`.
+  - If neither is available (e.g. the filesystem cannot return a timestamp), fall back to today's date in `YYYY-MM-DD` format.
+  - The pipeline never stores a derived date back into the frontmatter.
 - `<changefreq>` defaults to `monthly` unless overridden in frontmatter with a `changefreq` field.
 - `<priority>` defaults to `0.8` unless overridden in frontmatter with a `priority` field (0.0–1.0).
 - The `sitemap.xml` itself is **not** listed in the sitemap.

@@ -19,7 +19,11 @@ description: Short description     # Used in <meta name="description"> and og:de
 slug: about                        # Overrides the filename-derived URL slug if present.
 keywords: keyword1, keyword2       # Injected into <meta name="keywords">.
 author: Jane Smith                 # Injected into <meta name="author">.
-date: 2026-02-20                   # Publication date in YYYY-MM-DD format.
+date: 2026-02-20                   # Optional. Publication date in YYYY-MM-DD format.
+                                   # When set, this value is used verbatim on every publish run until
+                                   # you explicitly change or remove it. The pipeline never overwrites it.
+                                   # When omitted, the publish pipeline uses the file's last-modified
+                                   # timestamp on disk. That derived date is never written back here.
 changefreq: monthly                # Sitemap change frequency. Defaults to monthly.
 priority: 0.8                      # Sitemap priority (0.0–1.0). Defaults to 0.8.
 ai_instructions: |                 # Free-form instructions for this page's HTML generation.
