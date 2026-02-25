@@ -35,15 +35,15 @@ Crawlers and AI bots see the full static HTML directly. Browser users get the in
 
 ### Markdown and Frontmatter
 
-Pages are plain Markdown files with a YAML frontmatter block at the top. The frontmatter controls the page title, description, Open Graph metadata, sitemap settings, and more. See the [Content Authoring](content-authoring) page for the full frontmatter reference.
+Pages are plain Markdown files with a YAML frontmatter block at the top. The frontmatter controls the page title, description, Open Graph metadata, sitemap settings, and more. See the [Content Authoring](content-authoring.md) page for the full frontmatter reference.
 
 ### Shortcodes
 
-Shortcodes let you embed live Blazor components directly in Markdown content using a simple bracket syntax — no HTML, no code-behind files needed in the content itself. Components are defined once in the component library and reused across any number of pages. See the [Shortcodes](shortcodes) page for syntax and examples.
+Shortcodes let you embed live Blazor components directly in Markdown content using a simple bracket syntax — no HTML, no code-behind files needed in the content itself. Components are defined once in the component library and reused across any number of pages. See the [Shortcodes](shortcodes/home.md) page for syntax and examples.
 
 ### Publishing
 
-The publish workflow is driven entirely by GitHub Copilot following a set of structured instruction files. Running a publish processes one or more content files, generates their static HTML bootstrappers, updates the sitemap, and regenerates the navigation menu. See the [Publishing](publishing) page for the full workflow.
+The publish workflow is driven entirely by GitHub Copilot following a set of structured instruction files. Running a publish processes one or more content files, generates their static HTML bootstrappers, updates the sitemap, and regenerates the navigation menu. See the [Publishing](publishing.md) page for the full workflow.
 
 ### Project Structure
 
@@ -60,10 +60,10 @@ src/                      # Generated on first run — not committed to the temp
 
 ## In This Section
 
-- [Content Authoring](content-authoring) — Markdown structure, frontmatter fields, and writing guidelines
-- [Shortcodes](shortcodes) — Embedding Blazor components in content
-- [Publishing](publishing) — How the publish workflow generates static HTML
-- [Styling](styling) — CSS conventions and how to customise the look of your site
+- [Content Authoring](content-authoring.md) — Markdown structure, frontmatter fields, and writing guidelines
+- [Shortcodes](shortcodes/home.md) — Embedding Blazor components in content
+- [Publishing](publishing.md) — How the publish workflow generates static HTML
+- [Styling](styling.md) — CSS conventions and how to customise the look of your site
 
 ## Getting Started
 
