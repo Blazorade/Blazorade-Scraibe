@@ -28,7 +28,7 @@ Do not hardcode any of these values. Always read them from `blazorade.config.md`
 4. **Process shortcodes** in the Markdown body: scan line by line, resolve known components from `{ComponentLibraryName}.ShortCodes`, and replace shortcode lines with `<x-shortcode>` sentinel elements. This step must run before Markdown-to-HTML conversion. See the **Shortcode processing** section below for full rules.
 5. Convert the processed Markdown body to well-structured HTML.
 6. Wrap it in the standard HTML page template (see below).
-7. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure.
+7. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure. **Always write the complete file content in a single full overwrite — never patch or partially update an existing file.** This applies to every generated file: `.html` pages, `sitemap.xml`, `staticwebapp.config.json`, and `NavMenu.razor`. Partial replacement is fragile and risks corrupting the output.
 8. **Delete stale HTML files** — remove any `.html` files under `{WebAppPath}/wwwroot/` that do not correspond to a page in the current publish set. See the **Stale file cleanup** section below.
 9. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
 10. Regenerate `{WebAppPath}/wwwroot/staticwebapp.config.json` with per-page rewrite rules (see below).
@@ -107,7 +107,7 @@ Each generated page is built from the single page shell template at `{WebAppPath
 
 The template uses two kinds of tokens:
 
-- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{redirect_to}`, `{HostName}` (from `blazorade.config.md`). Optional tags — `{keywords}`, `{author}`, `{date}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent.
+- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{redirect_to}`, `{HostName}` (from `blazorade.config.md`). Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page.
 - **First-run token** (already resolved in this repo's copy of the template): `{{WebAppName}}` appears in `<link href="{{WebAppName}}.styles.css" ...>`. In a freshly cloned template repo this token is substituted by first-run setup; in this repo it is already correct.
 
 The `{body_html}` placeholder is replaced with the fully converted and shortcode-processed HTML content of the page.
