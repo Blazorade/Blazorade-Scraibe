@@ -8,7 +8,9 @@ priority: 0.7
 
 # Styling
 
-Blazorade Scraibe sites use a straightforward CSS layering model. Global styles live in one place, component-scoped styles live next to their components, and everything is overridable.
+Blazorade Scraibe uses [Bootstrap](https://getbootstrap.com/) as its UI framework and builds a straightforward CSS layering model on top of it. Global styles live in one place, component-scoped styles live next to their components, and everything is overridable.
+
+> **Note:** Styling support is currently very basic. It will be developed further to make it easy to take full advantage of everything Bootstrap offers — including its utility classes, themes, and component styles — with minimal manual configuration. Global styles live in one place, component-scoped styles live next to their components, and everything is overridable.
 
 ## Global Stylesheet
 
@@ -23,7 +25,9 @@ The default `app.css` ships with a minimal set of styles — base typography, li
 
 ### CSS Framework
 
-The default setup does not prescribe a specific CSS framework. If you want to use Bootstrap, Tailwind, or any other framework, add its CDN link or package reference to the page template at `{WebAppPath}/page-template.html` and import any required CSS there. The `app.css` file is then the right place to add any overrides or site-specific rules on top of the framework's base styles.
+Blazorade Scraibe uses [Bootstrap](https://getbootstrap.com/) as its UI framework. Bootstrap is included via the page template at `{WebAppPath}/page-template.html`, making all Bootstrap utility classes, grid, and component styles available on every page out of the box.
+
+The `app.css` file is the right place to add site-specific overrides or supplemental rules on top of Bootstrap's base styles. Avoid re-declaring things Bootstrap already provides — prefer Bootstrap utility classes in your components and override only what you need to customise.
 
 ## Component-Scoped Styles
 

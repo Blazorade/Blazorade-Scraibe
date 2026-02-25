@@ -1,12 +1,10 @@
 # Blazorade Scraibe
 
-A publishing framework that combines Blazor WebAssembly with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML.
+A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no app server, no runtime, and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static) or [GitHub Pages](https://pages.github.com/).
 
 > **There are no build scripts, no CLI commands, and no pipelines to configure.** To publish your site, you open a Copilot chat and say: *"Please publish my site."* Copilot reads your Markdown, generates the static HTML, updates the sitemap, and regenerates the navigation — all through conversation.
 
 > **Note:** This repository is under active development and should be considered a beta offering. Expect breaking changes, incomplete features, and evolving conventions as the framework matures.
-
-Because every page is a static file, hosting requires nothing beyond basic file serving — no app server, no runtime, no database. Yet thanks to Blazor WebAssembly, you can still embed fully interactive applications in your content using shortcodes, much like WordPress plugins but with the full power of .NET. Sites built with Blazorade Scraibe are designed to run on Azure Static Web Apps — fast, globally distributed, and affordable. GitHub Pages is also supported as a free hosting alternative.
 
 ## Quick Start
 
@@ -31,26 +29,13 @@ For detailed setup instructions, system requirements, and optional tooling, see 
 
 ## Key Features
 
-### Markdown Authoring
-Content is written as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format — just files in a folder that any editor can open.
-
-### Shortcodes
-Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax. Components are defined once in a Razor Class Library and reused across any number of pages — from simple callout boxes to complex data-driven widgets.
-
-### AI-Driven Publishing
-The publish workflow is driven entirely by GitHub Copilot following structured instruction files. Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates the navigation menu — no build scripts or CLI tools required.
-
-### Static HTML Output
-Every page is published as a static `.html` bootstrapper. Crawlers, search engines, and AI bots see fully-formed HTML. No app server, no runtime, no database needed to serve the site.
-
-### Interactive Blazor Runtime
-When a user visits the site in a browser, the Blazor WebAssembly app takes over — fetching the static HTML, rendering the page, and activating any embedded Blazor components. Static for bots, interactive for humans.
-
-### Zero-Config First Run
-Open the repository in VS Code with GitHub Copilot enabled and Copilot automatically detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation, no manual scaffolding required.
-
-### Affordable Hosting
-Because the output is pure static files, sites are a natural fit for Azure Static Web Apps — fast, globally distributed, and inexpensive to run. GitHub Pages is also supported for fully free hosting. Either way, there is no server infrastructure to manage.
+- **[Markdown Authoring](content/blazorade-docs/content-authoring.md)** — Write pages as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format.
+- **[Shortcodes](content/blazorade-docs/shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax.
+- **[AI-Driven Publishing](content/blazorade-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates navigation — no scripts or CLI tools required.
+- **[Styling](content/blazorade-docs/styling.md)** — Global styles in `app.css`, component-scoped CSS isolation, and a customisable page shell template.
+- **Static HTML Output** — Every page is a static `.html` bootstrapper. Crawlers, search engines, and AI bots see fully-formed HTML.
+- **Interactive Blazor Runtime** — The Blazor WebAssembly app takes over at runtime, rendering pages and activating embedded components. Static for bots, interactive for humans.
+- **Zero-Config First Run** — Copilot detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation.
 
 ## About the Name
 
