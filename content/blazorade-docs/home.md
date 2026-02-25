@@ -1,12 +1,12 @@
 ---
-title: Blazorade AI Publisher
-description: Documentation for Blazorade AI Publisher — a framework for building static Blazor WebAssembly sites with GitHub Copilot-assisted content authoring and publishing.
+title: Blazorade Scraibe
+description: Documentation for Blazorade Scraibe — a publishing framework for building static Blazor WebAssembly sites with GitHub Copilot-assisted content authoring and publishing.
 keywords: Blazorade, Blazor, static site, GitHub Copilot, AI publishing, shortcodes, Markdown
 changefreq: weekly
 priority: 0.9
 ---
 
-# Blazorade AI Publisher
+# Blazorade Scraibe
 
 ## Removing These Docs From Your Site
 
@@ -20,7 +20,7 @@ This documentation is published on your site by default so you have working cont
 
 The next publish run will skip all pages in this section. The source files remain in `/content/blazorade-docs/` and can be re-included at any time by removing the entry.
 
-Blazorade AI Publisher is a publishing framework that turns Markdown files into a modern, interactive website powered by Blazor WebAssembly. Content is authored in Markdown, optionally enriched with live Blazor components via a shortcode syntax, and published to static HTML that is both fully indexed by search engines and AI crawlers and dynamically rendered for users.
+Blazorade Scraibe is a publishing framework that turns Markdown files into a modern, interactive website powered by Blazor WebAssembly. Content is authored in Markdown, optionally enriched with live Blazor components via a shortcode syntax, and published to static HTML that is both fully indexed by search engines and AI crawlers and dynamically rendered for users.
 
 ## How It Works
 
@@ -68,4 +68,10 @@ src/                      # Generated on first run — not committed to the temp
 ## Getting Started
 
 If you are setting up a new site from this repository, open it in VS Code with GitHub Copilot enabled. Copilot will detect the missing `blazorade.config.md` configuration file and walk you through the automated first-run setup, which scaffolds the Blazor projects, copies and configures all template files, and prepares the content folder.
+
+## About the Name
+
+**Blazorade Scraibe** (/skraɪb/) is a blend of *Blazorade* and *Scribe* — with a deliberate twist: the spelling embeds **AI** in the middle of the word (scr-**AI**-be), reflecting the central role GitHub Copilot plays in the authoring and publishing workflow.
+
+A [scribe](https://en.wikipedia.org/wiki/Scribe) was a professional trained to produce, copy, and distribute written knowledge. Before the printing press, scribes were the backbone of civilisation's information infrastructure — turning thought into published form with craft and precision. Blazorade Scraibe carries that same purpose into the modern web: taking your Markdown content and giving it a published, accessible, search-engine-visible form, with an AI agent as the intermediary between author and output.
 

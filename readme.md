@@ -1,62 +1,53 @@
-# Blazorade AI Publisher
+# Blazorade Scraibe
 
-A static site generator and publishing framework that combines Blazor WebAssembly with GitHub Copilot-assisted content authoring and publishing. Write your content in Markdown, enhance it with Razor component shortcodes, and publish to SEO-friendly static HTML while preserving the interactive capabilities of Blazor components at runtime.
+A publishing framework that combines Blazor WebAssembly with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML.
 
-## What It Does
+> **Note:** This repository is under active development and should be considered a beta offering. Expect breaking changes, incomplete features, and evolving conventions as the framework matures.
 
-Blazorade AI Publisher transforms Markdown content into modern, interactive websites:
+Because every page is a static file, hosting requires nothing beyond basic file serving — no app server, no runtime, no database. Yet thanks to Blazor WebAssembly, you can still embed fully interactive applications in your content using shortcodes, much like WordPress plugins but with the full power of .NET. Sites built with Blazorade Scraibe are designed to run on Azure Static Web Apps — fast, globally distributed, and affordable. GitHub Pages is also supported as a free hosting alternative.
 
-- **Write in Markdown** — Author content with YAML frontmatter in the `/content` folder
-- **GitHub Copilot-Powered** — Use GitHub Copilot to generate, publish, and maintain your content with intelligent assistance
-- **Component Shortcodes** — Embed live Blazor components directly in your Markdown using a simple shortcode syntax
-- **Hybrid Rendering** — Static HTML for crawlers and bots, dynamic Blazor WASM for users
-- **SEO-Optimized** — Generates sitemap, meta tags, Open Graph tags, and canonical URLs automatically
-- **Zero Backend** — Deploy to Azure Static Web Apps, GitHub Pages, or any static hosting service
+## Quick Start
+
+The recommended way to get started is to create a new repository from this template using the **Use this template** button on GitHub. You can also clone or fork the repository if you prefer.
+
+1. Create a new repository from this template (or clone/fork).
+2. Open it in VS Code with GitHub Copilot enabled.
+3. Copilot will detect the missing configuration and run first-time setup automatically.
+4. Add Markdown files to `/content` and run the publish workflow.
 
 ## Key Features
 
-- **First-Run Setup** — Automated project scaffolding creates the complete site structure from templates
-- **Smart Instructions** — Context-aware instructions guide GitHub Copilot through content authoring and publishing workflows
-- **Template-Based** — All code files are maintained as templates with token substitution for multi-site reuse
-- **Component Library** — Build reusable shortcode components in a separate Razor Class Library
-- **Navigation Generation** — Top navbar with dropdowns is automatically generated from content structure
+### Markdown Authoring
+Content is written as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format — just files in a folder that any editor can open.
 
-## Project Structure
+### Shortcodes
+Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax. Components are defined once in a Razor Class Library and reused across any number of pages — from simple callout boxes to complex data-driven widgets.
 
-```
-├── content/                    # Markdown source files with frontmatter
-├── templates/                  # Reusable templates for new projects
-│   ├── component-library/      # Razor component templates
-│   └── web-app/               # Blazor WASM app templates
-├── .github/
-│   └── instructions/          # GitHub Copilot instruction files
-└── src/                       # Generated during first-run (not in repo)
-    ├── {AppName}.Components/  # Razor Class Library for shortcodes
-    └── {AppName}.Web/         # Blazor WebAssembly application
-```
+### AI-Driven Publishing
+The publish workflow is driven entirely by GitHub Copilot following structured instruction files. Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates the navigation menu — no build scripts or CLI tools required.
 
-## Getting Started
+### Static HTML Output
+Every page is published as a static `.html` bootstrapper. Crawlers, search engines, and AI bots see fully-formed HTML. No app server, no runtime, no database needed to serve the site.
 
-This repository serves as both the framework and a template for new sites. When you start working in a clone or fork of this repo, GitHub Copilot will detect the missing configuration and guide you through an automated first-run setup that:
+### Interactive Blazor Runtime
+When a user visits the site in a browser, the Blazor WebAssembly app takes over — fetching the static HTML, rendering the page, and activating any embedded Blazor components. Static for bots, interactive for humans.
 
-1. Collects your site identity (display name, app name, hostname)
-2. Creates the Blazor projects under `/src`
-3. Copies and configures all template files with your site's values
-4. Sets up the instruction bridges for scoped GitHub Copilot guidance
-5. Prepares the `/content` folder for your pages
+### Zero-Config First Run
+Open the repository in VS Code with GitHub Copilot enabled and Copilot automatically detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation, no manual scaffolding required.
 
-After setup, simply add Markdown files to `/content` and use the GitHub Copilot-powered publishing workflow to generate static HTML.
+### Affordable Hosting
+Because the output is pure static files, sites are a natural fit for Azure Static Web Apps — fast, globally distributed, and inexpensive to run. GitHub Pages is also supported for fully free hosting. Either way, there is no server infrastructure to manage.
+
+## About the Name
+
+**Blazorade Scraibe** (/skraɪb/) is a blend of *Blazorade* and *Scribe* — with a deliberate twist: the spelling embeds **AI** in the middle of the word (scr-**AI**-be), reflecting the central role GitHub Copilot plays in the authoring and publishing workflow.
+
+A [scribe](https://en.wikipedia.org/wiki/Scribe) was a professional trained to produce, copy, and distribute written knowledge. Before the printing press, scribes were the backbone of civilisation's information infrastructure — turning thought into published form with craft and precision. Blazorade Scraibe carries that same purpose into the modern web: taking your Markdown content and giving it a published, accessible, search-engine-visible form, with an AI agent as the intermediary between author and output.
 
 ## Documentation
 
-Detailed documentation for using Blazorade AI Publisher, including content authoring guidelines, shortcode creation, and publishing workflows, is maintained in `/content/blazorade-docs/`. This documentation serves as both:
-
-- A complete reference for authors using the framework
-- Example content demonstrating best practices for Markdown authoring with Blazorade AI Publisher
-
-Authors can choose to include this documentation in their published site or use it purely as a reference.
+Full documentation — content authoring, shortcodes, publishing, and styling — is in [`/content/blazorade-docs/`](content/blazorade-docs/home.md).
 
 ## License
-
 
 See [LICENSE](LICENSE) for details.

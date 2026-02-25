@@ -9,7 +9,7 @@
 
 ## Project overview
 
-This is the source repository for a static Blazor WebAssembly website built with Blazorade AI Publisher. The site identity and project structure are defined in `blazorade.config.md` at the repository root.
+This is the source repository for a static Blazor WebAssembly website built with Blazorade Scraibe. The site identity and project structure are defined in `blazorade.config.md` at the repository root.
 
 Content is authored as Markdown files in `/content`, published to static HTML bootstrappers directly in `{WebAppPath}/wwwroot/`, and served by a Blazor WASM app that fetches and renders each page at runtime.
 
