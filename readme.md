@@ -15,6 +15,18 @@ The recommended way to get started is to create a new repository from this templ
 3. Copilot will detect the missing configuration and run first-time setup automatically.
 4. Add Markdown files to `/content` and run the publish workflow.
 
+## Prerequisites
+
+Before you can run Blazorade Scraibe on your own machine, make sure the following software is installed.
+
+- [Visual Studio Code](https://code.visualstudio.com/) — the editor the entire workflow is built around.
+- [GitHub Copilot extension for VS Code](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) — drives publishing, first-run setup, and all AI-assisted authoring. Requires an active GitHub Copilot subscription.
+- [.NET SDK](https://dotnet.microsoft.com/download) — needed to build and run the Blazor WebAssembly application. Version 10.0 or later is required.
+- [Git](https://git-scm.com/downloads) — needed to clone the repository and manage your content history.
+- [GitHub account](https://github.com/join) — required to use GitHub Copilot and to create a repository from this template.
+
+For detailed setup instructions, system requirements, and optional tooling, see [Prerequisites](content/blazorade-docs/prerequisites) in the documentation.
+
 ## Key Features
 
 ### Markdown Authoring
@@ -46,7 +58,7 @@ A [scribe](https://en.wikipedia.org/wiki/Scribe) was a professional trained to p
 
 ## Documentation
 
-Full documentation — content authoring, shortcodes, publishing, and styling — is in [`/content/blazorade-docs/`](content/blazorade-docs/home.md).
+Full documentation — content authoring, shortcodes, publishing, and styling — is in [`/content/blazorade-docs/`](content/blazorade-docs/home).
 
 ## License
 
