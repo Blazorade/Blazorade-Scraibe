@@ -77,8 +77,8 @@ date: 2026-02-20                   # Optional. When present, used verbatim on ev
                                    # When absent, the file's last-modified timestamp on disk is used instead.
                                    # The pipeline never writes back to frontmatter. Injected as <meta name="date">.
 ai_instructions: |                 # Free-form instructions for this page's HTML generation.
-  Wrap each major section in a <section> with a descriptive aria-label.
   Include a <nav aria-label="On this page"> TOC if there are more than 3 headings.
+  Highlight the first paragraph with a <p class="lead"> class.
 ---
 ```
 
@@ -118,30 +118,33 @@ The HTML inside `<main>` must be semantic, accessible, and optimised for compreh
 
 - Use correct heading hierarchy (`<h1>` for the page title, `<h2>` for sections, etc.).
 - Include only one `<h1>` per page.
-- Wrap distinct thematic sections in `<section>` elements with descriptive `aria-label` attributes.
-- Use `<article>` for self-contained content blocks.
+- Wrap the entire page body in a single `<article>` element. Headings and paragraphs flow directly inside `<article>` without intermediate `<section>` wrappers.
 - Use `<nav aria-label="...">` for any navigation lists within the content.
 - Prefer `<ul>` / `<ol>` for lists, `<figure>` + `<figcaption>` for images.
 - Do **not** include any `<style>` or `<script>` tags inside `<main>`.
 - Do **not** include any Blazor-specific attributes or class names — the HTML must be standalone.
+- **External links:** Any `<a>` element whose `href` starts with `http://` or `https://` is external and must have `target="_blank" rel="noopener noreferrer"` added. This applies uniformly to links generated from Markdown `[text](url)` syntax, bare URL autolinking, and any other source. Since all intra-site links are relative paths, an absolute URL unambiguously identifies an external resource.
+- **Bare URL autolinking:** Any bare absolute URL (`http://` or `https://`) that appears as plain text in non-code Markdown content must be converted to an `<a href="...">...</a>` element using the URL itself as both the `href` and the link text. Apply external-link treatment as defined above.
+- **Internal link rewriting:** After Markdown-to-HTML conversion, scan every `<a href="...">` in the generated body HTML. Any `href` that is a relative path ending in `.md` must be rewritten to end in `.html` instead, preserving any `#fragment` suffix (e.g. `./about.md` → `./about.html`, `./about.md#section` → `./about.html#section`). Absolute URLs and non-`.md` relative links are left unchanged. Do not condense `home.html` paths — `../products/home.html` is the correct canonical URL for that page and must be preserved as-is.
 - Any page-level `ai_instructions` from frontmatter take precedence over these defaults.
 
 ### Tag-balancing rule for shortcode sentinels
 
-`ContentSegmentParser` in the web app splits the final HTML on `<x-shortcode>` tag boundaries. Each resulting HTML fragment is injected into the live DOM as a raw `MarkupString`. If a fragment contains an **unclosed** block-level HTML tag (e.g. an opening `<section>` without its matching `</section>`), the browser will auto-close it before the next fragment is injected, corrupting the DOM structure.
+`ContentSegmentParser` in the web app splits the final HTML on `<x-shortcode>` tag boundaries. Each resulting HTML fragment is injected into the live DOM as a raw `MarkupString`. If a fragment contains an **unclosed** block-level HTML tag (e.g. an opening `<div>` without its matching `</div>`), the browser will auto-close it before the next fragment is injected, corrupting the DOM structure.
 
 **Rule: every HTML fragment that precedes or follows a `<x-shortcode>` sentinel must be fully tag-balanced.**
 
-In practice this means: if a `<section>` (or any other block-level wrapper) would straddle a shortcode boundary, **close the `<section>` before the `<x-shortcode>` sentinel and, if the section continues after the shortcode, reopen it immediately after the closing `</x-shortcode>` tag**. If the shortcode is the last item in the section, simply close the `<section>` before it and do not reopen it.
+In practice this means: if any block-level wrapper (e.g. one introduced by `ai_instructions`) would straddle a shortcode boundary, **close the wrapper before the `<x-shortcode>` sentinel and, if the block continues after the shortcode, reopen it immediately after the closing `</x-shortcode>` tag**. If the shortcode is the last item in the block, simply close the wrapper before it and do not reopen it.
 
-Example — a `##` heading section that ends with a shortcode: the publisher must emit:
+Note: the outer `<article>` element that wraps the entire page body is handled by `ContentSegmentParser` as an `ElementNode` — its opening and closing tags are emitted via Blazor's `OpenElement`/`CloseElement` calls rather than as raw HTML strings, so the article wrapper itself does not trigger tag-balancing issues.
+
+Example — a custom wrapper added via `ai_instructions` that ends with a shortcode: the publisher must emit:
 
 ```html
-<section aria-label="Example">
-  <h2>Example</h2>
+<div class="callout">
   <p>Intro text.</p>
-</section>
-<x-shortcode name="Article" data-params='{}'>
+</div>
+<x-shortcode name="Alert" data-params='{}'>
   ...
 </x-shortcode>
 ```
@@ -149,13 +152,12 @@ Example — a `##` heading section that ends with a shortcode: the publisher mus
 **Not:**
 
 ```html
-<section aria-label="Example">
-  <h2>Example</h2>
+<div class="callout">
   <p>Intro text.</p>
-  <x-shortcode name="Article" data-params='{}'>
+  <x-shortcode name="Alert" data-params='{}'>
     ...
   </x-shortcode>
-</section>
+</div>
 ```
 
 ## Shortcode processing
