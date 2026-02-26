@@ -1,0 +1,33 @@
+﻿@attribute [AgentInstructions(@"
+Use the UIHint parameter to determine what CSS classes should be added to the CssClasses parameter
+on this component. The following CSS classes are supported by the Bootstrap Alert component.
+- alert-primary
+- alert-secondary
+- alert-success
+- alert-danger
+- alert-warning
+- alert-info
+- alert-light
+- alert-dark
+
+The author will specify the color to use so they are not required to know the CSS class exactly, so the
+following synonyms should also apply. Note that this is not a complete list, just a few examples.
+- main -> alert-primary
+- secondary -> alert-secondary
+- error -> alert-danger
+- message -> alert-info
+")]
+@inherits ShortCodeComponentBase
+
+<div @attributes="this.Attributes">
+    @this.ChildContent
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        this.AddClasses("alert");
+    }
+}

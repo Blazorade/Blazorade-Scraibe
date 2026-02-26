@@ -207,9 +207,10 @@ This is the content of the second slide.
 - The self-closing shortcode `[Name Params /]` must be alone on its line.
 - **Multi-line wrapping:** The opening tag `[Name Params]` and the closing tag `[/Name]` must each be alone on their own lines, with inner content on the lines in between.
 - **Inline wrapping:** If the opening tag, inner text, and closing tag all appear on a single line — `[Name Params]inner text[/Name]` — this is treated as an inline wrapping shortcode. Only plain text and inline Markdown (no nested shortcodes) are permitted in inline form.
-- Parameters are whitespace-separated key=value pairs on the opening tag only. Closing tags have no parameters.
-- Parameter names use pascal case, matching the `[Parameter]` property names on the Razor component.
-- String values are quoted (`Param="value"`), bool and numeric values are unquoted (`Flag=true Count=5`).
+- The opening tag may contain two kinds of tokens, both whitespace-separated. Closing tags carry no tokens.
+- **Named parameters** — `Key=value` or `Key="value"` pairs. Names are matched to `[Parameter]` properties on the component using `OrdinalIgnoreCase`; the canonical property name (as declared on the component) is always used as the key in `data-params`. Duplicate names after case normalisation are a fatal error — report the file, line number, and duplicated name.
+- **Hint tokens** — any token that is not a `Key=value` pair. Both bare unquoted words (`round`) and quoted strings (`"round pill"`) are hint tokens. All hint tokens are collected in order and joined with a single space to form the **hint string**.
+- String parameter values are quoted (`Param="value"`); bool and numeric values are unquoted (`Flag=true Count=5`).
 - A line that does not match any shortcode pattern is never treated as a shortcode — it passes through as plain text.
 
 ### Code spans and code blocks — skip shortcode detection
@@ -225,6 +226,19 @@ This is the content of the second slide.
 - Build a registry by reflecting over the compiled `{ComponentLibraryName}` assembly and collecting all types in the `{ComponentLibraryName}.ShortCodes` namespace.
 - The component name in the shortcode must match a type name in that namespace exactly (pascal case).
 - If the component name is **not found** in the registry, the shortcode line is treated as plain text and passes through unchanged.
+
+### Hint token processing (`[AgentInstructions]`)
+
+After the component type is resolved and tokens have been classified, process hint tokens as follows:
+
+1. Reflect over the resolved component class and check for a class-level `[AgentInstructions]` attribute (in the `{ComponentLibraryName}.Annotations` namespace).
+2. If the attribute is present **and** at least one hint token was found:
+   a. Use the `AgentInstructions` string as reasoning context to translate the joined hint string into one or more Bootstrap CSS class names.
+   b. Add `CssClasses` to the named parameter set with the translated class string as its value. If `CssClasses` was also written explicitly as a named parameter by the author, the hint-derived value takes precedence and the explicit value is discarded (emit a warning).
+3. If `[AgentInstructions]` is absent but hint tokens were found, emit a warning and discard the hint tokens — this is a content authoring mistake, not a fatal error.
+4. If no hint tokens were found, skip this step entirely.
+
+Hint token processing always runs before named parameters are serialised to `data-params`.
 
 ### Parser state machine
 
@@ -305,7 +319,7 @@ Nested wrapping shortcodes produce naturally nested sentinel elements:
 ```
 
 - `name` attribute uses double quotes. `data-params` attribute uses **single quotes** so that the JSON value can contain unescaped double quotes without HTML encoding.
-- `data-params` contains the parameters serialized as a compact JSON object. Use the parameter names exactly as written in the shortcode (pascal case). Use `'{}'` when there are no parameters.
+- `data-params` contains the named parameters serialised as a compact JSON object. Use the **canonical** property name (as declared on the component) for each key — never the raw casing written by the author. Hint tokens are never emitted directly; they are translated to `CssClasses` via `[AgentInstructions]` processing (see above) and appear in `data-params` only as `"CssClasses":"..."`. Use `'{}'` when there are no parameters.
 - The inner static content (wrapping form only) is the accumulated inner Markdown lines converted to HTML following the same HTML quality rules as the rest of the body.
 - `<x-shortcode>` is a custom element — it is transparent to browsers and crawlers, which read the inner content normally. The Blazor `ContentRenderer` component replaces it with the live component at runtime.
 

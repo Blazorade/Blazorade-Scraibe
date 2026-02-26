@@ -19,13 +19,19 @@ If you have used WordPress shortcodes, these follow the same `[Name Param="value
 Use the self-closing form when no child content is needed:
 
 ```
-[Badge UI="pill info" Text="Beta" /]
+[Badge pill info /]
+```
+
+Or the inline wrapping form when the component renders child content:
+
+```
+[Badge pill info]Beta[/Badge]
 ```
 
 Key points:
 - Component name is pascal case and must match a component in the `{ComponentLibraryName}.ShortCodes` namespace.
-- Parameters are whitespace-separated key/value pairs on the opening tag only; closing tags never carry parameters.
-- Strings are quoted; booleans and numbers are unquoted.
+- The opening tag can contain named parameters and hint tokens (see below); closing tags carry nothing.
+- String parameter values are quoted; booleans and numbers are unquoted.
 
 ## Wrapping Shortcodes
 
@@ -48,10 +54,34 @@ Here is some intro text.
 [/Article]
 ```
 
-## Parameters and Validation Rules
+## Named Parameters
 
-- Parameter names follow pascal case and map to `[Parameter]` properties on the component.
-- Duplicate parameters in the same tag are errors.
+Named parameters use `Key=value` or `Key="value"` syntax and map to `[Parameter]` properties on the component. Parameter names are matched case-insensitively, so `[Alert cssclasses="alert-danger" /]` works the same as `[Alert CssClasses="alert-danger" /]`. Duplicate names (after case normalisation) are fatal errors.
+
+## Hint Tokens
+
+Any token in the opening tag that is not a `Key=value` pair is a **hint token**. Bare words and quoted strings are both valid:
+
+```
+[Alert error /]
+[Alert "error" /]
+[Alert error dismissible /]
+[Alert "error dismissible" /]
+```
+
+All four are equivalent. The publish pipeline collects hint tokens in order, joins them with a space, and uses the component's `[AgentInstructions]` attribute to translate the result into CSS class names, which are set as the `CssClasses` parameter. If the component has no `[AgentInstructions]` attribute, hint tokens produce a warning and are discarded.
+
+Hint tokens and named parameters can be freely mixed:
+
+```
+[Carousel round Interval=3000 /]
+```
+
+Here `round` is a hint token and `Interval=3000` is a named parameter.
+
+## Validation Rules
+
+- Duplicate named parameters in the same tag are fatal errors.
 - A `[...]` token that does not match shortcode syntax is left as plain text.
 
 ## Nesting and Child Content
