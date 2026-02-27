@@ -1,4 +1,4 @@
-﻿using Blazorade.Core.Components;
+using Blazorade.Core.Components;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
