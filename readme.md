@@ -33,6 +33,8 @@ For detailed setup instructions, system requirements, and optional tooling, see 
 - **[Shortcodes](content/blazorade-docs/shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax.
 - **[AI-Driven Publishing](content/blazorade-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates navigation — no scripts or CLI tools required.
 - **[Styling](content/blazorade-docs/styling.md)** — Global styles in `app.css`, component-scoped CSS isolation, and a customisable page shell template.
+- **[Todo Items](content/blazorade-docs/home.md#todo-items)** — Track tasks and ideas for your site directly in the repository. Copilot creates, updates, and closes todo items through conversation — no external tool required.
+- **[Playbooks](content/blazorade-docs/home.md#playbooks)** — Define custom, repeatable procedures for your site in plain language. Copilot triggers and follows any playbook on request, from content audits to pre-launch checklists.
 - **Static HTML Output** — Every page is a static `.html` bootstrapper. Crawlers, search engines, and AI bots see fully-formed HTML.
 - **Interactive Blazor Runtime** — The Blazor WebAssembly app takes over at runtime, rendering pages and activating embedded components. Static for bots, interactive for humans.
 - **Zero-Config First Run** — Copilot detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation.

@@ -12,5 +12,6 @@ The `/todo` folder is a lightweight task-tracking system for ongoing and future 
 - **Never auto-promote a backlog item.** Only promote a backlog item to an active task when explicitly asked.
 - When a task is fully complete: write a short summary entry in `/todo/completed.md` **at the top, immediately after the introductory paragraph** (entries are newest-first), then remove its bullet from `/todo/home.md` and delete its detail document.
 - Never load all detail documents speculatively. Read `/todo/home.md` to get an overview, then read a specific detail document only when that task is actively being worked on.
+- If `/todo/home.md` does not exist, the todo system has not been initialised yet. Copy `templates/todo/home.md` to `/todo/home.md`, then proceed as normal.
 
 All todo documents are Markdown files. Follow the rules in [markdown-instructions.md](markdown-instructions.md) when creating or editing any file in `/todo/`.

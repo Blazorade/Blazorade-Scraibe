@@ -45,6 +45,14 @@ Shortcodes let you embed live Blazor components directly in Markdown content usi
 
 The publish workflow is driven entirely by GitHub Copilot following a set of structured instruction files. Running a publish processes one or more content files, generates their static HTML bootstrappers, updates the sitemap, and regenerates the navigation menu. See the [Publishing](publishing.md) page for the full workflow.
 
+### Todo Items
+
+Blazorade Scraibe includes a lightweight task-tracking system built directly into the repository. The `/todo` folder holds an index of active tasks and a backlog of ideas, with each active task having its own detail document containing full context, decisions made, and next steps. A completed-task log is maintained as a permanent record. Copilot can create new tasks, update them, promote backlog ideas, and close completed ones — all through conversation. No external tools or project management software required.
+
+### Playbooks
+
+Playbooks are site-specific, repeatable procedures stored in `/playbooks` and written in plain language. A playbook describes how to carry out a recurring task — a content freshness audit, a pre-launch readiness review, an onboarding process for a new content section — anything the site owner wants Copilot to know how to run. Playbooks are authored by the site owner, not shipped by the framework, so they reflect how *your* site operates. Copilot discovers available playbooks from the `/playbooks/home.md` index and triggers the right one based on what you ask for.
+
 ### Project Structure
 
 ```
