@@ -14,4 +14,10 @@ The `/todo` folder is a lightweight task-tracking system for ongoing and future 
 - Never load all detail documents speculatively. Read `/todo/home.md` to get an overview, then read a specific detail document only when that task is actively being worked on.
 - If `/todo/home.md` does not exist, the todo system has not been initialised yet. Copy `templates/todo/home.md` to `/todo/home.md`, then proceed as normal.
 
+## Implementation-readiness rule
+
+A detail document is **implementation-ready** when all architectural and design decisions required to implement the task are captured in the document itself — a new agent instance must be able to implement the task correctly by reading the detail document alone, without needing to ask clarifying questions about design intent. Decisions that are not yet made must appear as **open questions** until resolved. An active task with open questions is not yet implementation-ready.
+
+This does **not** mean the document must describe everything discoverable from the codebase (existing file contents, surrounding conventions, etc.) — those can be found with tools. It only means that design choices, architectural decisions, specific formats, and behavioural rules that cannot be inferred from code must be written down explicitly.
+
 All todo documents are Markdown files. Follow the rules in [markdown-instructions.md](markdown-instructions.md) when creating or editing any file in `/todo/`.
