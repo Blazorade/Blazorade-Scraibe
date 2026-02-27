@@ -10,5 +10,7 @@ The `/todo` folder is a lightweight task-tracking system for ongoing and future 
 - When a new active task is identified: create a detail document in `/todo/` and add a bullet to the Active tasks section of `/todo/home.md`.
 - When a backlog idea is ready to be worked on: create its detail document, move it from the Backlog section to the Active tasks section as a linked bullet, and remove it from the backlog.
 - **Never auto-promote a backlog item.** Only promote a backlog item to an active task when explicitly asked.
-- When a task is fully complete: write a short summary entry in `/todo/completed.md`, then remove its bullet from `/todo/home.md` and delete its detail document.
+- When a task is fully complete: write a short summary entry in `/todo/completed.md` **at the top, immediately after the introductory paragraph** (entries are newest-first), then remove its bullet from `/todo/home.md` and delete its detail document.
 - Never load all detail documents speculatively. Read `/todo/home.md` to get an overview, then read a specific detail document only when that task is actively being worked on.
+
+All todo documents are Markdown files. Follow the rules in [markdown-instructions.md](markdown-instructions.md) when creating or editing any file in `/todo/`.
