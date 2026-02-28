@@ -36,7 +36,7 @@ Do not hardcode any of these values. Always read them from `blazorade.config.md`
 
 Before walking the `/content` tree, read the `## Excluded Content` section of `blazorade.config.md`. Any bullet-list entries in that section are paths relative to `/content` that must be skipped entirely — no files under those paths are processed and no output is written for them. Apply exclusions silently; do not emit warnings for excluded files.
 
-Example: if `blazorade-docs` is listed, skip all files under `/content/blazorade-docs/` without processing or reporting them.
+Example: if `scraibe-docs` is listed, skip all files under `/content/scraibe-docs/` without processing or reporting them.
 
 ## Stale file cleanup
 

@@ -25,16 +25,16 @@ Before you can run Blazorade Scraibe on your own machine, make sure the followin
 - [Git](https://git-scm.com/downloads) — needed to clone the repository and manage your content history.
 - [GitHub account](https://github.com/join) — required to use GitHub Copilot and to create a repository from this template.
 
-For detailed setup instructions, system requirements, and optional tooling, see [Prerequisites](content/blazorade-docs/prerequisites.md) in the documentation.
+For detailed setup instructions, system requirements, and optional tooling, see [Prerequisites](content/scraibe-docs/prerequisites.md) in the documentation.
 
 ## Key Features
 
-- **[Markdown Authoring](content/blazorade-docs/content-authoring.md)** — Write pages as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format.
-- **[Shortcodes](content/blazorade-docs/shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax.
-- **[AI-Driven Publishing](content/blazorade-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates navigation — no scripts or CLI tools required.
-- **[Styling](content/blazorade-docs/styling.md)** — Global styles in `app.css`, component-scoped CSS isolation, and a customisable page shell template.
-- **[Todo Items](content/blazorade-docs/home.md#todo-items)** — Track tasks and ideas for your site directly in the repository. Copilot creates, updates, and closes todo items through conversation — no external tool required.
-- **[Playbooks](content/blazorade-docs/home.md#playbooks)** — Define custom, repeatable procedures for your site in plain language. Copilot triggers and follows any playbook on request, from content audits to pre-launch checklists.
+- **[Markdown Authoring](content/scraibe-docs/content-authoring.md)** — Write pages as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format.
+- **[Shortcodes](content/scraibe-docs/shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax.
+- **[AI-Driven Publishing](content/scraibe-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates navigation — no scripts or CLI tools required.
+- **[Styling](content/scraibe-docs/styling.md)** — Global styles in `app.css`, component-scoped CSS isolation, and a customisable page shell template.
+- **[Todo Items](content/scraibe-docs/home.md#todo-items)** — Track tasks and ideas for your site directly in the repository. Copilot creates, updates, and closes todo items through conversation — no external tool required.
+- **[Playbooks](content/scraibe-docs/home.md#playbooks)** — Define custom, repeatable procedures for your site in plain language. Copilot triggers and follows any playbook on request, from content audits to pre-launch checklists.
 - **Static HTML Output** — Every page is a static `.html` bootstrapper. Crawlers, search engines, and AI bots see fully-formed HTML.
 - **Interactive Blazor Runtime** — The Blazor WebAssembly app takes over at runtime, rendering pages and activating embedded components. Static for bots, interactive for humans.
 - **Zero-Config First Run** — Copilot detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation.
@@ -47,7 +47,7 @@ A [scribe](https://en.wikipedia.org/wiki/Scribe) was a professional trained to p
 
 ## Documentation
 
-Full documentation — content authoring, shortcodes, publishing, and styling — is in [`/content/blazorade-docs/`](content/blazorade-docs/home.md).
+Full documentation — content authoring, shortcodes, publishing, and styling — is in [`/content/scraibe-docs/`](content/scraibe-docs/home.md).
 
 ## License
 

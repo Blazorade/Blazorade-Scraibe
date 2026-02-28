@@ -64,7 +64,7 @@ You can prevent specific files or directories from being published by adding the
 ```markdown
 ## Excluded Content
 
-- blazorade-docs
+- scraibe-docs
 - drafts
 ```
 

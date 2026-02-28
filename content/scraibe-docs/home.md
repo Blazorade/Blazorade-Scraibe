@@ -10,15 +10,15 @@ priority: 0.9
 
 ## Removing These Docs From Your Site
 
-This documentation is published on your site by default so you have working content to view immediately after setup and a reference for all built-in features. When your own content is ready and you no longer want these docs published, open `blazorade.config.md` in the repository root and add `blazorade-docs` as a bullet point under the `## Excluded Content` section:
+This documentation is published on your site by default so you have working content to view immediately after setup and a reference for all built-in features. When your own content is ready and you no longer want these docs published, open `blazorade.config.md` in the repository root and add `scraibe-docs` as a bullet point under the `## Excluded Content` section:
 
 ```
 ## Excluded Content
 
-- blazorade-docs
+- scraibe-docs
 ```
 
-The next publish run will skip all pages in this section. The source files remain in `/content/blazorade-docs/` and can be re-included at any time by removing the entry.
+The next publish run will skip all pages in this section. The source files remain in `/content/scraibe-docs/` and can be re-included at any time by removing the entry.
 
 Blazorade Scraibe is a publishing framework that turns Markdown files into a modern, interactive website powered by Blazor WebAssembly. Content is authored in Markdown, optionally enriched with live Blazor components via a shortcode syntax, and published to static HTML that is both fully indexed by search engines and AI crawlers and dynamically rendered for users.
 
