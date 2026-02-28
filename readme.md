@@ -31,7 +31,8 @@ For detailed setup instructions, system requirements, and optional tooling, see 
 
 - **[Markdown Authoring](content/scraibe-docs/content-authoring.md)** — Write pages as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format.
 - **[Shortcodes](content/scraibe-docs/shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax.
-- **[AI-Driven Publishing](content/scraibe-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and regenerates navigation — no scripts or CLI tools required.
+- **[AI-Driven Publishing](content/scraibe-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and auto-generates the site navigation — no scripts or CLI tools required.
+- **[Page Layouts](content/scraibe-docs/page-layouts.md)** — Choose named layouts for different page types (default, landing, custom). Define shared content parts as `_name.md` scoped files or inline `[Part]` shortcodes, and rely on the auto-generated navbar when no custom nav is provided.
 - **[Styling](content/scraibe-docs/styling.md)** — Global styles in `app.css`, component-scoped CSS isolation, and a customisable page shell template.
 - **[Todo Items](content/scraibe-docs/home.md#todo-items)** — Track tasks and ideas for your site directly in the repository. Copilot creates, updates, and closes todo items through conversation — no external tool required.
 - **[Playbooks](content/scraibe-docs/home.md#playbooks)** — Define custom, repeatable procedures for your site in plain language. Copilot triggers and follows any playbook on request, from content audits to pre-launch checklists.

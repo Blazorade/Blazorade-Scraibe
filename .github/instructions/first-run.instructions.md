@@ -84,7 +84,7 @@ Then add the following NuGet package to the web app project. **Before adding it,
 dotnet add src/{AppName}.Web/{AppName}.Web.csproj package AngleSharp --version 1.2.0
 ```
 
-`AngleSharp` is required by `ContentSegmentParser` — it provides the HTML5 DOM parser used to detect inline `<x-shortcode>` sentinels inside block-level elements at runtime.
+`AngleSharp` is required by `ContentSegmentParser` (detecting `<x-shortcode>` sentinels inside block-level elements) and `PageContentUtilities.ComposePage` (splicing content parts into layout templates at runtime) — both powered by the same HTML5 DOM parser.
 
 Finally, add `ASPNETCORE_PREVENTHOSTINGSTARTUP` to both launch profiles in `src/{AppName}.Web/Properties/launchSettings.json`. This prevents the Blazor dev server from intercepting requests for static `.html` files (such as `/home.html`) and instead serves them directly from `wwwroot/`, which is required for the Scraibe content model to work correctly in development:
 

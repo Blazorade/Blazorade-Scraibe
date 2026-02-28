@@ -22,10 +22,9 @@ slug: my-custom-url         # Overrides the filename-derived URL slug.
 keywords: foo, bar, baz     # Injected into <meta name="keywords">.
 author: Jane Smith          # Injected into <meta name="author">.
 date: 2026-02-20            # Publication date (YYYY-MM-DD). Once set, never overwritten by the pipeline.
+layout: default             # Page layout. Case-insensitive; falls back to "Default" when absent.
 changefreq: monthly         # Sitemap change frequency. Defaults to monthly.
 priority: 0.8               # Sitemap priority (0.0–1.0). Defaults to 0.8.
-ai_instructions: |          # Optional free-form instructions for this page's HTML generation.
-  Wrap each section in a <section> with a descriptive aria-label.
 ---
 ```
 
@@ -34,10 +33,6 @@ If `title` is absent, it is derived from the first `#` heading in the body. If n
 ### The `date` field
 
 When `date` is set in frontmatter, the pipeline uses that value verbatim on every publish run. The pipeline never writes back to the source file, so the date you set is permanent until you change it manually. When `date` is omitted, the file's last-modified timestamp on disk is used instead — but that derived date is never saved to your frontmatter.
-
-### The `ai_instructions` field
-
-This is a free-form block of plain text passed to the AI agent as additional instructions when it generates the HTML for this specific page. Use it to request non-default HTML structure, extra landmarks, a table of contents, or any other per-page customisation that is not covered by the global publishing instructions.
 
 ## Reserved Filenames
 

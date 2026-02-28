@@ -24,11 +24,11 @@ date: 2026-02-20                   # Optional. Publication date in YYYY-MM-DD fo
                                    # you explicitly change or remove it. The pipeline never overwrites it.
                                    # When omitted, the publish pipeline uses the file's last-modified
                                    # timestamp on disk. That derived date is never written back here.
+layout: default                    # Optional. The name of the page layout to use. Resolved
+                                   # case-insensitively; "default" and "Default" both resolve to
+                                   # Default.html in the component library. Absent field uses "Default".
 changefreq: monthly                # Sitemap change frequency. Defaults to monthly.
 priority: 0.8                      # Sitemap priority (0.0–1.0). Defaults to 0.8.
-ai_instructions: |                 # Free-form instructions for this page's HTML generation.
-  Wrap each major section in a <section> with a descriptive aria-label.
-  Include a <nav aria-label="On this page"> TOC if there are more than 3 headings.
 ---
 ```
 
@@ -104,6 +104,53 @@ Content of slide 2.
 - Boolean and numeric values are unquoted: `Flag=true`, `Count=5`.
 - A `[...]` expression that doesn't match any shortcode pattern is never treated as a shortcode — it passes through as plain text.
 - Shortcode detection is skipped inside Markdown code contexts: inline code spans, fenced code blocks (with or without a language hint), and indented code blocks all remain literal.
+
+## Page layouts and content parts
+
+Each published page is rendered inside a **layout** — a static HTML file in the component library (`{ComponentLibraryPath}/wwwroot/Layouts/`) that defines named `x-part` slots. The layout controls the page chrome: navbar, footer, columns, and any other structural elements.
+
+### Choosing a layout
+
+Set the `layout` frontmatter field to the layout name (case-insensitive). Omitting the field uses `Default`.
+
+```yaml
+layout: default   # uses Default.html
+layout: landing   # uses Landing.html
+```
+
+Available layouts are the `.html` files in `{ComponentLibraryPath}/wwwroot/Layouts/`. The two built-in layouts are:
+
+- **Default** — Bootstrap navbar (`x-part="nav"`), content area (`x-part="main"`), and footer (`x-part="footer"`).
+- **Landing** — Full-width content only (`x-part="main"`). No nav, no footer.
+
+### `_name.md` shared part files
+
+A Markdown file whose name starts with `_` is a *shared part file* and is never published as a standalone page. The stem (without `_`) is the part name that it provides. The pipeline resolves them by scope: starting from the page's directory, walking up to `/content/`, the deepest matching file wins.
+
+Examples:
+- `content/_footer.md` — provides the `footer` part for every page that doesn't override it.
+- `content/products/_footer.md` — provides the `footer` part exclusively for pages under `content/products/`.
+
+The element used to wrap the part in the generated HTML follows the **element name convention** (e.g. `_footer.md` → `<footer>`, `_nav.md` → `<nav>`, anything else → `<aside>`). Add `element_name: div` to the file's frontmatter to override.
+
+### `[Part]` shortcode
+
+The `[Part]` shortcode adds a named part inline in a content page body. The part is extracted entirely from the primary content flow — nothing appears in its place in the page body. It is only valid at the top level of a page (not nested inside other shortcodes).
+
+```
+[Part Name="right-panel"]
+## Related Links
+- [Item one](/item-one)
+[/Part]
+```
+
+Parameters:
+- `Name` (required) — the part name; must match an `x-part` slot in the layout, or the part is emitted in the static HTML for crawlers but not rendered visually.
+- `ElementName` (optional) — overrides the element name convention for the generated HTML wrapper.
+
+### Auto-generated nav
+
+If no `_nav.md` resolves for a page, the publish pipeline auto-generates a Bootstrap navbar as the `nav` part, using the full published page list (same structure as the previous `NavMenu.razor` generation: brand link, flat-page links, subdirectory dropdowns).
 
 ## Content quality guidelines
 

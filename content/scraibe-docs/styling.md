@@ -43,10 +43,7 @@ Scoped styles are bundled into `{AppName}.Components.styles.css`, which is refer
 
 ## Page-Specific Styles
 
-If a single page needs custom styles that do not belong in the global stylesheet or a reusable component, you have two options:
-
-- **`ai_instructions` frontmatter** — instruct the publish pipeline to add a `<style>` block to the generated `<main>` section for this page only.
-- **A dedicated component** — if the styling is complex or reusable, create a new component in the component library and reference it from the page via a shortcode.
+If a single page needs custom styles that do not belong in the global stylesheet, create a dedicated component in the component library and reference it from the page via a shortcode.
 
 Avoid inline `style` attributes in Markdown content where possible; they are fragile and hard to maintain.
 

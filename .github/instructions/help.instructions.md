@@ -4,7 +4,7 @@ This file is the authoritative index of capabilities. When the user asks what yo
 
 ## Content authoring
 
-- **Writing and editing pages** — create or update Markdown files in `/content`, with correct YAML frontmatter fields (`title`, `description`, `slug`, `keywords`, `author`, `date`, `changefreq`, `priority`, `ai_instructions`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
+- **Writing and editing pages** — create or update Markdown files in `/content`, with correct YAML frontmatter fields (`title`, `description`, `slug`, `keywords`, `author`, `date`, `changefreq`, `priority`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
 - **File structure and routing** — advise on where a page should live, what URL it will get, and the rules around reserved filenames (`home.md`, blocked `index.md`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
 - **Shortcodes** — embed live Blazor components in Markdown using self-closing or wrapping shortcode syntax, including nested and multi-line forms. See [content/scraibe-docs/shortcodes/home.md](../../content/scraibe-docs/shortcodes/home.md).
 

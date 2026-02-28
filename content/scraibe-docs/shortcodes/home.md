@@ -30,7 +30,7 @@ Or the inline wrapping form when the component renders child content:
 
 Key points:
 - Component name is pascal case and must match a component in the `{ComponentLibraryName}.ShortCodes` namespace.
-- The opening tag can contain named parameters and hint tokens (see below); closing tags carry nothing.
+- The opening tag can contain named parameters and CSS class tokens (see below); closing tags carry nothing.
 - String parameter values are quoted; booleans and numbers are unquoted.
 
 ## Wrapping Shortcodes
@@ -58,26 +58,26 @@ Here is some intro text.
 
 Named parameters use `Key=value` or `Key="value"` syntax and map to `[Parameter]` properties on the component. Parameter names are matched case-insensitively, so `[Alert cssclasses="alert-danger" /]` works the same as `[Alert CssClasses="alert-danger" /]`. Duplicate names (after case normalisation) are fatal errors.
 
-## Hint Tokens
+## CSS Class Tokens
 
-Any token in the opening tag that is not a `Key=value` pair is a **hint token**. Bare words and quoted strings are both valid:
-
-```
-[Alert error /]
-[Alert "error" /]
-[Alert error dismissible /]
-[Alert "error dismissible" /]
-```
-
-All four are equivalent. The publish pipeline collects hint tokens in order, joins them with a space, and uses the component's `[AgentInstructions]` attribute to translate the result into CSS class names, which are set as the `CssClasses` parameter. If the component has no `[AgentInstructions]` attribute, hint tokens produce a warning and are discarded.
-
-Hint tokens and named parameters can be freely mixed:
+Any token in the opening tag that is not a `Key=value` pair is a **CSS class token**. Bare words and quoted strings are both valid:
 
 ```
-[Carousel round Interval=3000 /]
+[Alert alert-danger /]
+[Alert "alert-danger" /]
+[Alert alert-danger alert-dismissible /]
+[Alert "alert-danger alert-dismissible" /]
 ```
 
-Here `round` is a hint token and `Interval=3000` is a named parameter.
+All four are equivalent. The publish pipeline collects the tokens in order, joins them with a space, and stores the result directly as the `CssClasses` parameter. Content authors write the actual CSS class names (e.g. Bootstrap utility classes) as CSS class tokens.
+
+CSS class tokens and named parameters can be freely mixed:
+
+```
+[Carousel rounded Interval=3000 /]
+```
+
+Here `rounded` is a CSS class token (becomes `CssClasses="rounded"`) and `Interval=3000` is a named parameter.
 
 ## Validation Rules
 

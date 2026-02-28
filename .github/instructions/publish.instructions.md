@@ -20,17 +20,40 @@ These instructions apply when you are asked to **publish** content for this webs
 
 Do not hardcode any of these values. Always read them from `blazorade.config.md`.
 
-## Overview
+## How to publish
+
+**Publishing is fully automated. Run the PowerShell script and wait for the summary output:**
+
+```powershell
+.\tools\Invoke-Publish.ps1
+```
+
+The script reads `blazorade.config.md`, builds the component library, then hands everything off to `tools/Scraibe.Publisher` — a .NET console tool that owns the complete pipeline: content walking, shortcode processing, Markdown→HTML conversion, template application, nav generation, sitemap generation, and stale-file cleanup. No page HTML is generated in the chat context.
+
+If the script reports errors, read the output, fix the problem in the relevant source file, and re-run. Do **not** attempt to replicate the pipeline manually.
+
+### Optional parameters
+
+```powershell
+.\tools\Invoke-Publish.ps1 -Configuration Release   # build the component library in Release
+```
+
+---
+
+## Pipeline reference
+
+The sections below document the rules implemented by `tools/Scraibe.Publisher`. Read them when updating or debugging the publish tool — they are **not** instructions for the agent to follow manually.
+
+### Overview
 
 1. Walk all `.md` files recursively under `/content`.
-2. **Always re-read every `.md` file from disk before processing it.** Never assume a file is unchanged based on prior context or memory of a previous publish run. The content must be read fresh every time.
-3. For each file, parse the YAML frontmatter and the markdown body.
-4. **Process shortcodes** in the Markdown body: scan line by line, resolve known components from `{ComponentLibraryName}.ShortCodes`, and replace shortcode lines with `<x-shortcode>` sentinel elements. This step must run before Markdown-to-HTML conversion. See the **Shortcode processing** section below for full rules.
-5. Convert the processed Markdown body to well-structured HTML.
-6. Wrap it in the standard HTML page template (see below).
-7. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure. **Always write the complete file content in a single full overwrite — never patch or partially update an existing file.** This applies to every generated file: `.html` pages, `sitemap.xml`, and `NavMenu.razor`. Partial replacement is fragile and risks corrupting the output.
-8. **Delete stale HTML files** — remove any `.html` files under `{WebAppPath}/wwwroot/` that do not correspond to a page in the current publish set. See the **Stale file cleanup** section below.
-9. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
+2. For each file, parse the YAML frontmatter and the Markdown body.
+3. **Process shortcodes** in the Markdown body: scan line by line, resolve known components from `{ComponentLibraryName}.ShortCodes`, and replace shortcode lines with `<x-shortcode>` sentinel elements. This step must run before Markdown-to-HTML conversion. See the **Shortcode processing** section below for full rules.
+4. Convert the processed Markdown body to well-structured HTML.
+5. Wrap it in the standard HTML page template (see below).
+6. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure. Always write the complete file content in a single full overwrite — never patch or partially update an existing file.
+7. **Delete stale HTML files** — remove any `.html` files under `{WebAppPath}/wwwroot/` that do not correspond to a page in the current publish set.
+8. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
 
 ## Excluded content
 
@@ -75,9 +98,9 @@ author: Jane Smith                 # Injected into <meta name="author">
 date: 2026-02-20                   # Optional. When present, used verbatim on every publish run.
                                    # When absent, the file's last-modified timestamp on disk is used instead.
                                    # The pipeline never writes back to frontmatter. Injected as <meta name="date">.
-ai_instructions: |                 # Free-form instructions for this page's HTML generation.
-  Include a <nav aria-label="On this page"> TOC if there are more than 3 headings.
-  Highlight the first paragraph with a <p class="lead"> class.
+layout: default                    # Optional. Page layout name. Resolved case-insensitively and normalised to
+                                   # PascalCase (e.g. "default" → "Default", "two-column" → "Two-Column").
+                                   # Absent field falls back to "Default".
 ---
 ```
 
@@ -105,7 +128,7 @@ Each generated page is built from the single page shell template at `{WebAppPath
 
 The template uses two kinds of tokens:
 
-- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{HostName}` (from `blazorade.config.md`). Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page.
+- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{HostName}` (from `blazorade.config.md`), `{layout}`, `{parts_html}`. Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page. The `{layout}` token is **never omitted**: use the PascalCase-normalised layout name resolved from frontmatter, falling back to `Default` when the field is absent. The `{parts_html}` token is replaced with the serialised sibling part elements for the page (see **Content parts** below); replaced with an empty string when the page has no parts beyond `main`.
 
 The `{body_html}` placeholder is replaced with the fully converted and shortcode-processed HTML content of the page.
 
@@ -123,7 +146,6 @@ The HTML inside `<main>` must be semantic, accessible, and optimised for compreh
 - **External links:** Any `<a>` element whose `href` starts with `http://` or `https://` is external and must have `target="_blank" rel="noopener noreferrer"` added. This applies uniformly to links generated from Markdown `[text](https://example.com)` syntax, bare URL autolinking, and any other source. Since all intra-site links are relative paths, an absolute URL unambiguously identifies an external resource.
 - **Bare URL autolinking:** Any bare absolute URL (`http://` or `https://`) that appears as plain text in non-code Markdown content must be converted to an `<a href="...">...</a>` element using the URL itself as both the `href` and the link text. Apply external-link treatment as defined above.
 - **Internal link rewriting:** After Markdown-to-HTML conversion, scan every `<a href="...">` in the generated body HTML. Any `href` that is a relative path ending in `.md` must be rewritten to end in `.html` instead, preserving any `#fragment` suffix (e.g. `./about.md` → `./about.html`, `./about.md#section` → `./about.html#section`). Absolute URLs and non-`.md` relative links are left unchanged. Do not condense `home.html` paths — `../products/home.html` is the correct canonical URL for that page and must be preserved as-is.
-- Any page-level `ai_instructions` from frontmatter take precedence over these defaults.
 
 ### Tag-balancing rule for shortcode sentinels
 
@@ -131,11 +153,11 @@ The HTML inside `<main>` must be semantic, accessible, and optimised for compreh
 
 **Rule: every HTML fragment that precedes or follows a `<x-shortcode>` sentinel must be fully tag-balanced.**
 
-In practice this means: if any block-level wrapper (e.g. one introduced by `ai_instructions`) would straddle a shortcode boundary, **close the wrapper before the `<x-shortcode>` sentinel and, if the block continues after the shortcode, reopen it immediately after the closing `</x-shortcode>` tag**. If the shortcode is the last item in the block, simply close the wrapper before it and do not reopen it.
+In practice this means: if any block-level wrapper would straddle a shortcode boundary, **close the wrapper before the `<x-shortcode>` sentinel and, if the block continues after the shortcode, reopen it immediately after the closing `</x-shortcode>` tag**. If the shortcode is the last item in the block, simply close the wrapper before it and do not reopen it.
 
 Note: the outer `<article>` element that wraps the entire page body is handled by `ContentSegmentParser` as an `ElementNode` — its opening and closing tags are emitted via Blazor's `OpenElement`/`CloseElement` calls rather than as raw HTML strings, so the article wrapper itself does not trigger tag-balancing issues.
 
-Example — a custom wrapper added via `ai_instructions` that ends with a shortcode: the publisher must emit:
+Example — a wrapping div that ends with a shortcode: the publisher must emit:
 
 ```html
 <div class="callout">
@@ -206,7 +228,7 @@ This is the content of the second slide.
 - **Inline wrapping:** If the opening tag, inner text, and closing tag all appear on a single line — `[Name Params]inner text[/Name]` — this is treated as an inline wrapping shortcode. Only plain text and inline Markdown (no nested shortcodes) are permitted in inline form.
 - The opening tag may contain two kinds of tokens, both whitespace-separated. Closing tags carry no tokens.
 - **Named parameters** — `Key=value` or `Key="value"` pairs. Names are matched to `[Parameter]` properties on the component using `OrdinalIgnoreCase`; the canonical property name (as declared on the component) is always used as the key in `data-params`. Duplicate names after case normalisation are a fatal error — report the file, line number, and duplicated name.
-- **Hint tokens** — any token that is not a `Key=value` pair. Both bare unquoted words (`round`) and quoted strings (`"round pill"`) are hint tokens. All hint tokens are collected in order and joined with a single space to form the **hint string**.
+- **CSS class tokens** — any token that is not a `Key=value` pair. Both bare unquoted words (`rounded`) and quoted strings (`"rounded text-danger"`) are CSS class tokens. All CSS class tokens are collected in order and joined with a single space to form the `CssClasses` value.
 - String parameter values are quoted (`Param="value"`); bool and numeric values are unquoted (`Flag=true Count=5`).
 - A line that does not match any shortcode pattern is never treated as a shortcode — it passes through as plain text.
 
@@ -224,18 +246,17 @@ This is the content of the second slide.
 - The component name in the shortcode must match a type name in that namespace exactly (pascal case).
 - If the component name is **not found** in the registry, the shortcode line is treated as plain text and passes through unchanged.
 
-### Hint token processing (`[AgentInstructions]`)
+### CSS class token processing
 
-After the component type is resolved and tokens have been classified, process hint tokens as follows:
+After the component type is resolved and tokens have been classified, process CSS class tokens as follows:
 
-1. Reflect over the resolved component class and check for a class-level `[AgentInstructions]` attribute (in the `{ComponentLibraryName}.Annotations` namespace).
-2. If the attribute is present **and** at least one hint token was found:
-   a. Use the `AgentInstructions` string as reasoning context to translate the joined hint string into one or more Bootstrap CSS class names.
-   b. Add `CssClasses` to the named parameter set with the translated class string as its value. If `CssClasses` was also written explicitly as a named parameter by the author, the hint-derived value takes precedence and the explicit value is discarded (emit a warning).
-3. If `[AgentInstructions]` is absent but hint tokens were found, emit a warning and discard the hint tokens — this is a content authoring mistake, not a fatal error.
-4. If no hint tokens were found, skip this step entirely.
+1. Collect all CSS class tokens in order and join them with a single space to form the `CssClasses` value.
+2. Set `CssClasses` in the named parameter set to this string. If `CssClasses` was also written explicitly as a named parameter by the author, the token-derived value takes precedence and the explicit value is discarded (emit a warning).
+3. If no CSS class tokens were found, skip this step entirely.
 
-Hint token processing always runs before named parameters are serialised to `data-params`.
+CSS class tokens are used verbatim — content authors write the actual CSS class names (e.g. Bootstrap utility classes) directly. No translation or reflection is involved.
+
+CSS class token processing always runs before named parameters are serialised to `data-params`.
 
 ### Parser state machine
 
@@ -284,6 +305,17 @@ This full HTML block then becomes the inner body of the `<x-shortcode name="Caro
 
 After all lines are processed, convert the root accumulator (which may also contain a mix of Markdown and injected sentinel HTML) through the Markdown-to-HTML converter. The result is the `{body_html}` value for the page template.
 
+### `[Part]` shortcode special handling
+
+`Part` is a known wrapping shortcode with special output behaviour, processed within the same stack-based parser but producing no sentinel in the main content accumulator:
+
+- `[Part]` is only valid at **root level** (stack depth 0). A `[Part]` appearing inside another wrapping shortcode is a fatal publish error.
+- When the parser pops a `[Part Name="..."]...[/Part]` frame, instead of emitting an `<x-shortcode>` sentinel into the root accumulator, it:
+  1. Converts the frame's accumulated inner content to HTML (same as any wrapping shortcode).
+  2. Stores it as a named part entry `{ name, elementName, innerHtml }`. `name` is taken from the `Name` parameter (lowercased). `elementName` is taken from the `ElementName` parameter if provided, otherwise derived from `name` per the element name convention in **Content parts** below.
+  3. Emits **nothing** into the root content accumulator — the block is fully removed from the primary content flow.
+- After all lines are processed, stored `[Part]` entries are merged with parts from `_name.md` files and serialised into `{parts_html}`.
+
 ### Sentinel element format
 
 > **SENTINEL CONTRACT** — The exact attribute names, quote style, and element name below form a contract between the publish pipeline and `ContentRenderer` at runtime. If this format changes, both the publisher and `ContentRenderer`/`ContentSegmentParser` in the component library **must** be updated together.
@@ -316,13 +348,71 @@ Nested wrapping shortcodes produce naturally nested sentinel elements:
 ```
 
 - `name` attribute uses double quotes. `data-params` attribute uses **single quotes** so that the JSON value can contain unescaped double quotes without HTML encoding.
-- `data-params` contains the named parameters serialised as a compact JSON object. Use the **canonical** property name (as declared on the component) for each key — never the raw casing written by the author. Hint tokens are never emitted directly; they are translated to `CssClasses` via `[AgentInstructions]` processing (see above) and appear in `data-params` only as `"CssClasses":"..."`. Use `'{}'` when there are no parameters.
+- `data-params` contains the named parameters serialised as a compact JSON object. Use the **canonical** property name (as declared on the component) for each key — never the raw casing written by the author. CSS class tokens are never emitted directly into `data-params`; they are joined and stored as the `CssClasses` parameter value (see **CSS class token processing** above). Use `'{}'` when there are no parameters.
 - The inner static content (wrapping form only) is the accumulated inner Markdown lines converted to HTML following the same HTML quality rules as the rest of the body.
 - `<x-shortcode>` is a custom element — it is transparent to browsers and crawlers, which read the inner content normally. The Blazor `ContentRenderer` component replaces it with the live component at runtime.
 
 ### Error handling
 
 All shortcode errors are fatal — the publish run must stop and report a clear error message identifying the file and line number. Do not silently skip or corrupt content.
+
+## Content parts
+
+Content parts are named HTML fragments gathered per page and serialised into the `{parts_html}` token. At runtime, `ContentPage.razor` splices each part's `InnerHtml` into the matching `x-part` slot in the layout.
+
+### Sources
+
+Parts come from three sources, resolved and merged per page:
+
+1. **`_name.md` scoped files** — A Markdown file whose name starts with `_` is a *shared part file*. It is never published as a standalone page and never listed in the sitemap. The stem (without the `_` prefix) is the part name. Scope resolution: starting from the page's own directory, walk upward to `/content/`; the deepest matching file wins. For a page at `content/products/widget.md`, the pipeline checks `content/products/_footer.md` first, then `content/_footer.md`. The element name is derived from the part name per the **Element name convention** below; the file's frontmatter may override it via an `element_name` field.
+
+2. **`[Part]` shortcode** — Described in the **`[Part]` shortcode special handling** subsection above. The `Name` parameter becomes the part name; `ElementName` (if set) overrides the element name convention.
+
+3. **Auto-generated nav** — If no `_nav.md` resolves at any scope level for a given page, the pipeline auto-generates a Bootstrap navbar as the `nav` part. The generated HTML follows the same navigation structure rules previously used for `NavMenu.razor` generation: brand link to `/`, flat top-level pages as `<li class="nav-item">` items (excluding the home page), subdirectory dropdowns as `<li class="nav-item dropdown">` items with a non-navigating toggle button. The `DisplayName` value from `blazorade.config.md` is used as the `navbar-brand` text.
+
+   **Critical**: the generated HTML must be the **inner content** of the `<nav>` slot only — do **not** wrap it in another `<nav>` element. The layout's `<nav x-part="nav">` element is the sole root; the pipeline fills its children. Wrapping in a second `<nav>` produces two nested `<nav>` elements in the final page.
+
+### Element name convention
+
+The HTML element used to wrap a part in the generated HTML follows this rule, applied uniformly for all part sources:
+
+| Part name | Element |
+|---|---|
+| `header` | `<header>` |
+| `nav` | `<nav>` |
+| `main` | `<main>` |
+| `footer` | `<footer>` |
+| anything else | `<aside>` |
+
+### Generated HTML structure
+
+All parts are serialised as sibling elements immediately after `</main>`, each carrying `hidden` and `x-part`:
+
+```html
+<nav hidden x-part="nav">
+  <!-- Bootstrap navbar inner content only — NO wrapping <nav> element.
+       The layout slot <nav x-part="nav"> is the root; only its children go here.
+       Correct:   <div class="container"><a class="navbar-brand" ...> ... </div>
+       Wrong:     <nav class="navbar ..."><div class="container"> ... </div></nav> -->
+</nav>
+<footer hidden x-part="footer">...from _footer.md...</footer>
+<aside hidden x-part="right-panel">...from [Part Name="right-panel"]...</aside>
+```
+
+The `<main>` element itself carries `x-part="main"` and `hidden`. When a page has no parts beyond `main`, `{parts_html}` is replaced with an empty string.
+
+### Part verification (fatal errors)
+
+1. A referenced layout file does not exist. The pipeline looks for `{ComponentLibraryPath}/wwwroot/Layouts/{Name}.html` using the PascalCase-normalised name; the lookup is case-insensitive to tolerate OS differences.
+2. A layout file has more than one root element.
+3. A layout file has no elements with an `x-part` attribute (at least one slot is required).
+4. The same `x-part` name appears more than once in a layout file.
+5. The same part name is defined more than once for a given page (across `_name.md` files and `[Part]` blocks combined).
+
+### Not errors
+
+- A page defines a part that has no matching slot in the layout — the part is still emitted in the generated HTML (for crawlers) but is silently ignored at runtime.
+- A layout slot has no matching part — replaced at runtime with an HTML comment: `<!-- x-part="name": no content found -->`.
 
 ## Sitemap generation
 
@@ -357,28 +447,6 @@ The following examples illustrate how source documents map to generated output f
 
 `{WebAppPath}/wwwroot/staticwebapp.config.json` is **not managed by the publish pipeline**. It contains only the `navigationFallback` block (falling back to `/index.html`) and the asset `exclude` list. Do not modify this file during publishing.
 
-## NavMenu.razor generation
-
-After `sitemap.xml` is written, also regenerate `{WebAppPath}/Components/NavMenu.razor` so the top navbar stays in sync with the published pages. **Always overwrite the existing file — regenerate it unconditionally on every publish run, regardless of whether any page titles or structure changed.**
-
-### Navigation structure rules
-
-Walk the same page list used for the sitemap and apply these rules:
-
-- **Flat pages** (no subdirectory) become a plain `<li class="nav-item">` with a `<NavLink>`. Use the frontmatter `title` property as the link text. **Exclude the Home page** (the page whose slug resolves to `""` / `/`) from the nav items — the `navbar-brand` already links to `/` so including it would duplicate the link.
-- **Subdirectories** become a dropdown `<li class="nav-item dropdown">`. The dropdown label is taken from the frontmatter `title` property of the `Home.md` (case-insensitive) file inside that subdirectory. Each page inside the subdirectory (including `Home`) becomes a `<li>` with a `<NavLink class="dropdown-item">` inside the dropdown menu. The dropdown button itself does **not** navigate; it only opens/closes the menu via `@onclick`.
-- Preserve the order pages appear in the sitemap.
-
-### Home slug convention
-
-The Home page at `/home.html` must render its link with `href="/"` (not `/home`). All other pages use `href="/{slug}"` where the slug is the path-without-extension relative to `wwwroot/` (e.g. `/about.html` → `/about`; `/products/widget.html` → `/products/widget`).
-
-### Generated file structure
-
-Use `/templates/web-app/Components/NavMenu.razor` as the scaffold. It contains the full component structure with comment markers showing where flat-page `<li>` items and subdirectory dropdown `<li>` items are inserted. Generate the nav items dynamically from the published page list, then write the result to `{WebAppPath}/Components/NavMenu.razor`.
-
-Omit the dropdown helper methods (`ToggleDropdown`, `CloseDropdown`, `IsDropdownOpen`) and the `_openDropdownKey` field entirely if no subdirectory pages are present.
-
 ## Summary of what to report after publishing
 
 When the publishing run is complete, report:
@@ -387,5 +455,4 @@ When the publishing run is complete, report:
 - List of any skipped/blocked files and the reason.
 - List of any stale `.html` files deleted during cleanup (or confirmation that none needed to be deleted).
 - Confirmation that `sitemap.xml` was updated.
-- Confirmation that `Components/NavMenu.razor` was regenerated.
 - The full output path of every file written.

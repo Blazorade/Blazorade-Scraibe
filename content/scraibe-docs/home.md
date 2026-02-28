@@ -27,7 +27,7 @@ Blazorade Scraibe is a publishing framework that turns Markdown files into a mod
 Every page you write in `/content` goes through a two-step lifecycle:
 
 1. **Publish** — GitHub Copilot reads the Markdown file, resolves frontmatter metadata and shortcodes, generates semantic HTML, and writes a static `.html` bootstrapper to `wwwroot/`. The navigation menu is regenerated at the same time.
-2. **Runtime** — When a user visits the site, the Blazor WASM app fetches the relevant `.html` file, extracts the `<main>` element, and renders it — including any live Blazor components that were embedded as shortcodes.
+2. **Runtime** — When a user visits the site, the Blazor WASM app fetches the relevant `.html` file, resolves the page's named layout, and composes the full page by splicing each content part into its layout slot before rendering — including any live Blazor components embedded as shortcodes.
 
 Crawlers and AI bots see the full static HTML directly. Browser users get the interactive Blazor experience. No server required.
 
@@ -41,9 +41,13 @@ Pages are plain Markdown files with a YAML frontmatter block at the top. The fro
 
 Shortcodes let you embed live Blazor components directly in Markdown content using a simple bracket syntax — no HTML, no code-behind files needed in the content itself. Components are defined once in the component library and reused across any number of pages. See the [Shortcodes](shortcodes/home.md) page for syntax and examples.
 
+### Page Layouts
+
+Each page is rendered inside a named layout — a static HTML file in the component library that defines `x-part` slots for the navbar, content area, footer, and any other structural regions. Content parts are gathered at publish time from `_name.md` scoped files, inline `[Part]` shortcodes, and an auto-generated navbar, then spliced into the layout at runtime. See [Page Layouts](page-layouts.md) for the full guide.
+
 ### Publishing
 
-The publish workflow is driven entirely by GitHub Copilot following a set of structured instruction files. Running a publish processes one or more content files, generates their static HTML bootstrappers, updates the sitemap, and regenerates the navigation menu. See the [Publishing](publishing.md) page for the full workflow.
+The publish workflow is driven entirely by GitHub Copilot following a set of structured instruction files. Running a publish processes one or more content files, generates their static HTML bootstrappers, updates the sitemap, and auto-generates the site navigation where no custom nav part is provided. See the [Publishing](publishing.md) page for the full workflow.
 
 ### Todo Items
 
@@ -70,6 +74,7 @@ src/                      # Generated on first run — not committed to the temp
 
 - [Content Authoring](content-authoring.md) — Markdown structure, frontmatter fields, and writing guidelines
 - [Shortcodes](shortcodes/home.md) — Embedding Blazor components in content
+- [Page Layouts](page-layouts.md) — Choosing a layout, content parts, and shared `_name.md` files
 - [Publishing](publishing.md) — How the publish workflow generates static HTML
 - [Styling](styling.md) — CSS conventions and how to customise the look of your site
 

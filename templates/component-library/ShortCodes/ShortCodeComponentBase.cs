@@ -20,9 +20,9 @@ namespace {{ComponentLibraryName}}.ShortCodes
         public string? Id { get; set; }
 
         /// <summary>
-        /// A space-separated list of CSS classes that should be added to the component when it is rendered. 
-        /// This property is used by AI agents to determine which CSS classes to add to the component when 
-        /// it is rendered.
+        /// A space-separated list of CSS classes to add to the component when it is rendered.
+        /// In shortcode syntax, bare unquoted tokens (e.g. <c>rounded text-danger</c>) are collected
+        /// and emitted here by the publish pipeline.
         /// </summary>
         [Parameter]
         public string? CssClasses { get; set; }
