@@ -26,6 +26,7 @@ Generated files under `{WebAppPath}/wwwroot/` (`*.html`, `sitemap.xml`, `staticw
 
 ## Workflows
 
+- **Help** — triggered when the user asks what you can help with, what you do, or asks about your capabilities. Read [help.instructions.md](./instructions/help.instructions.md) and present the relevant capabilities based on the user's context.
 - **Publishing content** — triggered when the user asks to publish, regenerate, or update the site pages. Follow [publish.instructions.md](./instructions/publish.instructions.md).
 - **First-run setup** — triggered when `blazorade.config.md` does not exist. Follow [first-run.instructions.md](./instructions/first-run.instructions.md).
 - **Todo items** — triggered when the user wants to note something for later, review outstanding tasks, or close a completed one. Follow [todo.instructions.md](./instructions/todo.instructions.md).
