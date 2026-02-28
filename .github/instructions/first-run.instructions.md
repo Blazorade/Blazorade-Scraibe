@@ -85,6 +85,17 @@ dotnet add src/{AppName}.Web/{AppName}.Web.csproj package AngleSharp --version 1
 
 `AngleSharp` is required by `ContentSegmentParser` — it provides the HTML5 DOM parser used to detect inline `<x-shortcode>` sentinels inside block-level elements at runtime.
 
+Finally, add `ASPNETCORE_PREVENTHOSTINGSTARTUP` to both launch profiles in `src/{AppName}.Web/Properties/launchSettings.json`. This prevents the Blazor dev server from intercepting requests for static `.html` files (such as `/home.html`) and instead serves them directly from `wwwroot/`, which is required for the Scraibe content model to work correctly in development:
+
+```json
+"environmentVariables": {
+  "ASPNETCORE_ENVIRONMENT": "Development",
+  "ASPNETCORE_PREVENTHOSTINGSTARTUP": "true"
+}
+```
+
+Apply this change to **both** the `http` and `https` profiles.
+
 ## Step 4 — Copy and configure template files
 
 Copy files from `/templates/web-app/` into `src/{AppName}.Web/` and from `/templates/component-library/` into `src/{AppName}.Components/`. While copying, substitute all `{{TokenName}}` tokens in **file contents** (not filenames):
