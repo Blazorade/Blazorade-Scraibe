@@ -29,6 +29,7 @@ Components in the `{ComponentLibraryName}.ShortCodes` namespace are special: the
 
 ### Conventions for shortcode components
 
+- Every shortcode component must inherit from `ShortCodeComponentBase`, which provides the `Id` (`string?`) and `CssClasses` (`string?`) base parameters. The publish pipeline populates `CssClasses` automatically from CSS class tokens in the shortcode syntax.
 - Class name must be pascal case and match exactly what content authors write in shortcodes.
 - All inputs must be declared as `[Parameter]` properties with explicit types — the runtime uses these types to coerce string values from the sentinel's `data-params` JSON.
 - Components must be self-contained and must not depend on layout-level state.
