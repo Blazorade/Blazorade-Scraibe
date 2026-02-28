@@ -1,7 +1,7 @@
 ---
 title: Prerequisites
 description: Everything you need to install on your machine before running Blazorade Scraibe.
-keywords: prerequisites, setup, install, VS Code, GitHub Copilot, .NET SDK, Git, posh-git, PowerShell
+keywords: prerequisites, setup, install, IDE, GitHub Copilot, .NET SDK, Git, posh-git, PowerShell
 changefreq: monthly
 priority: 0.7
 ---
@@ -12,17 +12,20 @@ This page lists all software that must be available on your machine before Blazo
 
 ## Required Software
 
-### Visual Studio Code
+### An IDE with GitHub Copilot Support
 
-**Download:** [code.visualstudio.com](https://code.visualstudio.com/)
+Blazorade Scraibe is entirely driven by GitHub Copilot running in **agent mode**. Any IDE or development environment that supports GitHub Copilot agent mode will work — the framework has no hard dependency on a specific editor.
 
-The entire Blazorade Scraibe workflow is built around VS Code. Publishing, first-run setup, content authoring assistance, and shortcode resolution are all driven by GitHub Copilot running inside VS Code. Any other editor will lack the agent integration that makes the framework work.
+**Visual Studio Code** is the most widely used option and is the IDE referenced throughout this documentation.
+
+**Download VS Code:** [code.visualstudio.com](https://code.visualstudio.com/)
+**GitHub Copilot extension for VS Code:** [marketplace.visualstudio.com](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
 
 Install the stable release for your operating system (Windows, macOS, or Linux).
 
-### GitHub Copilot Extension
+### GitHub Copilot
 
-**Install:** [VS Code Marketplace — GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
+**Learn more:** [github.com/features/copilot](https://github.com/features/copilot)
 
 GitHub Copilot is the AI engine behind Blazorade Scraibe. It reads your Markdown source files, applies the publishing instructions, generates static HTML bootstrappers, updates the sitemap, and regenerates the navigation menu — all without any build scripts or CLI tooling. Without an active Copilot session, none of the publishing or setup workflows will run.
 
@@ -31,7 +34,7 @@ You will need:
 - A **GitHub account** — [github.com/join](https://github.com/join)
 - An active **GitHub Copilot subscription** (Individual, Business, or Enterprise) — [github.com/features/copilot](https://github.com/features/copilot)
 
-After installing the extension, sign in with your GitHub account from the Accounts menu in VS Code.
+How you install and activate GitHub Copilot depends on your IDE. In **VS Code**, install the [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) from the Marketplace and sign in with your GitHub account from the Accounts menu.
 
 ### .NET SDK
 
