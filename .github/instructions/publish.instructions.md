@@ -28,10 +28,9 @@ Do not hardcode any of these values. Always read them from `blazorade.config.md`
 4. **Process shortcodes** in the Markdown body: scan line by line, resolve known components from `{ComponentLibraryName}.ShortCodes`, and replace shortcode lines with `<x-shortcode>` sentinel elements. This step must run before Markdown-to-HTML conversion. See the **Shortcode processing** section below for full rules.
 5. Convert the processed Markdown body to well-structured HTML.
 6. Wrap it in the standard HTML page template (see below).
-7. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure. **Always write the complete file content in a single full overwrite — never patch or partially update an existing file.** This applies to every generated file: `.html` pages, `sitemap.xml`, `staticwebapp.config.json`, and `NavMenu.razor`. Partial replacement is fragile and risks corrupting the output.
+7. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure. **Always write the complete file content in a single full overwrite — never patch or partially update an existing file.** This applies to every generated file: `.html` pages, `sitemap.xml`, and `NavMenu.razor`. Partial replacement is fragile and risks corrupting the output.
 8. **Delete stale HTML files** — remove any `.html` files under `{WebAppPath}/wwwroot/` that do not correspond to a page in the current publish set. See the **Stale file cleanup** section below.
 9. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
-10. Regenerate `{WebAppPath}/wwwroot/staticwebapp.config.json` with per-page rewrite rules (see below).
 
 ## Excluded content
 
@@ -91,14 +90,13 @@ If `title` is missing, derive it from the first `# Heading` in the markdown body
 - `/content/contacts/team.md` → `{WebAppPath}/wwwroot/contacts/team.html`
 - If the frontmatter specifies a `slug` field, use that as the filename instead of the original filename, but preserve the directory path.
 - The canonical URL for a page is `https://{HostName}/{relative-path-without-extension}.html`.
-- The `{redirect_to}` token value is always auto-derived from the file path: `/{relative-path-without-extension}` (no `.html`). For `home.md` files the trailing `/home` segment is stripped — `content/home.md` → `/`, `content/products/home.md` → `/products`, `content/contacts/finland/home.md` → `/contacts/finland`. This applies at any nesting depth.
 
 ### Folder home pages
 
 `home.md` (case-insensitive) is the designated landing page for its containing directory. It follows these special rules:
 
-- `/content/home.md` is the root home page. It generates `/wwwroot/home.html`. The `{redirect_to}` token value is `/`.
-- `/content/{path}/home.md` (at any nesting depth) is the landing page for its containing directory. It generates `/wwwroot/{path}/home.html`. The `{redirect_to}` token value is `/{path}` — **not** `/{path}/home`. For example, `content/contacts/finland/home.md` generates `wwwroot/contacts/finland/home.html` with `{redirect_to}` set to `/contacts/finland`.
+- `/content/home.md` is the root home page. It generates `/wwwroot/home.html`. The clean URL is `/`.
+- `/content/{path}/home.md` (at any nesting depth) is the landing page for its containing directory. It generates `/wwwroot/{path}/home.html`. The clean URL is `/{path}` (e.g. `content/contacts/finland/home.md` → URL `/contacts/finland`).
 - Folder `home.md` files follow all the same rules as other pages (shortcodes, HTML template, metadata, sitemap entry) except for the routing convention above.
 
 ## HTML page template
@@ -107,8 +105,7 @@ Each generated page is built from the single page shell template at `{WebAppPath
 
 The template uses two kinds of tokens:
 
-- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{redirect_to}`, `{HostName}` (from `blazorade.config.md`). Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page.
-- **First-run token** (already resolved in this repo's copy of the template): `{{WebAppName}}` appears in `<link href="{{WebAppName}}.styles.css" ...>`. In a freshly cloned template repo this token is substituted by first-run setup; in this repo it is already correct.
+- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{HostName}` (from `blazorade.config.md`). Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page.
 
 The `{body_html}` placeholder is replaced with the fully converted and shortcode-processed HTML content of the page.
 
@@ -123,7 +120,7 @@ The HTML inside `<main>` must be semantic, accessible, and optimised for compreh
 - Prefer `<ul>` / `<ol>` for lists, `<figure>` + `<figcaption>` for images.
 - Do **not** include any `<style>` or `<script>` tags inside `<main>`.
 - Do **not** include any Blazor-specific attributes or class names — the HTML must be standalone.
-- **External links:** Any `<a>` element whose `href` starts with `http://` or `https://` is external and must have `target="_blank" rel="noopener noreferrer"` added. This applies uniformly to links generated from Markdown `[text](url)` syntax, bare URL autolinking, and any other source. Since all intra-site links are relative paths, an absolute URL unambiguously identifies an external resource.
+- **External links:** Any `<a>` element whose `href` starts with `http://` or `https://` is external and must have `target="_blank" rel="noopener noreferrer"` added. This applies uniformly to links generated from Markdown `[text](https://example.com)` syntax, bare URL autolinking, and any other source. Since all intra-site links are relative paths, an absolute URL unambiguously identifies an external resource.
 - **Bare URL autolinking:** Any bare absolute URL (`http://` or `https://`) that appears as plain text in non-code Markdown content must be converted to an `<a href="...">...</a>` element using the URL itself as both the `href` and the link text. Apply external-link treatment as defined above.
 - **Internal link rewriting:** After Markdown-to-HTML conversion, scan every `<a href="...">` in the generated body HTML. Any `href` that is a relative path ending in `.md` must be rewritten to end in `.html` instead, preserving any `#fragment` suffix (e.g. `./about.md` → `./about.html`, `./about.md#section` → `./about.html#section`). Absolute URLs and non-`.md` relative links are left unchanged. Do not condense `home.html` paths — `../products/home.html` is the correct canonical URL for that page and must be preserved as-is.
 - Any page-level `ai_instructions` from frontmatter take precedence over these defaults.
@@ -356,21 +353,9 @@ The following examples illustrate how source documents map to generated output f
 | `content/products/home.md` | `wwwroot/products/home.html` | `/products` |
 | `content/products/widget.md` | `wwwroot/products/widget.html` | `/products/widget` |
 
-## staticwebapp.config.json regeneration
+## staticwebapp.config.json
 
-After `sitemap.xml` is written, regenerate `{WebAppPath}/wwwroot/staticwebapp.config.json`. **Always overwrite the existing file unconditionally on every publish run.**
-
-For each published page, add a route entry that rewrites the clean URL to the `.html` file. Use `/templates/web-app/wwwroot/staticwebapp.config.json` as the structural reference for the `navigationFallback` block and the `exclude` array — always copy these unchanged. The `routes` array is generated dynamically from the published page list (one entry per page).
-
-### Route generation rules
-
-- The `route` value is the auto-derived clean Blazor URL: `/{relative-path-without-extension}`, with the `/home` suffix stripped for `home.md` files at any nesting depth (e.g. `content/home.md` → `/`, `content/products/home.md` → `/products`, `content/contacts/finland/home.md` → `/contacts/finland`).
-- The `rewrite` value is the path to the generated `.html` file (e.g. `/about.html`, `/blog/my-post.html`).
-- **Always include the root home page** as the first route entry: `{ "route": "/", "rewrite": "/home.html" }`. This ensures `/` is served directly from the content bootstrapper on Azure. The `navigationFallback` (pointing to `/index.html`) then acts as a true 404/unknown-route safety net and is never reached for known pages.
-- **Folder home pages** generate a route from the folder path to the `home.html` file, at any nesting depth. Examples: `{ "route": "/products", "rewrite": "/products/home.html" }`, `{ "route": "/contacts/finland", "rewrite": "/contacts/finland/home.html" }`. The route is always the auto-derived clean URL (the directory path), never the file path ending in `/home`.
-- Subdirectory non-home pages use their full path: `/products/widget` → `/products/widget.html`.
-- The `navigationFallback` block is always included unchanged — it is the safety net for any route not explicitly listed (including unknown/404 routes).
-- The `exclude` array is always included unchanged.
+`{WebAppPath}/wwwroot/staticwebapp.config.json` is **not managed by the publish pipeline**. It contains only the `navigationFallback` block (falling back to `/index.html`) and the asset `exclude` list. Do not modify this file during publishing.
 
 ## NavMenu.razor generation
 

@@ -1,8 +1,4 @@
 {
-  "routes": [
-    { "route": "/", "rewrite": "/home.html" },
-    { "route": "/{slug}", "rewrite": "/{slug}.html" }
-  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
