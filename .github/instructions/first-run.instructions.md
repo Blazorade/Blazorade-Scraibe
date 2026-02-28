@@ -72,6 +72,7 @@ After creating the project, clean it up:
 
 1. Delete `Pages/Home.razor` — its `@page "/"` route would conflict with the catch-all route in `ContentPage.razor`.
 2. Delete all contents of `wwwroot/` — everything needed in wwwroot will be provided by the templates in Step 4.
+3. Remove the `<FocusOnNavigate ... />` line from `App.razor` — this component serves no purpose in a content-driven site and causes unnecessary focus shifts on every navigation.
 
 Wire up the following:
 - Add a project reference from `{AppName}.Web` to `{AppName}.Components`.
