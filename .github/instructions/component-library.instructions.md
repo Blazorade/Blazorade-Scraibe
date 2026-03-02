@@ -59,3 +59,29 @@ Components in the `{ComponentLibraryName}.ShortCodes` namespace are special: the
 ### Usage in `ContentPage.razor`
 
 `ContentPage.razor` in the web app passes the extracted `<main>` innerHTML directly to `ContentRenderer` as a `MarkupString`.
+
+## Bootstrap styles — `Styles/` folder
+
+The component library owns the Bootstrap CSS pipeline. The `Styles/` folder contains the SCSS source files.
+
+### Files
+
+| File | Ownership | Purpose |
+|---|---|---|
+| `Styles/_variables.scss` | **Site builder** | Bootstrap variable overrides. The only file that needs editing to customise the look. |
+| `Styles/app.scss` | Agent (do not edit) | SCSS entry point: imports `_variables.scss` then Bootstrap. |
+| `Styles/lib/` | Downloaded (gitignored) | Bootstrap SCSS source downloaded by `libman restore`. Never edited or committed. |
+
+### Build outputs (gitignored)
+
+These files are produced by `dotnet build` and are never committed:
+
+- `wwwroot/css/app.css` — Bootstrap compiled to CSS by `AspNetCore.SassCompiler`. Served at `_content/{ComponentLibraryName}/css/app.css`.
+- `wwwroot/css/app.css.map` — CSS source map.
+- `wwwroot/js/bootstrap.bundle.min.js` — Bootstrap JS bundle copied by the `CopyBootstrapJs` MSBuild target. Served at `_content/{ComponentLibraryName}/js/bootstrap.bundle.min.js`.
+
+### Rules
+
+- **Do not add any CSS or SCSS to `wwwroot/css/` directly.** That folder is exclusively for build outputs. Any manual changes will be overwritten on next build.
+- **Do not commit `Styles/lib/`** — it is gitignored. Run `libman restore` to repopulate it after a fresh clone.
+- **Do not edit `Styles/app.scss`** — it is agent-maintained. Customise Bootstrap only through `Styles/_variables.scss`.

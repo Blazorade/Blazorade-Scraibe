@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Markdig;
 
@@ -16,7 +17,7 @@ static class ShortcodeProcessor
     private static readonly Regex RxInline     = new(@"^\[([A-Za-z][A-Za-z0-9]*)([^\]]*)\](.+)\[/\1\]$", RegexOptions.Compiled);
     private static readonly Regex RxOpen       = new(@"^\[([A-Za-z][A-Za-z0-9]*)([^\]]*)\]$",        RegexOptions.Compiled);
     private static readonly Regex RxClose      = new(@"^\[/([A-Za-z][A-Za-z0-9]*)\]$",               RegexOptions.Compiled);
-    private static readonly Regex RxFenceOpen  = new(@"^(\s*)(```|~~~)(.*)?$",                        RegexOptions.Compiled);
+    private static readonly Regex RxFenceOpen  = new(@"^(\s*)(```+|~~~+)(.*)?$",                       RegexOptions.Compiled);
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
@@ -42,6 +43,8 @@ static class ShortcodeProcessor
 
         bool inFence = false;
         string fenceMarker = "";
+        bool inMermaidFence = false;
+        var mermaidBody = new StringBuilder();
 
         for (int lineNo = 1; lineNo <= lines.Length; lineNo++)
         {
@@ -55,6 +58,15 @@ static class ShortcodeProcessor
                 if (fm.Success)
                 {
                     fenceMarker = fm.Groups[2].Value;
+                    var langHint = fm.Groups[3].Value.Trim();
+                    if (langHint.Equals("mermaid", StringComparison.OrdinalIgnoreCase))
+                    {
+                        inMermaidFence = true;
+                        inFence = true;
+                        mermaidBody.Clear();
+                        // Do NOT emit the fence-open line — it becomes a sentinel instead
+                        continue;
+                    }
                     inFence = true;
                     Append(stack, root, line);
                     continue;
@@ -62,8 +74,31 @@ static class ShortcodeProcessor
             }
             else
             {
-                if (trimmed == fenceMarker || trimmed.StartsWith(fenceMarker) &&
-                    trimmed[fenceMarker.Length..].Trim().Length == 0)
+                var isClosingFence = trimmed == fenceMarker ||
+                    (trimmed.StartsWith(fenceMarker) && trimmed[fenceMarker.Length..].Trim().Length == 0);
+
+                if (inMermaidFence)
+                {
+                    if (!isClosingFence)
+                    {
+                        mermaidBody.AppendLine(line);
+                        continue;
+                    }
+                    // Closing fence — emit Mermaid shortcode sentinel.
+                    // Definition is serialised into data-params so that no child content
+                    // is needed, which avoids the Blazor <!--!--> comment marker that
+                    // Mermaid's parser trips over when ChildContent is used.
+                    var definition = mermaidBody.ToString().Trim();
+                    var dp = JsonSerializer.Serialize(new { Definition = definition });
+                    var sentinel = $"<x-shortcode name=\"Mermaid\" data-params='{dp}'></x-shortcode>";
+                    Append(stack, root, sentinel);
+                    inMermaidFence = false;
+                    inFence = false;
+                    mermaidBody.Clear();
+                    continue;
+                }
+
+                if (isClosingFence)
                     inFence = false;
                 Append(stack, root, line);
                 continue;

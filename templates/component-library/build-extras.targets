@@ -1,0 +1,37 @@
+<Project>
+
+  <!--
+    Bootstrap delivery targets — automatically wired into the build pipeline.
+
+    LibmanRestore: runs libman restore before the first build if Bootstrap SCSS
+    source has not yet been downloaded. Requires the libman CLI global tool:
+      dotnet tool install -g Microsoft.Web.LibraryManager.Cli
+
+    CopyBootstrapJs: copies bootstrap.bundle.min.js from the libman output folder
+    into wwwroot/js/ so it is served as a static Blazor web asset at
+    _content/{AppName}.Components/js/bootstrap.bundle.min.js.
+
+    The files produced by these targets are all build outputs and are gitignored:
+      Styles/lib/             — downloaded Bootstrap SCSS source
+      wwwroot/css/app.css     — compiled Bootstrap CSS (output of AspNetCore.SassCompiler)
+      wwwroot/css/app.css.map — CSS source map
+      wwwroot/js/bootstrap.bundle.min.js
+  -->
+
+  <Target Name="LibmanRestore"
+          BeforeTargets="BeforeBuild"
+          Condition="!Exists('$(MSBuildProjectDirectory)/Styles/lib/bootstrap/scss/bootstrap.scss')">
+    <Message Text="Bootstrap SCSS not found — running libman restore…" Importance="High" />
+    <Exec Command="libman restore" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
+  <Target Name="CopyBootstrapJs"
+          BeforeTargets="BeforeBuild"
+          Condition="Exists('$(MSBuildProjectDirectory)/Styles/lib/bootstrap/dist/js/bootstrap.bundle.min.js')">
+    <MakeDir Directories="$(MSBuildProjectDirectory)/wwwroot/js" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/Styles/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
+          DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/js/"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

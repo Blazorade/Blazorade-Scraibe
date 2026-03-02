@@ -1,0 +1,9 @@
+﻿@inherits ShortCodeComponentBase
+
+<MermaidDiagram Definition="@this.Definition" />
+
+@code {
+
+    [Parameter]
+    public string Definition { get; set; } = string.Empty;
+}

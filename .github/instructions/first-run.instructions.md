@@ -57,7 +57,10 @@ Then add the following NuGet packages to the component library project. **Before
 ```
 dotnet add src/{AppName}.Components/{AppName}.Components.csproj package Blazorade.Core --version 4.0.0
 dotnet add src/{AppName}.Components/{AppName}.Components.csproj package Blazorade.Mermaid --version 2.0.2
+dotnet add src/{AppName}.Components/{AppName}.Components.csproj package AspNetCore.SassCompiler --version 1.97.1
 ```
+
+`AspNetCore.SassCompiler` compiles Bootstrap SCSS source → `wwwroot/css/app.css` on every `dotnet build`, enabling full Bootstrap customisation via `Styles/_variables.scss` without requiring Node.js.
 
 ## Step 3 — Create the Blazor WebAssembly application
 
@@ -112,7 +115,36 @@ Files to copy from `/templates/component-library/` → `src/{AppName}.Components
 - Copy all files and folders from `templates/component-library/` into `src/{AppName}.Components/`, creating any necessary subdirectories that don't exist
 - `_Imports.razor` should **overwrite** the existing `_Imports.razor` in the project root
 
-After copying, build the solution to verify everything compiles before continuing.
+After copying, perform the following additional wiring steps before building:
+
+### 4a — Wire up the Bootstrap build targets
+
+Add `<Import Project="build-extras.targets" />` to the component library `.csproj`, immediately before the closing `</Project>` tag. This links in the Bootstrap delivery targets that were copied from the template:
+
+```xml
+  <!-- Bootstrap delivery targets (libman restore + JS copy to wwwroot/js/) -->
+  <Import Project="build-extras.targets" />
+
+</Project>
+```
+
+### 4b — Install libman CLI and download Bootstrap
+
+Ensure the libman CLI global tool is installed. If it is not already present, install it:
+
+```
+dotnet tool install -g Microsoft.Web.LibraryManager.Cli --ignore-failed-sources
+```
+
+Then run `libman restore` in the component library directory to download Bootstrap SCSS source files and the Bootstrap JS bundle:
+
+```
+libman restore --project src/{AppName}.Components
+```
+
+### 4c — Build to verify
+
+Build the solution to verify everything compiles before continuing.
 
 ## Step 5 — Verify the `content/` folder and initialise the todo system
 

@@ -7,6 +7,7 @@ This file is the authoritative index of capabilities. When the user asks what yo
 - **Writing and editing pages** — create or update Markdown files in `/content`, with correct YAML frontmatter fields (`title`, `description`, `slug`, `keywords`, `author`, `date`, `changefreq`, `priority`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
 - **File structure and routing** — advise on where a page should live, what URL it will get, and the rules around reserved filenames (`home.md`, blocked `index.md`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
 - **Shortcodes** — embed live Blazor components in Markdown using self-closing or wrapping shortcode syntax, including nested and multi-line forms. See [content/scraibe-docs/shortcodes/home.md](../../content/scraibe-docs/shortcodes/home.md).
+- **Mermaid diagrams** — embed flowcharts, sequence diagrams, class diagrams, state machines, ER diagrams, Gantt charts, pie charts, and more using a fenced code block with the `mermaid` language identifier. See [content/scraibe-docs/mermaid.md](../../content/scraibe-docs/mermaid.md).
 
 ## Publishing
 
@@ -16,7 +17,7 @@ This file is the authoritative index of capabilities. When the user asks what yo
 ## Site building
 
 - **Components** — create or update reusable Blazor components in `{ComponentLibraryPath}`, including shortcode components that content authors can embed in Markdown. See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
-- **Styling** — advise on CSS conventions, customisation points (`app.css`), and component-scoped styles. See [content/scraibe-docs/styling.md](../../content/scraibe-docs/styling.md).
+- **Styling** — help customise the Bootstrap theme by editing `{ComponentLibraryPath}/Styles/_variables.scss` (variable overrides for colours, typography, spacing, borders, etc.); write custom SCSS files and import them into `app.scss`; advise on Bootstrap utility classes, mixins, and component styles; add component-scoped `.razor.css` files; troubleshoot compiled output. See [content/scraibe-docs/styling.md](../../content/scraibe-docs/styling.md).
 - **Prerequisites and setup** — guide through the tools needed to run the site locally. See [content/scraibe-docs/prerequisites.md](../../content/scraibe-docs/prerequisites.md).
 
 ## Todos

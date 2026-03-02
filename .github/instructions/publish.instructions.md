@@ -239,6 +239,27 @@ This is the content of the second slide.
 - **Fenced code blocks** (with or without a language hint) and **indented code blocks** are passed through unchanged; shortcode-like text is not tokenised there.
 - Only non-code regions of the Markdown body are eligible for shortcode parsing.
 
+### Mermaid fenced block detection
+
+Fenced code blocks whose language hint is exactly `mermaid` (case-insensitive) are intercepted **before** shortcode parsing and converted to `Mermaid` shortcode sentinels. This happens inside the fenced-block tracking pass.
+
+**Detection rule:** When a fenced-block opening line is matched and the language hint equals `mermaid` (OrdinalIgnoreCase):
+
+1. Do **not** emit the fence-open line to output.
+2. Accumulate all subsequent body lines into a separate `mermaidBody` buffer. Do **not** emit them to output.
+3. On the closing fence line, take `mermaidBody.ToString().Trim()` as the diagram definition and emit the following sentinel:
+
+```html
+<x-shortcode name="Mermaid" data-params='{}'>
+graph TD
+    A --> B
+</x-shortcode>
+```
+
+4. Do **not** emit the closing fence line. Reset mermaid state.
+
+The inner content of the sentinel is the raw diagram definition — it is **not** run through Markdig. All other fenced blocks (any other language hint, or no hint) are left completely untouched by this step.
+
 ### Component resolution
 
 - **Before reflecting over the component library, build the project** by running `dotnet build` on `{ComponentLibraryPath}/{ComponentLibraryName}.csproj`. This ensures any components added or modified since the last build are compiled into the assembly before the registry is populated. If the build fails, abort the publish run and report the build errors.

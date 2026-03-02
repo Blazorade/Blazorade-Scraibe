@@ -50,6 +50,26 @@ dotnet --version
 
 The output should be `10.0.0` or higher. If it is not, download and install the latest SDK from the link above.
 
+### libman CLI
+
+**Install:** [learn.microsoft.com/aspnet/core/client-side/libman/libman-cli](https://learn.microsoft.com/aspnet/core/client-side/libman/libman-cli)
+
+The `libman` CLI (Microsoft Library Manager) is a .NET global tool that downloads client-side library files — in Blazorade Scraibe's case, Bootstrap's SCSS source files and JS bundle — directly from a CDN into your project. No Node.js or npm required.
+
+Install it once on your machine:
+
+```
+dotnet tool install -g Microsoft.Web.LibraryManager.Cli
+```
+
+To verify the installation:
+
+```
+libman --version
+```
+
+The build pipeline calls `libman restore` automatically on first build when Bootstrap source files are not yet present, so you do not need to run it manually.
+
 ### Git
 
 **Download:** [git-scm.com/downloads](https://git-scm.com/downloads)

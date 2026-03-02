@@ -152,6 +152,21 @@ Parameters:
 
 If no `_nav.md` resolves for a page, the publish pipeline auto-generates a Bootstrap navbar as the `nav` part, using the full published page list (same structure as the previous `NavMenu.razor` generation: brand link, flat-page links, subdirectory dropdowns).
 
+## Mermaid diagrams
+
+Mermaid diagrams are embedded using a standard fenced code block with the `mermaid` language hint:
+
+````
+```mermaid
+graph LR
+    A --> B --> C
+```
+````
+
+No explicit shortcode syntax is needed. The publish pipeline detects the fenced block automatically and converts it to a `Mermaid` component sentinel at publish time. The same syntax renders as a live diagram in VS Code (via the Mermaid VS Code extension) and on the published site (via Blazorade Mermaid).
+
+The diagram definition is passed verbatim to the Mermaid renderer — it is never processed as Markdown. Ensure it is valid Mermaid syntax.
+
 ## Content quality guidelines
 
 - Use correct heading hierarchy: `#` for the page title (one per page), `##` for sections, `###` for subsections.
