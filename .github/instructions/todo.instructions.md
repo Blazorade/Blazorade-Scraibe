@@ -21,4 +21,6 @@ A detail document is **implementation-ready** when all architectural and design 
 
 This does **not** mean the document must describe everything discoverable from the codebase (existing file contents, surrounding conventions, etc.) — those can be found with tools. It only means that design choices, architectural decisions, specific formats, and behavioural rules that cannot be inferred from code must be written down explicitly.
 
+A detail document describes the **intended design**, not the state of the code when the document was written. When implementing a task, always work against the **current state of the codebase** — check actual file contents with tools rather than assuming the files still look as they did at plan-time. Other tasks may have been completed in the meantime and the files may have changed.
+
 All todo documents are Markdown files. Follow the rules in [markdown-instructions.md](markdown-instructions.md) when creating or editing any file in `/todo/`.
