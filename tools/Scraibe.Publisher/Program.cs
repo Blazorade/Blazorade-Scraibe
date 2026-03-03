@@ -25,17 +25,35 @@ static List<string> All(string[] args, string flag)
 static string AbsPath(string root, string path)
     => Path.IsPathRooted(path) ? path : Path.GetFullPath(Path.Combine(root, path));
 
-var cwd  = Directory.GetCurrentDirectory();
+var cwd        = Directory.GetCurrentDirectory();
+var outputPath = AbsPath(cwd, Require(args, "--output"));
+
+// Extract the fingerprinted Blazor script src from wwwroot/index.html so every
+// published page can boot the Blazor runtime at its clean URL.
+var blazorScript  = "_framework/blazor.webassembly.js"; // fallback
+var indexHtmlPath = Path.Combine(outputPath, "index.html");
+if (File.Exists(indexHtmlPath))
+{
+    var indexContent = File.ReadAllText(indexHtmlPath);
+    var scriptMatch  = System.Text.RegularExpressions.Regex.Match(
+        indexContent,
+        @"<script[^>]*\ssrc=""(_framework/blazor\.webassembly[^""]+)""",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    if (scriptMatch.Success)
+        blazorScript = scriptMatch.Groups[1].Value;
+}
+
 var opts = new PublishOptions(
     ContentPath:          AbsPath(cwd, Require(args, "--content")),
-    OutputPath:           AbsPath(cwd, Require(args, "--output")),
+    OutputPath:           outputPath,
     HostName:             Require(args, "--host"),
     DisplayName:          Require(args, "--display-name"),
     TemplatePath:         AbsPath(cwd, Require(args, "--template")),
     AssemblyPath:         AbsPath(cwd, Require(args, "--assembly")),
     ComponentNamespace:   Require(args, "--component-namespace"),
     LayoutsPath:          AbsPath(cwd, Require(args, "--layouts")),
-    ExcludedPaths:        All(args, "--excluded")
+    ExcludedPaths:        All(args, "--excluded"),
+    BlazorScript:         blazorScript
 );
 
 Console.WriteLine($"Scraibe Publisher");

@@ -7,6 +7,7 @@ The `/todo` folder is a lightweight task-tracking system for ongoing and future 
   - **Backlog** — a plain bullet list of short ideas with no detail document yet. No links required.
 - Each active task has its own detail document (e.g. `/todo/reusable-ai-site-builder.md`) containing the full context, decisions made, and next steps.
 - `/todo/completed.md` is the permanent completion log. It contains a short paragraph per completed task (name, date, and a few sentences on what was done and where). It is never deleted.
+- **Active tasks are always ordered by recommended implementation sequence** — the task you would start next is first, the task furthest out is last. When adding a new task, consider whether its introduction affects the order of existing tasks, not just where the new item slots in, and reorder the full list if needed.
 - When a new active task is identified: create a detail document in `/todo/` and add a bullet to the Active tasks section of `/todo/home.md`.
 - When a backlog idea is ready to be worked on: create its detail document, move it from the Backlog section to the Active tasks section as a linked bullet, and remove it from the backlog.
 - **Never auto-promote a backlog item.** Only promote a backlog item to an active task when explicitly asked.
@@ -18,6 +19,8 @@ The `/todo` folder is a lightweight task-tracking system for ongoing and future 
 ## Implementation-readiness rule
 
 A detail document is **implementation-ready** when all architectural and design decisions required to implement the task are captured in the document itself — a new agent instance must be able to implement the task correctly by reading the detail document alone, without needing to ask clarifying questions about design intent. Decisions that are not yet made must appear as **open questions** until resolved. An active task with open questions is not yet implementation-ready.
+
+**Every detail document must be self-contained.** It must not rely on chat history, prior conversation context, or assumptions that exist only in a previous session. Anything a future implementer needs to know — architectural decisions, naming conventions, token formats, behavioural rules, cross-file dependencies — must be written explicitly in the document.
 
 This does **not** mean the document must describe everything discoverable from the codebase (existing file contents, surrounding conventions, etc.) — those can be found with tools. It only means that design choices, architectural decisions, specific formats, and behavioural rules that cannot be inferred from code must be written down explicitly.
 

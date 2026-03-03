@@ -45,5 +45,25 @@ window.blazoradePublisher = {
         }
 
         return results.join('\n');
+    },
+
+    /**
+     * Shows all .navigation-indicator elements by adding the is-navigating class.
+     * Called by ContentPage.razor when a new page starts loading (overlays the old content).
+     */
+    showNavigationIndicator: function () {
+        document.querySelectorAll('.navigation-indicator').forEach(function (el) {
+            el.classList.add('is-navigating');
+        });
+    },
+
+    /**
+     * Hides all .navigation-indicator elements by removing the is-navigating class.
+     * Called by ContentPage.razor after a page's content has finished loading.
+     */
+    hideNavigationIndicator: function () {
+        document.querySelectorAll('.navigation-indicator').forEach(function (el) {
+            el.classList.remove('is-navigating');
+        });
     }
 };

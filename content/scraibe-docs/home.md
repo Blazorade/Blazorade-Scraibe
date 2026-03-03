@@ -8,6 +8,11 @@ priority: 0.9
 
 # Blazorade Scraibe
 
+A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no app server, no runtime, and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static) or [GitHub Pages](https://pages.github.com/).
+
+> **There are no build scripts, no CLI commands, and no pipelines to configure.** To publish your site, you open a Copilot chat and say: *"Please publish my site."* Copilot reads your Markdown, generates the static HTML, updates the sitemap, and regenerates the navigation — all through conversation.
+
+[Alert alert-info]
 ## Removing These Docs From Your Site
 
 This documentation is published on your site by default so you have working content to view immediately after setup and a reference for all built-in features. When your own content is ready and you no longer want these docs published, open `blazorade.config.md` in the repository root and add `scraibe-docs` as a bullet point under the `## Excluded Content` section:
@@ -17,10 +22,9 @@ This documentation is published on your site by default so you have working cont
 
 - scraibe-docs
 ```
+[/Alert]
 
 The next publish run will skip all pages in this section. The source files remain in `/content/scraibe-docs/` and can be re-included at any time by removing the entry.
-
-Blazorade Scraibe is a publishing framework that turns Markdown files into a modern, interactive website powered by Blazor WebAssembly. Content is authored in Markdown, optionally enriched with live Blazor components via a shortcode syntax, and published to static HTML that is both fully indexed by search engines and AI crawlers and dynamically rendered for users.
 
 ## How It Works
 
@@ -61,9 +65,12 @@ Playbooks are site-specific, repeatable procedures stored in `/playbooks` and wr
 
 ```
 content/                  # Markdown source files — edit these to update the site
+playbooks/                # Site-specific repeatable procedures authored in plain language
+todo/                     # Task-tracking documents: active tasks, backlog, and completed log
 templates/                # Reusable scaffolding templates for new projects
   component-library/      # Razor Class Library template
   web-app/                # Blazor WASM app template
+tools/                    # Publish pipeline script (Invoke-Publish.ps1) and supporting tools
 .github/instructions/     # Copilot instruction files that drive authoring and publishing
 src/                      # Generated on first run — not committed to the template repo
   {AppName}.Components/   # Razor Class Library: shortcode components
@@ -72,6 +79,7 @@ src/                      # Generated on first run — not committed to the temp
 
 ## In This Section
 
+- [Prerequisites](prerequisites.md) — Required and optional software before you begin
 - [Content Authoring](content-authoring.md) — Markdown structure, frontmatter fields, and writing guidelines
 - [Shortcodes](shortcodes/home.md) — Embedding Blazor components in content
 - [Page Layouts](page-layouts.md) — Choosing a layout, content parts, and shared `_name.md` files

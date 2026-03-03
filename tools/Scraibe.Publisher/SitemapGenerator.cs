@@ -22,8 +22,17 @@ static class SitemapGenerator
                 var lastMod = p.Frontmatter.Date
                     ?? p.LastModified.ToString("yyyy-MM-dd");
 
+                var cleanSlug = p.Slug.Equals("home", StringComparison.OrdinalIgnoreCase)
+                    ? ""
+                    : p.Slug.EndsWith("/home", StringComparison.OrdinalIgnoreCase)
+                        ? p.Slug[..^5]
+                        : p.Slug;
+                var loc = string.IsNullOrEmpty(cleanSlug)
+                    ? $"https://{hostName}/"
+                    : $"https://{hostName}/{cleanSlug}";
+
                 return new XElement(Ns + "url",
-                    new XElement(Ns + "loc",        $"https://{hostName}/{p.Slug}.html"),
+                    new XElement(Ns + "loc",        loc),
                     new XElement(Ns + "lastmod",    lastMod),
                     new XElement(Ns + "changefreq", p.Frontmatter.ChangeFreq),
                     new XElement(Ns + "priority",   p.Frontmatter.Priority

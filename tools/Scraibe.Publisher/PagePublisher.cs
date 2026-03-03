@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using AngleSharp.Html.Parser;
 using Markdig;
 
 namespace Scraibe.Publisher;
@@ -58,11 +59,11 @@ static class PagePublisher
             var bodyHtml = Markdig.Markdown.ToHtml(scResult.ProcessedMarkdown, Pipeline);
             bodyHtml = PostProcessHtml(bodyHtml);
 
-            // 7. Merge parts: [Part] shortcodes → scoped _name.md files → (nav always present)
-            var parts = MergeParts(inlineParts, scopedParts, navHtml);
+            // 7. Merge parts: [Part] shortcodes → scoped _name.md files → page body → nav
+            var parts = MergeParts(inlineParts, scopedParts, navHtml, bodyHtml);
 
             // 8. Apply page template
-            var html = ApplyTemplate(page, bodyHtml, parts, opts);
+            var html = ApplyTemplate(page, parts, opts);
 
             // 9. Write output
             Directory.CreateDirectory(Path.GetDirectoryName(page.OutputPath)!);
@@ -82,33 +83,55 @@ static class PagePublisher
 
     // ── Template application ────────────────────────────────────────────────────
 
-    private static string ApplyTemplate(PageInfo page, string bodyHtml,
-        List<PartInfo> parts, PublishOptions opts)
-    {
-        var template  = File.ReadAllText(opts.TemplatePath);
-        var fm        = page.Frontmatter;
-        var lastMod   = fm.Date ?? page.LastModified.ToString("yyyy-MM-dd");
+    private static readonly HtmlParser HtmlParser = new();
 
-        // Serialize parts_html: all parts except "main" (main is handled by the template)
-        var partsHtml = new StringBuilder();
-        foreach (var part in parts.Where(p => p.Name != "main"))
+    private static string ApplyTemplate(PageInfo page, List<PartInfo> parts, PublishOptions opts)
+    {
+        var template = File.ReadAllText(opts.TemplatePath);
+        var fm       = page.Frontmatter;
+        var lastMod  = fm.Date ?? page.LastModified.ToString("yyyy-MM-dd");
+
+        // Derive clean slug: strip trailing /home, or empty string for the root page.
+        var cleanSlug = page.Slug.Equals("home", StringComparison.OrdinalIgnoreCase)
+            ? ""
+            : page.Slug.EndsWith("/home", StringComparison.OrdinalIgnoreCase)
+                ? page.Slug[..^5]
+                : page.Slug;
+
+        // Build layout_html by injecting part content into each x-part slot.
+        var layoutFile = Path.Combine(opts.LayoutsPath, fm.Layout + ".html");
+        if (!File.Exists(layoutFile))
         {
-            partsHtml.AppendLine(
-                $"  <{part.ElementName} hidden x-part=\"{part.Name}\">{part.InnerHtml}" +
-                $"</{part.ElementName}>");
+            layoutFile = Directory.GetFiles(opts.LayoutsPath, "*.html")
+                .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f)
+                    .Equals(fm.Layout, StringComparison.OrdinalIgnoreCase)) ?? layoutFile;
+        }
+        var layoutHtml    = File.ReadAllText(layoutFile);
+        var layoutDoc     = HtmlParser.ParseDocument(layoutHtml);
+        var partsByName   = parts.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var slot in layoutDoc.QuerySelectorAll("[x-part]").ToList())
+        {
+            var partName = slot.GetAttribute("x-part") ?? "";
+            if (partsByName.TryGetValue(partName, out var part))
+                slot.InnerHtml = part.InnerHtml;
+            else
+                slot.Parent?.RemoveChild(slot); // no content → remove slot entirely
         }
 
-        var result = template;
+        var layoutHtmlResult = layoutDoc.Body?.InnerHtml ?? "";
 
-        // Mandatory tokens
-        result = result.Replace("{title}",       HtmlEncode(fm.Title));
-        result = result.Replace("{description}", HtmlEncode(fm.Description ?? ""));
-        result = result.Replace("{slug}",        page.Slug);
-        result = result.Replace("{HostName}",    opts.HostName);
-        result = result.Replace("{layout}",      fm.Layout);
-        result = result.Replace("{date}",        lastMod);
-        result = result.Replace("{body_html}",   bodyHtml);
-        result = result.Replace("{parts_html}",  partsHtml.ToString().TrimEnd());
+        // Token substitution
+        var result = template;
+        result = result.Replace("{title}",         HtmlEncode(fm.Title));
+        result = result.Replace("{description}",   HtmlEncode(fm.Description ?? ""));
+        result = result.Replace("{slug}",          page.Slug);
+        result = result.Replace("{cleanSlug}",     cleanSlug);
+        result = result.Replace("{HostName}",      opts.HostName);
+        result = result.Replace("{layout}",        fm.Layout);
+        result = result.Replace("{date}",          lastMod);
+        result = result.Replace("{layout_html}",   layoutHtmlResult);
+        result = result.Replace("{blazor_script}", opts.BlazorScript);
 
         // Optional tokens: remove whole line when field is absent
         result = ReplaceOrRemoveLine(result, "{keywords}", fm.Keywords);
@@ -173,18 +196,22 @@ static class PagePublisher
     private static List<PartInfo> MergeParts(
         List<PartInfo> inlineParts,
         List<PartInfo> scopedParts,
-        string navHtml)
+        string navHtml,
+        string bodyHtml)
     {
-        // Priority: [Part] shortcode > _name.md > auto-nav
+        // Priority (highest → lowest): [Part] shortcode > _name.md > page body > auto-nav
         var merged = new Dictionary<string, PartInfo>(StringComparer.OrdinalIgnoreCase);
 
-        // Auto-nav first (lowest priority)
-        merged["nav"] = new PartInfo("nav", "nav", navHtml);
+        // Auto-nav (lowest priority)
+        merged["nav"]  = new PartInfo("nav",  "nav",     navHtml);
 
-        // Scoped _name.md files
+        // Page body becomes the default "main" content
+        merged["main"] = new PartInfo("main", "article", bodyHtml);
+
+        // Scoped _name.md files overwrite (including _main.md if present)
         foreach (var p in scopedParts) merged[p.Name] = p;
 
-        // Inline [Part] shortcodes (highest)
+        // Inline [Part] shortcodes (highest priority)
         foreach (var p in inlineParts) merged[p.Name] = p;
 
         return [.. merged.Values];

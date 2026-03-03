@@ -12,6 +12,8 @@
   <ItemGroup>
     <!-- Markdig: Markdown-to-HTML conversion -->
     <PackageReference Include="Markdig" Version="0.40.0" />
+    <!-- AngleSharp: HTML parsing and DOM manipulation for layout slot injection -->
+    <PackageReference Include="AngleSharp" Version="1.4.0" />
   </ItemGroup>
 
 </Project>

@@ -2,5 +2,11 @@
 // This file is agent-maintained — do not edit it directly.
 // To customize Bootstrap variables, edit Styles/_variables.scss.
 
+// Customizing Boostrap starts with changing variables before importing the library.
 @import "variables";
+
+// The default Bootstrap styles are included here so they can be overridden by custom styles in this file or other imported files as needed.
 @import "lib/bootstrap/scss/bootstrap";
+
+// Add your custom styles here so they will load after Bootstrap's and can override them as needed.
+@import "navigation-indicator";

@@ -10,7 +10,8 @@ record PublishOptions(
     string AssemblyPath,          // absolute path to compiled component library DLL
     string ComponentNamespace,    // e.g. BlazoradeCom.Components.ShortCodes
     string LayoutsPath,           // absolute path to Layouts folder in component library
-    List<string> ExcludedPaths    // paths relative to /content, read from blazorade.config.md
+    List<string> ExcludedPaths,   // paths relative to /content, read from blazorade.config.md
+    string BlazorScript           // e.g. _framework/blazor.webassembly#[.abc123].js
 );
 
 /// <summary>Resolved metadata for one publishable page.</summary>

@@ -1,0 +1,28 @@
+// Navigation loading indicator.
+// Shown automatically by ContentPage.razor while a new page is loading.
+// Place a .navigation-indicator element in any layout file to activate it.
+//
+// Default appearance: full-viewport semi-transparent backdrop with a centered
+// 64px Bootstrap spinner. Override any of these rules in _variables.scss or a
+// site-specific stylesheet if a different look is needed.
+
+.navigation-indicator {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background-color: rgba($dark, 0.25);
+    align-items: center;
+    justify-content: center;
+
+    &.is-navigating {
+        display: flex;
+    }
+
+    .spinner-border {
+        width: 4rem;  // 64px at default 1rem = 16px
+        height: 4rem;
+        border-width: 0.375em;
+        color: $info;
+    }
+}
