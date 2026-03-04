@@ -51,6 +51,8 @@ Getting started is as easy as 1-2-3:
 2. Open it in VS Code with GitHub Copilot enabled.
 3. Add Markdown files to `/content` and say *"publish my site"*.
 
+**[Create your new repository here](https://github.com/new?template_name=Blazorade-Scraibe&template_owner=Blazorade)**
+
 ## About the name
 
 **Blazorade Scraibe** (/skraɪb/) blends *Blazorade* and *Scribe* — with a deliberate twist: the spelling embeds **AI** in the middle of the word (scr-**AI**-be). A [scribe](https://en.wikipedia.org/wiki/Scribe) was the professional who turned thought into published form. Blazorade Scraibe does the same thing — with an AI agent as the intermediary between author and output.

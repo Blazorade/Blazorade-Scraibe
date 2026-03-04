@@ -117,6 +117,8 @@ src/                      # Generated on first run — not committed to the temp
 
 If you are setting up a new site from this repository, open it in VS Code with GitHub Copilot enabled. Copilot will detect the missing `blazorade.config.md` configuration file and walk you through the automated first-run setup, which scaffolds the Blazor projects, copies and configures all template files, and prepares the content folder.
 
+[LinkButton href="https://github.com/new?template_name=Blazorade-Scraibe&template_owner=Blazorade" OpenInNewTab="true" btn-success btn-lg my-4]Create your new repository here[/LinkButton]
+
 ## About the Name
 
 **Blazorade Scraibe** (/skraɪb/) is a blend of *Blazorade* and *Scribe* — with a deliberate twist: the spelling embeds **AI** in the middle of the word (scr-**AI**-be), reflecting the central role GitHub Copilot plays in the authoring and publishing workflow.
