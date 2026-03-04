@@ -57,6 +57,15 @@ static class PagePublisher
 
             // 6. Convert processed markdown to HTML
             var bodyHtml = Markdig.Markdown.ToHtml(scResult.ProcessedMarkdown, Pipeline);
+
+            // Inject wrapping-shortcode inner HTML now that Markdig has run.
+            // This must happen BEFORE PostProcessHtml so that .md links inside shortcode
+            // inner content are also rewritten to .html.
+            // (Inner HTML was deferred out of ProcessedMarkdown to prevent Markdig's
+            // condition-6 HTML blocks from terminating at blank lines inside the content.)
+            foreach (var (placeholder, innerHtml) in scResult.ShortcodeInners)
+                bodyHtml = bodyHtml.Replace($"<!--{placeholder}-->", innerHtml);
+
             bodyHtml = PostProcessHtml(bodyHtml);
 
             // 7. Merge parts: [Part] shortcodes → scoped _name.md files → page body → nav

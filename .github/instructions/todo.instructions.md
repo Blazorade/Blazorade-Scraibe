@@ -27,3 +27,15 @@ This does **not** mean the document must describe everything discoverable from t
 A detail document describes the **intended design**, not the state of the code when the document was written. When implementing a task, always work against the **current state of the codebase** — check actual file contents with tools rather than assuming the files still look as they did at plan-time. Other tasks may have been completed in the meantime and the files may have changed.
 
 All todo documents are Markdown files. Follow the rules in [markdown-instructions.md](markdown-instructions.md) when creating or editing any file in `/todo/`.
+
+## Backlog self-containment rule
+
+A backlog bullet must contain enough information for a new agent instance — with no access to prior chat history — to understand what the item is, why it matters, and how it fits into the project well enough to write a complete, implementation-ready detail document for it.
+
+This does **not** require the same depth as a detail document. A backlog bullet does not need open questions listed, file names enumerated, or implementation steps described. It only needs:
+
+- a clear statement of what the feature or change is,
+- enough context to understand *why* it is wanted, and
+- any key design decisions already made that would affect how the detail document is written.
+
+When adding or editing a backlog item, check it against this rule. If a new agent reading only the bullet would have to guess at intent or invent design decisions from scratch, the bullet needs more information.

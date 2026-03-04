@@ -5,9 +5,13 @@ This file is the authoritative index of capabilities. When the user asks what yo
 ## Content authoring
 
 - **Writing and editing pages** — create or update Markdown files in `/content`, with correct YAML frontmatter fields (`title`, `description`, `slug`, `keywords`, `author`, `date`, `changefreq`, `priority`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
+- **SEO metadata** — not just field names but actively drafting effective `title`, `description`, and `keywords` values for a page: concise titles that work in browser tabs and search results, meta descriptions that summarise the page in 150–160 characters, and relevant keyword sets derived from the page content.
+- **Content quality** — proofread pages for spelling, grammar, and clarity; improve sentence structure and flow; suggest better phrasing; ensure consistent tone and terminology across multiple pages. Just ask with the page open or attached.
 - **File structure and routing** — advise on where a page should live, what URL it will get, and the rules around reserved filenames (`home.md`, blocked `index.md`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
+- **Content structure and information architecture** — advise on how to organise a section into pages, when a flat file should become a folder, and how the resulting navigation will look.
+- **Cross-linking** — write correct internal Markdown links between pages given the URL structure (e.g. `/scraibe-docs/content-authoring` links as `[text](/scraibe-docs/content-authoring)`).
 - **Shortcodes** — embed live Blazor components in Markdown using self-closing or wrapping shortcode syntax, including nested and multi-line forms. See [content/scraibe-docs/shortcodes/home.md](../../content/scraibe-docs/shortcodes/home.md).
-- **Mermaid diagrams** — embed flowcharts, sequence diagrams, class diagrams, state machines, ER diagrams, Gantt charts, pie charts, and more using a fenced code block with the `mermaid` language identifier. See [content/scraibe-docs/mermaid.md](../../content/scraibe-docs/mermaid.md).
+- **Mermaid diagrams** — generate Mermaid markup from a plain-language description, or embed/edit diagrams directly. Supported types: flowcharts, sequence diagrams, class diagrams, state machines, ER diagrams, Gantt charts, pie charts, and more. See [content/scraibe-docs/mermaid.md](../../content/scraibe-docs/mermaid.md).
 
 ## Publishing
 
@@ -17,7 +21,14 @@ This file is the authoritative index of capabilities. When the user asks what yo
 ## Site building
 
 - **Components** — create or update reusable Blazor components in `{ComponentLibraryPath}`, including shortcode components that content authors can embed in Markdown. See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
-- **Styling** — help customise the Bootstrap theme by editing `{ComponentLibraryPath}/Styles/_variables.scss` (variable overrides for colours, typography, spacing, borders, etc.); write custom SCSS files and import them into `app.scss`; advise on Bootstrap utility classes, mixins, and component styles; add component-scoped `.razor.css` files; troubleshoot compiled output. See [content/scraibe-docs/styling.md](../../content/scraibe-docs/styling.md).
+- **Styling** — a broad area where the agent can actively generate and advise, not just point to documentation:
+  - **Theme generation** — given just a primary (and optionally secondary) colour, derive a full harmonious Bootstrap theme: `$success`, `$info`, `$warning`, `$danger`, `$light`, `$dark` that work together visually and meet contrast requirements. Edit `{ComponentLibraryPath}/Styles/_variables.scss` directly.
+  - **Bootstrap variable overrides** — typography (`$font-family-base`, `$font-size-base`, `$headings-font-family`), spacing (`$spacer`), borders (`$border-radius`, `$border-color`), shadows, transitions, and any other Bootstrap Sass variable. A full reference is at https://getbootstrap.com/docs/5.3/customize/sass/#variable-defaults.
+  - **Custom SCSS** — write new `.scss` partial files and import them into `app.scss`; advise on nesting, mixins, `@extend`, and Bootstrap's own mixins (`color-contrast`, `media-breakpoint-up`, etc.).
+  - **Bootstrap utility classes** — advise which utility classes to use in Markdown, layout templates, or Blazor components for spacing, typography, display, flexbox/grid, and responsive breakpoints.
+  - **Component-scoped styles** — add `.razor.css` isolation files for Blazor components so styles don't leak.
+  - **Troubleshooting** — diagnose compiled CSS output issues, specificity conflicts, or unexpected Bootstrap overrides.
+  See [content/scraibe-docs/styling.md](../../content/scraibe-docs/styling.md).
 - **Prerequisites and setup** — guide through the tools needed to run the site locally. See [content/scraibe-docs/prerequisites.md](../../content/scraibe-docs/prerequisites.md).
 
 ## Todos

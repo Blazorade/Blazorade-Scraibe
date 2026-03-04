@@ -32,6 +32,10 @@ Generated files under `{WebAppPath}/wwwroot/` (`*.html`, `sitemap.xml`, `staticw
 - **Todo items** — triggered when the user wants to note something for later, review outstanding tasks, or close a completed one. Follow [todo.instructions.md](./instructions/todo.instructions.md).
 - **Playbooks** — triggered when the user asks to run a playbook, or makes a request that may match a site-defined procedure. Read `playbooks/home.md` to identify the correct playbook, then load and follow it. Follow [playbooks.instructions.md](./instructions/playbooks.instructions.md).
 
+## Source control
+
+Never run `git commit`, `git push`, or any other command that writes to the repository's git history or remote without explicit instruction from the user. Always stop after making file changes and let the user review, stage, and push on their own terms.
+
 ## Plan before implementing
 
 Before creating or modifying any file, present a written plan and wait for explicit approval. This applies to everything except read-only operations and the documented workflows above, which are self-contained and pre-approved by their existence.

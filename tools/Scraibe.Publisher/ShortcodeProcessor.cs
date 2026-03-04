@@ -26,7 +26,7 @@ static class ShortcodeProcessor
     // Stack frame for wrapping shortcodes
     private record Frame(string ComponentName, string DataParams, StringBuilder Accumulator, int OpenLineNo);
 
-    public record Result(string ProcessedMarkdown, List<PartInfo> Parts);
+    public record Result(string ProcessedMarkdown, List<PartInfo> Parts, IReadOnlyDictionary<string, string> ShortcodeInners);
 
     /// <summary>
     /// Processes shortcodes in the raw Markdown body and returns processed Markdown
@@ -36,10 +36,12 @@ static class ShortcodeProcessor
     public static Result Process(string markdownBody, ComponentRegistry registry,
         string filePath, PublishOptions opts)
     {
-        var lines = markdownBody.ReplaceLineEndings("\n").Split('\n');
-        var root  = new StringBuilder();
-        var stack = new Stack<Frame>();
-        var parts = new List<PartInfo>();
+        var lines      = markdownBody.ReplaceLineEndings("\n").Split('\n');
+        var root       = new StringBuilder();
+        var stack      = new Stack<Frame>();
+        var parts      = new List<PartInfo>();
+        var scInners   = new Dictionary<string, string>();
+        int scInnerIdx = 0;
 
         bool inFence = false;
         string fenceMarker = "";
@@ -202,11 +204,18 @@ static class ShortcodeProcessor
                     continue;
                 }
 
-                // Normal wrapping shortcode → produce sentinel
+                // Normal wrapping shortcode → produce sentinel.
+                // Inner HTML is NOT embedded here because Markdig's condition-6 HTML block
+                // terminates at blank lines, which would break fenced code blocks and other
+                // multi-paragraph content inside the shortcode. Instead we use a placeholder
+                // comment and inject the real inner HTML after Markdig has run.
+                var placeholder = $"x-sc-inner-{scInnerIdx++}";
+                scInners[placeholder] =
+                    $"  <!-- static content for crawlers -->\n" +
+                    $"  {innerHtml}";
                 var sentinel =
                     $"<x-shortcode name=\"{top.ComponentName}\" data-params='{top.DataParams}'>\n" +
-                    $"  <!-- static content for crawlers -->\n" +
-                    $"  {innerHtml}\n" +
+                    $"<!--{placeholder}-->\n" +
                     $"</x-shortcode>";
 
                 Append(stack, root, sentinel);
@@ -224,7 +233,7 @@ static class ShortcodeProcessor
                 $"{filePath}: unclosed [{top.ComponentName}] opened at line {top.OpenLineNo}.");
         }
 
-        return new Result(root.ToString(), parts);
+        return new Result(root.ToString(), parts, scInners);
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
