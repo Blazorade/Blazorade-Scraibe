@@ -11,14 +11,20 @@
 .PARAMETER Configuration
     Build configuration for the component library. Defaults to Debug.
 
+.PARAMETER Pages
+    Comma-separated list of content-relative .md paths to publish selectively (e.g. "home.md,scraibe-docs/mermaid.md").
+    When omitted or empty, a full publish is performed.
+
 .EXAMPLE
     .\tools\Invoke-Publish.ps1
     .\tools\Invoke-Publish.ps1 -Configuration Release
+    .\tools\Invoke-Publish.ps1 -Pages home.md,scraibe-docs/mermaid.md
 #>
 
 [CmdletBinding()]
 param(
-    [string] $Configuration = 'Debug'
+    [string] $Configuration = 'Debug',
+    [string] $Pages = ''
 )
 
 Set-StrictMode -Version Latest
@@ -107,6 +113,17 @@ $namespace     = "$ComponentLibraryName.ShortCodes"
 Write-Host "`nRunning publish pipeline..."
 $publisherProject = Join-Path $PSScriptRoot 'Scraibe.Publisher/Scraibe.Publisher.csproj'
 
+$PageArgs = @()
+if ($Pages) {
+    foreach ($page in ($Pages -split ',')) {
+        $p = $page.Trim()
+        if ($p) {
+            $PageArgs += '--page'
+            $PageArgs += $p
+        }
+    }
+}
+
 $publishArgs = @(
     'run', '--project', $publisherProject, '--',
     '--content',             $contentPath,
@@ -117,7 +134,7 @@ $publishArgs = @(
     '--assembly',            $assemblyPath,
     '--component-namespace', $namespace,
     '--layouts',             $layoutsPath
-) + $ExcludedArgs
+) + $ExcludedArgs + $PageArgs
 
 dotnet @publishArgs
 

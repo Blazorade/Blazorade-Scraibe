@@ -25,8 +25,8 @@ After all pages are processed:
 
 7. **Delete stale files** — any `.html` files in `wwwroot/` that no longer have a corresponding source document are removed (except `index.html`, which is the Blazor app shell and is never touched).
 8. **Regenerate `sitemap.xml`** with an entry for every published page.
-9. **Regenerate `staticwebapp.config.json`** with rewrite rules mapping clean URLs to the corresponding `.html` files.
-10. **Regenerate `NavMenu.razor`** with a link for every top-level page and a dropdown for every subdirectory.
+
+Navigation is not a separate generated file — it is embedded as a block of HTML inside each page during step 6 above. Every static `.html` file contains the full site navigation, so crawlers and AI bots see all the links immediately without running any JavaScript.
 
 ## Running a Publish
 
@@ -39,8 +39,6 @@ Some examples of things you can say:
 - *"Please publish my site."*
 - *"Publish all content."*
 - *"Publish content/about.md."*
-- *"Publish everything under content/blog/."*
-- *"I've updated the homepage and the about page — please publish those."*
 
 Copilot will tell you what it is about to do before it starts, process each file, and give you a summary of everything that was written, updated, or deleted when it is done.
 
@@ -52,8 +50,9 @@ You do not need to tell Copilot *how* to publish — only *what* to publish. It 
 - How to resolve shortcodes against your component library.
 - Which files are excluded based on `blazorade.config.md`.
 - How to build the page shell from `page-template.html`.
-- How to regenerate the sitemap, route rewrites, and navigation menu.
-- Which stale HTML files to clean up after a partial publish.
+- How to embed the site navigation into each static HTML page.
+- How to regenerate the sitemap.
+- Which stale HTML files to clean up.
 
 The instructions that govern all of this are version-controlled in `.github/instructions/publish.instructions.md`. You can read and modify them if you need to change how publishing behaves for your site.
 
@@ -100,12 +99,12 @@ Published URLs mirror the `/content` directory structure. The `.html` extension 
 
 ## Navigation
 
-The top navigation bar is regenerated from scratch on every publish run. Top-level pages get a direct link. Subdirectories get a dropdown whose label comes from the `title` field in the subdirectory's `home.md` frontmatter.
+The top navigation bar is regenerated from scratch on every publish run and embedded directly inside each static `.html` file. Top-level pages get a direct link. Subdirectories get a dropdown whose label comes from the `title` field in the subdirectory's `home.md` frontmatter.
 
-The generated file is `{WebAppPath}/Components/NavMenu.razor`. Do not edit it manually — it will be overwritten the next time you publish.
+Because the navigation is part of each static file rather than a separate component, crawlers and AI bots see the full site structure on every page without executing any JavaScript.
 
 ## What Publishing Does Not Do
 
 - It does not run `dotnet build` or `dotnet publish`. The Blazor app is a separate concern.
-- It does not deploy to Azure or GitHub Pages. Deployment is handled by your CI/CD pipeline or manually via the Azure CLI / SWA CLI.
+- It does not deploy to Azure Static Web Apps. Deployment is handled by your CI/CD pipeline or manually via the Azure CLI / SWA CLI.
 - It does not modify your Markdown source files. Frontmatter values (including `date`) are never written back by the pipeline.

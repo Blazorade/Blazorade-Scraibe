@@ -93,7 +93,7 @@ A GitHub account is needed to:
 - Use the **Use this template** button to create a new repository from the Blazorade Scraibe template.
 - Authenticate with GitHub Copilot inside VS Code.
 - Push your content to GitHub for version control and CI/CD.
-- Optionally host your site for free on **GitHub Pages**.
+- Host your site for free on **Azure Static Web Apps** — including custom domains, HTTPS, and clean-URL routing rules.
 
 ## Optional Software
 

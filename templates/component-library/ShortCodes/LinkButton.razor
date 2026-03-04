@@ -1,0 +1,39 @@
+@inherits ShortCodeComponentBase
+
+<a href="@this.Href" @attributes="this.Attributes">
+    @this.ChildContent
+</a>
+
+@code {
+    /// <summary>
+    /// Defines whether the link should be opened in a new browser tab or not.
+    /// </summary>
+    /// <remarks>
+    /// Default is <see langword="false"/>.
+    /// </remarks>
+    [Parameter]
+    public bool OpenInNewTab {get;set;} = false;
+
+    /// <summary>
+    /// The URL to navigate to when the button is clicked.
+    /// </summary>
+    [Parameter]
+    public string Href { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        this.AddClasses("btn");
+        if(this.CssClasses?.Length > 0 == false)
+        {
+            this.AddClasses("btn-primary");
+        }
+
+        if(this.OpenInNewTab)
+        {
+            this.Attributes["target"] = "_blank";
+        }
+    }
+
+}

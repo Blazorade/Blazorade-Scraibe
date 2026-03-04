@@ -9,7 +9,6 @@ This file is the authoritative index of capabilities. When the user asks what yo
 - **Content quality** — proofread pages for spelling, grammar, and clarity; improve sentence structure and flow; suggest better phrasing; ensure consistent tone and terminology across multiple pages. Just ask with the page open or attached.
 - **File structure and routing** — advise on where a page should live, what URL it will get, and the rules around reserved filenames (`home.md`, blocked `index.md`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
 - **Content structure and information architecture** — advise on how to organise a section into pages, when a flat file should become a folder, and how the resulting navigation will look.
-- **Cross-linking** — write correct internal Markdown links between pages given the URL structure (e.g. `/scraibe-docs/content-authoring` links as `[text](/scraibe-docs/content-authoring)`).
 - **Shortcodes** — embed live Blazor components in Markdown using self-closing or wrapping shortcode syntax, including nested and multi-line forms. See [content/scraibe-docs/shortcodes/home.md](../../content/scraibe-docs/shortcodes/home.md).
 - **Mermaid diagrams** — generate Mermaid markup from a plain-language description, or embed/edit diagrams directly. Supported types: flowcharts, sequence diagrams, class diagrams, state machines, ER diagrams, Gantt charts, pie charts, and more. See [content/scraibe-docs/mermaid.md](../../content/scraibe-docs/mermaid.md).
 

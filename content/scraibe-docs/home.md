@@ -8,7 +8,7 @@ priority: 0.9
 
 # Blazorade Scraibe
 
-A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no app server, no runtime, and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static) or [GitHub Pages](https://pages.github.com/).
+A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no app server, no runtime, and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static), which provides clean-URL routing, custom domains, and HTTPS — all on the free tier. Any static file host works too, but without routing rule support you lose the SEO and clean-URL benefits.
 
 > **There are no build scripts, no CLI commands, and no pipelines to configure.** To publish your site, you open a Copilot chat and say: *"Please publish my site."* Copilot reads your Markdown, generates the static HTML, updates the sitemap, and regenerates the navigation — all through conversation.
 
@@ -25,6 +25,42 @@ This documentation is published on your site by default so you have working cont
 [/Alert]
 
 The next publish run will skip all pages in this section. The source files remain in `/content/scraibe-docs/` and can be re-included at any time by removing the entry.
+
+## Key Features
+
+- **[Markdown Authoring](content-authoring.md)** — Write pages as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format.
+- **[Shortcodes](shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a [WordPress-style shortcode syntax](https://codex.wordpress.org/Shortcode_API). Components are pure [Razor components](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/) — no JavaScript, no sandboxing, full .NET.
+- **[AI as Intelligent Collaborator](publishing.md)** — Copilot drafts content, suggests structure, generates layouts, creates Mermaid diagrams, and advises on styling — while traditional scripts handle the mechanical work. A junior site builder, available on demand through conversation.
+- **[Free SEO and AIO on Static Hosting](hosting.md)** — Full static HTML for every page, hosted free on Azure Static Web Apps. No [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models#blazor-server) app server required. Search engines and AI bots see real, indexable HTML — not an empty JavaScript shell.
+- **[Page Layouts](page-layouts.md)** — Named layouts for different page types (default, landing, custom). Shared content parts defined as `_name.md` scoped files or inline `[Part]` shortcodes.
+- **[Styling](styling.md)** — Bootstrap 5 compiled from SCSS. Customise design tokens in `_variables.scss`. No Node.js, no npm.
+- **[Mermaid Diagrams](mermaid.md)** — Publish flowcharts, sequence diagrams, and more via a shortcode. The AI agent generates [Mermaid](https://mermaid.js.org) syntax from a plain-language description.
+- **[Todo Items](#todo-items)** — Track tasks and ideas in the repository itself. Copilot creates, updates, and closes todo items through conversation — no external tool required.
+- **[Playbooks](#playbooks)** — Define custom, repeatable procedures in plain language. Copilot discovers and runs any playbook on request.
+- **Zero JavaScript — fully responsive, fully interactive** — No JavaScript required from you. Ever. Navigation, interactivity, Bootstrap behaviour, and Mermaid rendering are handled entirely by Blazorade libraries and .NET code.
+- **Zero-Config First Run** — Copilot detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation.
+
+## Why Blazorade Scraibe?
+
+### AI as intelligent collaborator
+
+Most tools treat AI as automation glue — a way to run the same steps faster. Blazorade Scraibe uses AI differently. The mechanical parts of publishing (HTML generation, sitemap updates, nav regeneration) are handled by traditional scripts and .NET tools, precisely so the AI agent can focus on where it adds real value: drafting and refining content, suggesting page structure, generating layouts, creating Mermaid diagrams, advising on styling — the work of a junior site builder, available on demand through conversation.
+
+### Shortcodes — WordPress power, Blazor quality
+
+[Shortcodes](https://codex.wordpress.org/Shortcode_API) are one of the most-loved features in WordPress: a simple bracket syntax that lets content authors embed rich, interactive components directly in Markdown — no HTML, no code-behind files required in the content itself. Blazorade Scraibe brings that same authoring experience to Blazor. The difference is that the components behind the shortcodes are pure [Razor components](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/) and .NET code — no JavaScript, no sandboxing, full access to the .NET ecosystem.
+
+### Free SEO and AIO on static hosting
+
+Until now, getting crawler-visible HTML from a Blazor application meant writing it as a [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models#blazor-server) app with server-side rendering — which requires an always-on app server, a paid hosting plan, and carries the latency cost of a persistent SignalR connection per connected user. Blazorade Scraibe delivers the same result — full static HTML for every page — hosted entirely for free on Azure Static Web Apps. Search engines and AI bots see real, indexable HTML, not an empty JavaScript shell. The upcoming [Schema.org JSON-LD](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) support will take structured data beyond what any other Blazor publishing platform currently offers.
+
+### Zero JavaScript — fully responsive, fully interactive
+
+The Blazorade-wide promise extends to Blazorade Scraibe: you do not have to write a single line of JavaScript. Navigation, component interactivity, Bootstrap behaviour, and Mermaid diagram rendering are all handled by Blazorade libraries and .NET code. No npm, no bundlers, no JS configuration files. Just C# and Markdown — and a site that is fully responsive on any device and fully interactive in the browser.
+
+### Mermaid diagrams, AI-assisted
+
+[Mermaid](https://mermaid.js.org) lets you define flowcharts, sequence diagrams, entity-relationship diagrams, and more in plain text — but the syntax is not always intuitive. Blazorade Scraibe renders Mermaid diagrams directly in published pages via a shortcode, and the AI agent can generate and explain diagram syntax from a plain-language description. You describe the diagram; the agent writes the code.
 
 ## How It Works
 
@@ -76,15 +112,6 @@ src/                      # Generated on first run — not committed to the temp
   {AppName}.Components/   # Razor Class Library: shortcode components
   {AppName}.Web/          # Blazor WebAssembly application
 ```
-
-## In This Section
-
-- [Prerequisites](prerequisites.md) — Required and optional software before you begin
-- [Content Authoring](content-authoring.md) — Markdown structure, frontmatter fields, and writing guidelines
-- [Shortcodes](shortcodes/home.md) — Embedding Blazor components in content
-- [Page Layouts](page-layouts.md) — Choosing a layout, content parts, and shared `_name.md` files
-- [Publishing](publishing.md) — How the publish workflow generates static HTML
-- [Styling](styling.md) — CSS conventions and how to customise the look of your site
 
 ## Getting Started
 

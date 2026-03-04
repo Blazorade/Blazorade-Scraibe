@@ -38,6 +38,36 @@ If the script reports errors, read the output, fix the problem in the relevant s
 .\tools\Invoke-Publish.ps1 -Configuration Release   # build the component library in Release
 ```
 
+### Partial publish
+
+Use partial publish when a content author asks to publish one or a few specific pages rather than the whole site. Only the specified pages' HTML files are regenerated and their sitemap entries updated — all other files are untouched. No stale cleanup is performed in a partial run.
+
+**Trigger phrases** — use partial publish when the request matches one of:
+- "publish the current page" / "publish this page"
+- "publish attached documents" / "publish these files"
+- "publish [explicit path or filename]"
+- "publish the pages I have open" (use attached files or the active editor file; if neither is available, ask the user to specify)
+
+A plain "publish" or "run publish" with no page qualifier always triggers a **full publish** — no change to existing behaviour.
+
+**Resolving the page list** — before invoking the script, resolve which pages to publish from one of three forms:
+
+1. **"Publish the current page"** — use the active file path from the editor context.
+2. **Attached files** — one or more `.md` files attached to the chat; use their file paths.
+3. **Explicit path in chat** — the author mentions a path directly (e.g. `content/scraibe-docs/mermaid.md`); parse and use it.
+
+**Validation rule (mandatory for all three forms):** every resolved path must be inside the `/content` folder of the repository. If any path falls outside `/content`, reject the entire request with a clear error and do not publish anything. Perform this check before invoking the script.
+
+Convert each absolute path to a content-relative `.md` path for the `-Pages` argument (e.g. `C:\...\content\scraibe-docs\mermaid.md` → `scraibe-docs/mermaid.md`).
+
+**Invocation:**
+
+```powershell
+.\tools\Invoke-Publish.ps1 -Pages home.md,scraibe-docs/mermaid.md
+```
+
+Paths in `-Pages` are relative to `/content` and must include the `.md` extension. The publisher performs a pre-flight check: if any of the specified pages has never been published (its `.html` file does not exist in `wwwroot/`), the run aborts with a clear error before any work is done. Instruct the author to run a full publish first.
+
 ---
 
 ## Pipeline reference

@@ -1,42 +1,61 @@
 # Blazorade Scraibe
 
-A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no app server, no runtime, and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static) or [GitHub Pages](https://pages.github.com/).
+**Your Blazor site — published, SEO-ready, and free to host — with GitHub Copilot as your site builder.**
 
-> **There are no build scripts, no CLI commands, and no pipelines to configure.** To publish your site, you open a Copilot chat and say: *"Please publish my site."* Copilot reads your Markdown, generates the static HTML, updates the sitemap, and regenerates the navigation — all through conversation.
+## The problem with Blazor and SEO
 
-> **Note:** This repository is under active development and should be considered a beta offering. Expect breaking changes, incomplete features, and evolving conventions as the framework matures.
+Blazor WebAssembly ships an empty HTML shell. Crawlers and AI bots see nothing. You fix that one of two ways:
 
-## Quick Start
+- **[Blazor Server with SSR](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-modes)** — an always-on app server, a paid hosting plan, SignalR latency overhead, and a deployment pipeline to maintain. For a content site, that is enormous overhead.
+- **You write all the HTML yourself** — which defeats the point.
 
-The recommended way to get started is to create a new repository from this template using the **Use this template** button on GitHub. You can also clone or fork the repository if you prefer.
+There has never been a good middle ground. Until now.
 
-1. Create a new repository from this template (or clone/fork).
+## What Blazorade Scraibe does
+
+Write your content in Markdown. Open a Copilot chat. Say *"publish my site"*. Every page becomes a fully-formed, crawler-visible static HTML file — served for free on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static). No app server. No pipeline. No JavaScript to write.
+
+**Every problem you will run into has already been solved and captured as structured instructions for GitHub Copilot.** Content authoring, shortcode resolution, page layouts, navigation, sitemap generation, styling conventions, first-run setup, repeatable procedures — all of it is in `.github/instructions/`, version-controlled with your site, and followed autonomously by Copilot every time you ask.
+
+You do not configure tools. You have a conversation.
+
+## Copilot as your site builder — on steroids
+
+Most teams use AI to generate boilerplate faster. Blazorade Scraibe is built around a different idea: let the scripts handle the deterministic work, and let the AI handle everything that requires judgement.
+
+Copilot can draft your page content, suggest structure, pick a layout, generate a [Mermaid](https://mermaid.js.org) diagram from a plain-language description, advise on styling, write a shortcode component, set up a new content section, run a content audit, close a task, or onboard a new contributor — all through conversation, all within VS Code.
+
+It is not a generator. It is a collaborator that already knows how your site works. Some things you can just say:
+
+- *"How can you help me with my site?"*
+- *"Write a compact, SEO-friendly description for this page."*
+- *"I need a new Products section with a landing page and three sub-pages."*
+- *"Generate a sequence diagram showing our checkout flow."*
+- *"Publish the page I just finished writing."*
+- *"What tasks are still open for this site?"*
+
+## What you get
+
+- **SEO and AIO out of the box** — Static HTML on every page. Crawlers and AI bots see real content, not a JavaScript shell. No [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models#blazor-server) required.
+- **Shortcodes — [WordPress power](https://codex.wordpress.org/Shortcode_API), Blazor quality** — Embed fully interactive [Razor components](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/) directly in Markdown using a simple bracket syntax. Pure .NET, no sandboxing.
+- **Zero JavaScript. Fully responsive. Fully interactive.** — No npm, no bundlers, no JS config files. You write C# and Markdown. Blazorade handles the rest.
+- **Free hosting** — Designed for [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static): clean-URL routing, custom domains, and HTTPS on the free tier.
+
+## Convinced? Start here
+
+**[Read the full documentation →](content/scraibe-docs/home.md)** — every feature, every concept, and every reason you should build your next site with Blazorade Scraibe instead of anything else.
+
+Getting started is as easy as 1-2-3:
+
+1. Create a new repository from this template using the **Use this template** button on GitHub.
 2. Open it in VS Code with GitHub Copilot enabled.
-3. Copilot will detect the missing configuration and run first-time setup automatically.
-4. Add Markdown files to `/content` and run the publish workflow.
+3. Add Markdown files to `/content` and say *"publish my site"*.
 
-## Key Features
+## About the name
 
-- **[Markdown Authoring](content/scraibe-docs/content-authoring.md)** — Write pages as plain Markdown files with YAML frontmatter. No admin UI, no database, no proprietary format.
-- **[Shortcodes](content/scraibe-docs/shortcodes/home.md)** — Embed fully interactive Blazor components directly in Markdown using a simple bracket syntax.
-- **[AI-Driven Publishing](content/scraibe-docs/publishing.md)** — Copilot reads your Markdown, resolves shortcodes, generates semantic HTML, updates the sitemap, and auto-generates the site navigation — no scripts or CLI tools required.
-- **[Page Layouts](content/scraibe-docs/page-layouts.md)** — Choose named layouts for different page types (default, landing, custom). Define shared content parts as `_name.md` scoped files or inline `[Part]` shortcodes, and rely on the auto-generated navbar when no custom nav is provided.
-- **[Styling](content/scraibe-docs/styling.md)** — Global styles in `app.css`, component-scoped CSS isolation, and a customisable page shell template.
-- **[Todo Items](content/scraibe-docs/home.md#todo-items)** — Track tasks and ideas for your site directly in the repository. Copilot creates, updates, and closes todo items through conversation — no external tool required.
-- **[Playbooks](content/scraibe-docs/home.md#playbooks)** — Define custom, repeatable procedures for your site in plain language. Copilot triggers and follows any playbook on request, from content audits to pre-launch checklists.
-- **Static HTML Output** — Every page is a static `.html` bootstrapper. Crawlers, search engines, and AI bots see fully-formed HTML.
-- **Interactive Blazor Runtime** — The Blazor WebAssembly app takes over at runtime, rendering pages and activating embedded components. Static for bots, interactive for humans.
-- **Zero-Config First Run** — Copilot detects the missing configuration, walks you through setup, and scaffolds the Blazor projects — all through conversation.
+**Blazorade Scraibe** (/skraɪb/) blends *Blazorade* and *Scribe* — with a deliberate twist: the spelling embeds **AI** in the middle of the word (scr-**AI**-be). A [scribe](https://en.wikipedia.org/wiki/Scribe) was the professional who turned thought into published form. Blazorade Scraibe does the same thing — with an AI agent as the intermediary between author and output.
 
-## About the Name
-
-**Blazorade Scraibe** (/skraɪb/) is a blend of *Blazorade* and *Scribe* — with a deliberate twist: the spelling embeds **AI** in the middle of the word (scr-**AI**-be), reflecting the central role GitHub Copilot plays in the authoring and publishing workflow.
-
-A [scribe](https://en.wikipedia.org/wiki/Scribe) was a professional trained to produce, copy, and distribute written knowledge. Before the printing press, scribes were the backbone of civilisation's information infrastructure — turning thought into published form with craft and precision. Blazorade Scraibe carries that same purpose into the modern web: taking your Markdown content and giving it a published, accessible, search-engine-visible form, with an AI agent as the intermediary between author and output.
-
-## Documentation
-
-Full documentation — setup, content authoring, shortcodes, publishing, styling, and everything else you need to get started — is in [`/content/scraibe-docs/`](content/scraibe-docs/home.md).
+> **Beta:** This repository is under active development. Expect breaking changes, incomplete features, and evolving conventions.
 
 ## License
 

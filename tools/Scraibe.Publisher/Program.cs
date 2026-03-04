@@ -65,6 +65,133 @@ Console.WriteLine($"  Host    : {opts.HostName}");
 
 var registry = new ComponentRegistry(opts.AssemblyPath, opts.ComponentNamespace);
 
+// ── Partial publish (--page args supplied) ────────────────────────────────────
+
+var selectedPages = All(args, "--page");
+
+if (selectedPages.Count > 0)
+{
+    Console.WriteLine($"\nPartial publish: {selectedPages.Count} page(s) specified.");
+
+    // Step 1: resolve source paths
+    var partialSources = selectedPages
+        .Select(rel => (
+            Rel: rel.Replace('\\', '/').TrimStart('/'),
+            Src: Path.GetFullPath(Path.Combine(opts.ContentPath,
+                     rel.Replace('\\', '/').TrimStart('/')))))
+        .ToList();
+
+    // Validate: all source files must exist
+    var missingSrc = partialSources.Where(p => !File.Exists(p.Src)).ToList();
+    if (missingSrc.Count > 0)
+    {
+        foreach (var m in missingSrc)
+            Console.Error.WriteLine($"Error: source file not found: {m.Src}");
+        Environment.Exit(1);
+    }
+
+    // Step 4: parse selected .md files into PageInfo (same logic as full publish)
+    var partialPageInfos = new List<PageInfo>();
+    foreach (var (rel, src) in partialSources)
+    {
+        var raw = File.ReadAllText(src);
+        var (fm, _) = FrontmatterParser.Parse(raw, src);
+
+        var dir  = Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
+        var stem = Path.GetFileNameWithoutExtension(rel);
+        var slug = fm.Slug ?? stem;
+        var fullSlug = string.IsNullOrEmpty(dir) ? slug : $"{dir}/{slug}";
+
+        var outputFile   = Path.Combine(opts.OutputPath,
+            fullSlug.Replace('/', Path.DirectorySeparatorChar) + ".html");
+        var canonicalUrl = $"https://{opts.HostName}/{fullSlug}.html";
+        var lastMod      = File.GetLastWriteTime(src);
+
+        partialPageInfos.Add(new PageInfo(
+            SourcePath:   src,
+            RelativePath: rel,
+            OutputPath:   outputFile,
+            Slug:         fullSlug,
+            CanonicalUrl: canonicalUrl,
+            Frontmatter:  fm,
+            LastModified: lastMod));
+    }
+
+    // Step 2: pre-flight — all target .html files must already exist
+    var missingOut = partialPageInfos.Where(p => !File.Exists(p.OutputPath)).ToList();
+    if (missingOut.Count > 0)
+    {
+        Console.Error.WriteLine(
+            "Pre-flight check failed. The following pages have never been published:");
+        foreach (var m in missingOut)
+            Console.Error.WriteLine(
+                $"  Missing: {Path.GetRelativePath(opts.OutputPath, m.OutputPath)}");
+        Console.Error.WriteLine("Run a full publish first, then retry the partial publish.");
+        Environment.Exit(1);
+    }
+
+    // Step 5: extract nav HTML from the first existing output file
+    var partialNavHtml = "";
+    {
+        var existingHtml = File.ReadAllText(partialPageInfos[0].OutputPath);
+        var parser       = new AngleSharp.Html.Parser.HtmlParser();
+        var doc          = parser.ParseDocument(existingHtml);
+        var navEl        = doc.QuerySelector("[x-part='nav']");
+        partialNavHtml = navEl?.InnerHtml ?? "";
+    }
+
+    // Step 6: publish only the specified pages
+    Console.WriteLine("\nPublishing pages...");
+    var partialPublished = new List<PageInfo>();
+    var partialErrors    = new List<PageResult>();
+
+    foreach (var page in partialPageInfos)
+    {
+        var result = PagePublisher.Publish(page, registry, opts, partialNavHtml, partialPageInfos);
+        if (result.Success)
+        {
+            Console.WriteLine($"  ✓  {page.Slug}.html");
+            partialPublished.Add(page);
+        }
+        else
+        {
+            Console.Error.WriteLine($"  ✗  {page.Slug} — {result.Error}");
+            partialErrors.Add(result);
+        }
+    }
+
+    // Step 7: update sitemap.xml in-place
+    var sitemapPath = Path.Combine(opts.OutputPath, "sitemap.xml");
+    if (File.Exists(sitemapPath))
+    {
+        SitemapGenerator.Update(partialPublished, sitemapPath, opts.HostName);
+        Console.WriteLine($"\n  ✓  sitemap.xml updated ({partialPublished.Count} entries patched).");
+    }
+    else
+    {
+        SitemapGenerator.Generate(partialPublished, sitemapPath, opts.HostName);
+        Console.WriteLine($"\n  ✓  sitemap.xml generated ({partialPublished.Count} entries).");
+    }
+
+    Console.WriteLine($"""
+
+── Publish summary ──────────────────────────────────
+  Pages published : {partialPublished.Count} (partial run)
+  Errors          : {partialErrors.Count}
+─────────────────────────────────────────────────────
+""");
+
+    if (partialErrors.Count > 0)
+    {
+        Console.Error.WriteLine("Errors:");
+        foreach (var e in partialErrors)
+            Console.Error.WriteLine($"  {e.Page.Slug}: {e.Error}");
+        Environment.Exit(1);
+    }
+
+    Environment.Exit(0);
+}
+
 // ── Walk content tree ─────────────────────────────────────────────────────────
 
 Console.WriteLine("\nScanning content...");
