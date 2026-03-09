@@ -1,0 +1,46 @@
+// Default page layout shell: optional left/right panels around primary content.
+// Rules are scoped to .blz-layout-default so other layouts remain unaffected.
+
+.blz-layout-default {
+    .container {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacer * 1.5;
+    }
+
+    .container > main {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .container > [x-part="left-panel"],
+    .container > [x-part="right-panel"] {
+        flex: 0 0 clamp(14rem, 22vw, 18rem);
+        min-width: 0;
+    }
+
+    // On narrow viewports, stack as one column and keep main content first.
+    @include media-breakpoint-down(lg) {
+        .container {
+            flex-direction: column;
+            gap: $spacer;
+        }
+
+        .container > main {
+            order: 1;
+            width: 100%;
+        }
+
+        .container > [x-part="left-panel"] {
+            order: 2;
+            flex: 1 1 auto;
+            width: 100%;
+        }
+
+        .container > [x-part="right-panel"] {
+            order: 3;
+            flex: 1 1 auto;
+            width: 100%;
+        }
+    }
+}

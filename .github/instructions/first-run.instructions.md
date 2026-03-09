@@ -106,6 +106,7 @@ Copy files from `/templates/web-app/` into `src/{AppName}.Web/` and from `/templ
 
 - `{{WebAppName}}` → `{AppName}.Web`
 - `{{ComponentLibraryName}}` → `{AppName}.Components`
+- `{{ComponentLibraryServiceRegistrationMethod}}` → `Register{AppName}ComponentServices`
 
 Files to copy from `/templates/web-app/` → `src/{AppName}.Web/`:
 - Copy all files and folders from `templates/web-app/` into `src/{AppName}.Web/`, creating any necessary subdirectories that don't exist
@@ -128,7 +129,25 @@ Add `<Import Project="build-extras.targets" />` to the component library `.cspro
 </Project>
 ```
 
-### 4b — Install libman CLI and download Bootstrap
+### 4b — Wire up Program.cs service registration
+
+Update `src/{AppName}.Web/Program.cs` to call the component-library service registration extension method:
+
+1. Add this using:
+
+```csharp
+using {AppName}.Components.Configuration;
+```
+
+2. Add this call before the final host run line (`await builder.Build().RunAsync();`):
+
+```csharp
+builder.Services.Register{AppName}ComponentServices();
+```
+
+The method name must match the value substituted for `{{ComponentLibraryServiceRegistrationMethod}}` in template files.
+
+### 4c — Install libman CLI and download Bootstrap
 
 Ensure the libman CLI global tool is installed. If it is not already present, install it:
 
@@ -142,7 +161,7 @@ Then run `libman restore` in the component library directory to download Bootstr
 libman restore --project src/{AppName}.Components
 ```
 
-### 4c — Build to verify
+### 4d — Build to verify
 
 Build the solution to verify everything compiles before continuing.
 

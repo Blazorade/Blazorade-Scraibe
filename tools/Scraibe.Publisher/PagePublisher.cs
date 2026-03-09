@@ -196,8 +196,20 @@ static class PagePublisher
                 if (fm.RawFields().TryGetValue("element_name", out var elemOverride))
                     elemName = elemOverride;
 
-                var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
-                var innerHtml = Markdig.Markdown.ToHtml(body, pipeline).Trim();
+                // Reusable parts should follow the same processing path as page main content.
+                var scResult = ShortcodeProcessor.Process(body, registry, mdFile, opts);
+                var partHtml = Markdig.Markdown.ToHtml(scResult.ProcessedMarkdown, Pipeline);
+
+                foreach (var (placeholder, inner) in scResult.ShortcodeInners)
+                    partHtml = partHtml.Replace($"<!--{placeholder}-->", inner);
+
+                var partRelativeDir = Path.GetDirectoryName(
+                    Path.GetRelativePath(opts.ContentPath, mdFile))?.Replace('\\', '/') ?? "";
+
+                partHtml = UrlRewriter.Rewrite(partHtml, partRelativeDir);
+                partHtml = PostProcessHtml(partHtml);
+
+                var innerHtml = partHtml.Trim();
                 result[partName] = new PartInfo(partName, elemName, innerHtml);
             }
         }
