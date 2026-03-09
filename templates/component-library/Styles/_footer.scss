@@ -1,0 +1,15 @@
+footer.text-bg-dark,
+footer.text-bg-dark * {
+	color: $light !important;
+}
+
+footer.text-bg-dark a,
+footer.text-bg-dark a:visited,
+footer.text-bg-dark a:focus,
+footer.text-bg-dark a:active {
+	color: $light !important;
+}
+
+footer.text-bg-dark a:hover {
+	color: $secondary !important;
+}

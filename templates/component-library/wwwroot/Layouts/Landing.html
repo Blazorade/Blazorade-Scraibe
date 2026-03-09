@@ -1,8 +1,17 @@
-<div>
-  <main x-part="main"></main>
-  <div class="navigation-indicator" aria-hidden="true">
-    <div class="spinner-border" role="status">
-      <span class="visually-hidden">Loading…</span>
+<div class="blz-layout-landing">
+    <div x-part="image-header"></div>
+    <nav class="navbar navbar-expand-lg" data-bs-theme="light" x-part="nav"></nav>
+    <div class="container mt-4">
+        <main>
+            <article x-part="main"></article>
+        </main>
     </div>
-  </div>
+    <footer class="text-bg-dark">
+        <div class="container-fluid mt-4 p-4" x-part="footer"></div>
+    </footer>
+    <div class="navigation-indicator" aria-hidden="true">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading…</span>
+        </div>
+    </div>
 </div>

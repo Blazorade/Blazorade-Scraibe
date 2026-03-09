@@ -12,13 +12,21 @@ The `Part` shortcode defines a named content part inline in a page body. The blo
 
 ## Syntax
 
-`[Part]` is a multi-line wrapping shortcode only — it cannot be used in self-closing or inline form.
+`[Part]` is a wrapping shortcode only — it cannot be used in self-closing form.
 
 ```
 [Part Name="part-name"]
 Content for this part goes here.
 [/Part]
 ```
+
+Opening and closing tags may be adjacent to other shortcode tags on the same line when balanced. For example:
+
+```
+[Part Name="image-header"][Carousel][Slide][Heading Display="1"]Blazorade[/Heading][/Slide][/Carousel][/Part]
+```
+
+Leading indentation before shortcode tags is allowed.
 
 The entire block is removed from the primary page body. No placeholder or sentinel remains in its place.
 
@@ -59,6 +67,8 @@ This wraps in a <section> instead of <aside>.
 - `[Part]` is only valid at the **root level** of a page body. Nesting it inside another shortcode is a fatal publish error.
 - If the same part name is defined more than once in a page (whether through `[Part]` blocks or `_name.md` files), the publish run fails with an error.
 - If a part has no matching slot in the layout, it is still present in the static HTML for crawlers but is silently ignored during runtime composition.
+- Wrapping content inside `[Part]` is dedented before Markdown conversion, so indentation used for readability does not accidentally create blockquotes or code blocks.
+- To intentionally render a blockquote in a part, use `>` explicitly.
 
 ## Example
 

@@ -54,6 +54,14 @@ Here is some intro text.
 [/Article]
 ```
 
+Tags are token-based, so they can also be placed back-to-back on one line when balanced:
+
+```
+[Carousel][Slide][Heading Display="2"]One-liner[/Heading][/Slide][/Carousel]
+```
+
+Leading indentation before shortcode tags is allowed and does not prevent shortcode detection.
+
 ## Named Parameters
 
 Named parameters use `Key=value` or `Key="value"` syntax and map to `[Parameter]` properties on the component. Parameter names are matched case-insensitively, so `[Alert cssclasses="alert-danger" /]` works the same as `[Alert CssClasses="alert-danger" /]`. Duplicate names (after case normalisation) are fatal errors.
@@ -84,6 +92,31 @@ Here `rounded` is a CSS class token (becomes `CssClasses="rounded"`) and `Interv
 - Duplicate named parameters in the same tag are fatal errors.
 - A `[...]` token that does not match shortcode syntax is left as plain text.
 
+## Indentation and markdown behavior
+
+Wrapping shortcode inner content is dedented before Markdown conversion. This means visual indentation is treated as authoring layout, not as implicit Markdown block syntax.
+
+- If you want a blockquote, write `>` explicitly.
+- If you want code blocks, prefer fenced code blocks.
+
+Example:
+
+```
+[Heading]
+	Indented Heading
+[/Heading]
+```
+
+The indented text above is treated as normal heading content, not as a blockquote.
+
+To intentionally create a blockquote inside the shortcode:
+
+```
+[Heading]
+> Indented Heading
+[/Heading]
+```
+
 ## Nesting and Child Content
 
 Shortcodes can nest to any depth in multi-line form. For example:
@@ -105,7 +138,7 @@ More detail.
 
 Shortcode detection is skipped inside code contexts so you can document examples safely:
 - Inline code spans: `[Badge ui="pill"]` stays literal when wrapped in single backticks.
-- Fenced code blocks (with or without a language hint) and indented code blocks: shortcode-like text is not parsed and remains verbatim.
+- Fenced code blocks (with or without a language hint): shortcode-like text is not parsed and remains verbatim.
 
 ## Tips
 

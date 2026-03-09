@@ -255,20 +255,31 @@ This is the content of the second slide.
 
 ### Syntax rules
 
-- The self-closing shortcode `[Name Params /]` must be alone on its line.
-- **Multi-line wrapping:** The opening tag `[Name Params]` and the closing tag `[/Name]` must each be alone on their own lines, with inner content on the lines in between.
-- **Inline wrapping:** If the opening tag, inner text, and closing tag all appear on a single line — `[Name Params]inner text[/Name]` — this is treated as an inline wrapping shortcode. Only plain text and inline Markdown (no nested shortcodes) are permitted in inline form.
+- Shortcode detection is **token-based**, not line-based. Tags may appear back-to-back on one line and may be indented.
+- Back-to-back nested tags are valid when balanced, for example: `[Part Name="hero"][Carousel][Slide]...[/Slide][/Carousel][/Part]`.
+- **Inline wrapping:** `[Name Params]inner text[/Name]` is valid.
+- **Multi-line wrapping:** opening and closing tags may appear on separate lines with mixed Markdown and nested shortcodes between them.
 - The opening tag may contain two kinds of tokens, both whitespace-separated. Closing tags carry no tokens.
 - **Named parameters** — `Key=value` or `Key="value"` pairs. Names are matched to `[Parameter]` properties on the component using `OrdinalIgnoreCase`; the canonical property name (as declared on the component) is always used as the key in `data-params`. Duplicate names after case normalisation are a fatal error — report the file, line number, and duplicated name.
 - **CSS class tokens** — any token that is not a `Key=value` pair. Both bare unquoted words (`rounded`) and quoted strings (`"rounded text-danger"`) are CSS class tokens. All CSS class tokens are collected in order and joined with a single space to form the `CssClasses` value.
 - String parameter values are quoted (`Param="value"`); bool and numeric values are unquoted (`Flag=true Count=5`).
-- A line that does not match any shortcode pattern is never treated as a shortcode — it passes through as plain text.
+- Text that is not a valid shortcode tag is emitted as plain Markdown text.
+
+### Wrapping-content normalization
+
+- Before Markdown conversion, wrapping shortcode inner content is normalized with a **dedent-before-Markdown** step.
+- Tabs in leading indentation are normalised consistently (tab width 4) for indentation measurement.
+- The parser removes the minimum common leading indentation across non-empty lines.
+- Relative indentation beyond the shared baseline is preserved.
+- Visual indentation alone must not create accidental Markdown block semantics (for example blockquotes or code blocks).
+- Intentional Markdown block semantics must be explicit (for example `>` for a blockquote).
 
 ### Code spans and code blocks — skip shortcode detection
 
 - Do not scan for shortcodes inside Markdown code contexts. Anything that the Markdown parser treats as code must remain literal and bypass shortcode detection entirely.
 - **Inline code spans** (single backticks) are emitted verbatim; `[Badge ui="pill"]` inside backticks stays as text.
-- **Fenced code blocks** (with or without a language hint) and **indented code blocks** are passed through unchanged; shortcode-like text is not tokenised there.
+- **Fenced code blocks** (with or without a language hint) are passed through unchanged; shortcode-like text is not tokenised there.
+- For portable literal shortcode examples, prefer fenced blocks over indented-code syntax.
 - Only non-code regions of the Markdown body are eligible for shortcode parsing.
 
 ### Mermaid fenced block detection
@@ -313,28 +324,25 @@ CSS class token processing always runs before named parameters are serialised to
 
 ### Parser state machine
 
-The parser processes the Markdown body line by line using a **stack** that tracks open wrapping shortcodes. The stack starts empty (root level).
+The parser processes the Markdown body using a stack of open wrapping shortcodes. Input is read line-by-line, but shortcode detection within each line is token-based.
 
-Detection must be attempted **in the order listed below** — earlier patterns take priority.
+Processing model:
 
-**On every line:**
+- Scan each eligible line left-to-right.
+- Emit plain text segments directly to the current accumulator.
+- For a known self-closing tag, emit a sentinel immediately.
+- For a known opening tag, push a frame onto the stack.
+- For a closing tag, validate it matches the top stack frame, then pop and materialize the wrapping shortcode.
+- Unknown opening/self-closing tags pass through as plain text.
+- A closing tag with no matching open frame is fatal.
+- End-of-file with non-empty stack is fatal (unclosed shortcode).
 
-| Line matches | Stack empty (root) | Stack non-empty (inside block) |
-|---|---|---|
-| Regular text line | Emit to root Markdown accumulator | Append to top-of-stack Markdown accumulator |
-| `[Name Params /]` — self-closing, **known** component | Replace line with sentinel; stay at root | Replace line with sentinel; append sentinel HTML to top-of-stack accumulator |
-| `[Name Params /]` — self-closing, **unknown** component | Pass through as plain text | Append verbatim to top-of-stack accumulator |
-| `[Name Params]text[/Name]` — inline wrapping, **known** component | Convert inner text as inline Markdown; emit sentinel with converted text as body; stay at root | Convert inner text as inline Markdown; emit sentinel; append to top-of-stack accumulator |
-| `[Name Params]text[/Name]` — inline wrapping, **unknown** component | Pass through as plain text | Append verbatim to top-of-stack accumulator |
-| `[Name Params]` — opening only, **known** component | Push new frame onto stack (name, params, empty accumulator). Do **not** emit the opening tag line. | Push new frame onto stack. Do **not** emit the opening tag line. |
-| `[Name Params]` — opening only, **unknown** component | Pass through as plain text | Append verbatim to top-of-stack accumulator |
-| `[/Name]` — closing, matches top of stack | Pop frame; process its accumulated content (see below); emit wrapping sentinel into root accumulator | Pop frame; process its accumulated content; append resulting sentinel HTML to new top-of-stack accumulator |
-| `[/Name]` — closing, **does not** match top of stack | **Error**: unexpected `[/Name]` with no matching open. Publish fails. | **Error**: expected `[/FrameName]`, found `[/Name]`. Publish fails. |
-| End of file | Normal completion | **Error**: unclosed `[FrameName]`. Publish fails. |
+Processing a popped frame:
 
-**Processing a popped frame:**
-
-When a wrapping frame is popped its accumulated content may contain a mix of plain Markdown lines and already-emitted `<x-shortcode>` sentinel HTML strings (from nested shortcodes that were processed and injected back). Run the entire accumulated content through the Markdown-to-HTML converter. The Markdown processor treats raw HTML blocks as pass-through, so the nested sentinel elements are preserved verbatim. The result becomes the inner body of the wrapping sentinel element for the popped frame.
+- Normalize inner markdown with dedent-before-Markdown.
+- Convert the normalized content to HTML.
+- For normal wrapping shortcodes, emit a sentinel with static inner HTML.
+- For `[Part]`, store `{ name, elementName, innerHtml }` and emit nothing into main content.
 
 For example, the mixed-content `[Carousel]` frame above accumulates:
 ```

@@ -1,0 +1,14 @@
+﻿@inherits ShortCodeComponentBase
+
+<div @attributes="this.Attributes">
+    @this.ChildContent
+</div>
+
+@code {
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        this.AddClasses("carousel-item");
+    }
+}

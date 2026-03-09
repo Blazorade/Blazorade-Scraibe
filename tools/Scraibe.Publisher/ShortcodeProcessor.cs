@@ -12,19 +12,20 @@ namespace Scraibe.Publisher;
 /// </summary>
 static class ShortcodeProcessor
 {
-    // Regex patterns — applied in priority order per the spec
-    private static readonly Regex RxSelfClose  = new(@"^\[([A-Za-z][A-Za-z0-9]*)([^\]]*)\s*/\]$",    RegexOptions.Compiled);
-    private static readonly Regex RxInline     = new(@"^\[([A-Za-z][A-Za-z0-9]*)([^\]]*)\](.+)\[/\1\]$", RegexOptions.Compiled);
-    private static readonly Regex RxOpen       = new(@"^\[([A-Za-z][A-Za-z0-9]*)([^\]]*)\]$",        RegexOptions.Compiled);
-    private static readonly Regex RxClose      = new(@"^\[/([A-Za-z][A-Za-z0-9]*)\]$",               RegexOptions.Compiled);
+    // Regex patterns — used for fenced block detection only.
     private static readonly Regex RxFenceOpen  = new(@"^(\s*)(```+|~~~+)(.*)?$",                       RegexOptions.Compiled);
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .Build();
 
-    // Stack frame for wrapping shortcodes
-    private record Frame(string ComponentName, string DataParams, StringBuilder Accumulator, int OpenLineNo);
+    // Stack frame for wrapping shortcodes. RawParams preserves opening-tag params
+    // so [Part] can resolve Name/ElementName when the closing tag is encountered.
+    private record Frame(string ComponentName, string DataParams, string RawParams, StringBuilder Accumulator, int OpenLineNo);
+
+    private enum TagKind { Open, Close, Self }
+
+    private readonly record struct TagToken(TagKind Kind, string Name, string RawParams, string Original, int EndExclusive);
 
     public record Result(string ProcessedMarkdown, List<PartInfo> Parts, IReadOnlyDictionary<string, string> ShortcodeInners);
 
@@ -106,124 +107,7 @@ static class ShortcodeProcessor
                 continue;
             }
 
-            // ── Self-closing shortcode ───────────────────────────────────────────
-            var scm = RxSelfClose.Match(trimmed);
-            if (scm.Success)
-            {
-                var name = scm.Groups[1].Value;
-                if (registry.IsKnown(name))
-                {
-                    var dp = BuildDataParams(name, scm.Groups[2].Value, registry, filePath, lineNo);
-                    var sentinel = $"<x-shortcode name=\"{name}\" data-params='{dp}'></x-shortcode>";
-                    Append(stack, root, sentinel);
-                    continue;
-                }
-                // Unknown → pass through as plain text
-                Append(stack, root, line);
-                continue;
-            }
-
-            // ── Inline wrapping shortcode ────────────────────────────────────────
-            var im = RxInline.Match(trimmed);
-            if (im.Success)
-            {
-                var name = im.Groups[1].Value;
-                if (registry.IsKnown(name))
-                {
-                    var dp      = BuildDataParams(name, im.Groups[2].Value, registry, filePath, lineNo);
-                    var inner   = Markdig.Markdown.ToHtml(im.Groups[3].Value.Trim(), Pipeline).Trim();
-                    // Strip wrapping <p> that Markdig adds for single inline paragraphs
-                    if (inner.StartsWith("<p>") && inner.EndsWith("</p>") && !inner[3..^4].Contains("<p>"))
-                        inner = inner[3..^4];
-                    var sentinel =
-                        $"<x-shortcode name=\"{name}\" data-params='{dp}'>\n" +
-                        $"  <!-- static content for crawlers -->\n" +
-                        $"  {inner}\n" +
-                        $"</x-shortcode>";
-                    Append(stack, root, sentinel);
-                    continue;
-                }
-                Append(stack, root, line);
-                continue;
-            }
-
-            // ── Opening tag ──────────────────────────────────────────────────────
-            var om = RxOpen.Match(trimmed);
-            if (om.Success && trimmed != line.Trim()) { /* fall through if not on its own line */ }
-            if (om.Success)
-            {
-                var name = om.Groups[1].Value;
-                if (registry.IsKnown(name))
-                {
-                    var dp = BuildDataParams(name, om.Groups[2].Value, registry, filePath, lineNo);
-                    stack.Push(new Frame(name, dp, new StringBuilder(), lineNo));
-                    continue;
-                }
-                Append(stack, root, line);
-                continue;
-            }
-
-            // ── Closing tag ──────────────────────────────────────────────────────
-            var cm = RxClose.Match(trimmed);
-            if (cm.Success)
-            {
-                var closeName = cm.Groups[1].Value;
-
-                if (stack.Count == 0)
-                    throw new PublishException(
-                        $"{filePath}:{lineNo}: unexpected [/{closeName}] — no open shortcode.");
-
-                var top = stack.Peek();
-                if (!top.ComponentName.Equals(closeName, StringComparison.OrdinalIgnoreCase))
-                    throw new PublishException(
-                        $"{filePath}:{lineNo}: expected [/{top.ComponentName}] " +
-                        $"(opened at line {top.OpenLineNo}), found [/{closeName}].");
-
-                stack.Pop();
-                var innerAccum = top.Accumulator.ToString().TrimEnd('\n');
-                var innerHtml  = Markdig.Markdown.ToHtml(innerAccum, Pipeline).Trim();
-
-                // [Part] special handling: extract and store, emit nothing into content
-                if (closeName.Equals("Part", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (stack.Count > 0)
-                        throw new PublishException(
-                            $"{filePath}:{lineNo}: [Part] may only appear at root level.");
-
-                    // Extract Name= and ElementName= from the dataparams JSON
-                    // (BuildDataParams already ran) — simpler to re-parse the raw params string
-                    var partParams = ParseNamedParams(om.Success ? om.Groups[2].Value : "");
-                    var partName = partParams.FirstOrDefault(p =>
-                        p.Key.Equals("Name", StringComparison.OrdinalIgnoreCase)).Value ?? "part";
-                    partName = partName.ToLowerInvariant();
-                    var elemOverride = partParams.FirstOrDefault(p =>
-                        p.Key.Equals("ElementName", StringComparison.OrdinalIgnoreCase)).Value;
-                    var elemName = elemOverride ?? ElementNames.For(partName);
-
-                    parts.Add(new PartInfo(partName, elemName, innerHtml));
-                    continue;
-                }
-
-                // Normal wrapping shortcode → produce sentinel.
-                // Inner HTML is NOT embedded here because Markdig's condition-6 HTML block
-                // terminates at blank lines, which would break fenced code blocks and other
-                // multi-paragraph content inside the shortcode. Instead we use a placeholder
-                // comment and inject the real inner HTML after Markdig has run.
-                var placeholder = $"x-sc-inner-{scInnerIdx++}";
-                scInners[placeholder] =
-                    $"  <!-- static content for crawlers -->\n" +
-                    $"  {innerHtml}";
-                var sentinel =
-                    $"<x-shortcode name=\"{top.ComponentName}\" data-params='{top.DataParams}'>\n" +
-                    $"<!--{placeholder}-->\n" +
-                    $"</x-shortcode>";
-
-                Append(stack, root, sentinel);
-                continue;
-            }
-
-            // ── Regular text line ────────────────────────────────────────────────
-            Append(stack, root, line);
+            ProcessLine(line, stack, root, parts, scInners, registry, filePath, lineNo, ref scInnerIdx);
         }
 
         if (stack.Count > 0)
@@ -238,10 +122,324 @@ static class ShortcodeProcessor
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
+    private static void ProcessLine(
+        string line,
+        Stack<Frame> stack,
+        StringBuilder root,
+        List<PartInfo> parts,
+        Dictionary<string, string> scInners,
+        ComponentRegistry registry,
+        string filePath,
+        int lineNo,
+        ref int scInnerIdx)
+    {
+        var i = 0;
+        while (i < line.Length)
+        {
+            // Inline code spans are literal: skip shortcode tokenization inside backticks.
+            if (line[i] == '`')
+            {
+                int tickRun = 1;
+                while (i + tickRun < line.Length && line[i + tickRun] == '`') tickRun++;
+
+                var delim = new string('`', tickRun);
+                var closeIdx = line.IndexOf(delim, i + tickRun, StringComparison.Ordinal);
+                if (closeIdx < 0)
+                {
+                    AppendRaw(stack, root, line[i..]);
+                    break;
+                }
+
+                AppendRaw(stack, root, line[i..(closeIdx + tickRun)]);
+                i = closeIdx + tickRun;
+                continue;
+            }
+
+            var openIdx = line.IndexOf('[', i);
+            var tickIdx = line.IndexOf('`', i);
+            if (tickIdx >= 0 && (openIdx < 0 || tickIdx < openIdx))
+            {
+                AppendRaw(stack, root, line[i..tickIdx]);
+                i = tickIdx;
+                continue;
+            }
+
+            if (openIdx < 0)
+            {
+                AppendRaw(stack, root, line[i..]);
+                break;
+            }
+
+            var token = TryReadTagToken(line, openIdx);
+            if (token is null || IsLinkLikeContext(line, openIdx, token.Value.EndExclusive))
+            {
+                if (openIdx > i)
+                    AppendRaw(stack, root, line[i..openIdx]);
+                AppendRaw(stack, root, "[");
+                i = openIdx + 1;
+                continue;
+            }
+
+            if (openIdx > i)
+            {
+                var between = line[i..openIdx];
+                if (!string.IsNullOrWhiteSpace(between))
+                    AppendRaw(stack, root, between);
+            }
+
+            var t = token.Value;
+            switch (t.Kind)
+            {
+                case TagKind.Self:
+                {
+                    if (!registry.IsKnown(t.Name))
+                    {
+                        AppendRaw(stack, root, t.Original);
+                        i = t.EndExclusive;
+                        continue;
+                    }
+
+                    var dp = BuildDataParams(t.Name, t.RawParams, registry, filePath, lineNo);
+                    var sentinel = $"<x-shortcode name=\"{t.Name}\" data-params='{dp}'></x-shortcode>";
+                    AppendRaw(stack, root, sentinel);
+                    i = t.EndExclusive;
+                    continue;
+                }
+                case TagKind.Open:
+                {
+                    if (!registry.IsKnown(t.Name))
+                    {
+                        AppendRaw(stack, root, t.Original);
+                        i = t.EndExclusive;
+                        continue;
+                    }
+
+                    var dp = BuildDataParams(t.Name, t.RawParams, registry, filePath, lineNo);
+                    stack.Push(new Frame(t.Name, dp, t.RawParams, new StringBuilder(), lineNo));
+                    i = t.EndExclusive;
+                    continue;
+                }
+                case TagKind.Close:
+                {
+                    if (stack.Count == 0)
+                        throw new PublishException(
+                            $"{filePath}:{lineNo}: unexpected [/{t.Name}] — no open shortcode.");
+
+                    var top = stack.Peek();
+                    if (!top.ComponentName.Equals(t.Name, StringComparison.OrdinalIgnoreCase))
+                        throw new PublishException(
+                            $"{filePath}:{lineNo}: expected [/{top.ComponentName}] " +
+                            $"(opened at line {top.OpenLineNo}), found [/{t.Name}].");
+
+                    stack.Pop();
+                    var innerAccum = top.Accumulator.ToString().TrimEnd('\n');
+                    var normalizedInner = NormalizeInnerMarkdown(innerAccum);
+                    var innerHtml = Markdig.Markdown.ToHtml(normalizedInner, Pipeline).Trim();
+
+                    // Inline wrappers should keep previous behavior where a single paragraph
+                    // does not force an extra <p> wrapper around simple text content.
+                    if (lineNo == top.OpenLineNo && innerHtml.StartsWith("<p>", StringComparison.Ordinal) &&
+                        innerHtml.EndsWith("</p>", StringComparison.Ordinal) && !innerHtml[3..^4].Contains("<p>", StringComparison.Ordinal))
+                    {
+                        innerHtml = innerHtml[3..^4];
+                    }
+
+                    // [Part] special handling: extract and store, emit nothing into content
+                    if (t.Name.Equals("Part", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (stack.Count > 0)
+                            throw new PublishException(
+                                $"{filePath}:{lineNo}: [Part] may only appear at root level.");
+
+                        innerHtml = ReplaceShortcodeInnerPlaceholders(innerHtml, scInners);
+
+                        var partParams = ParseNamedParams(top.RawParams);
+                        var partName = partParams.FirstOrDefault(p =>
+                            p.Key.Equals("Name", StringComparison.OrdinalIgnoreCase)).Value ?? "part";
+                        partName = partName.ToLowerInvariant();
+                        var elemOverride = partParams.FirstOrDefault(p =>
+                            p.Key.Equals("ElementName", StringComparison.OrdinalIgnoreCase)).Value;
+                        var elemName = elemOverride ?? ElementNames.For(partName);
+
+                        parts.Add(new PartInfo(partName, elemName, innerHtml));
+                        i = t.EndExclusive;
+                        continue;
+                    }
+
+                    var placeholder = $"x-sc-inner-{scInnerIdx++}";
+                    scInners[placeholder] =
+                        $"  <!-- static content for crawlers -->\n" +
+                        $"  {innerHtml}";
+                    var sentinel =
+                        $"<x-shortcode name=\"{top.ComponentName}\" data-params='{top.DataParams}'>\n" +
+                        $"<!--{placeholder}-->\n" +
+                        $"</x-shortcode>";
+
+                    AppendRaw(stack, root, sentinel);
+                    i = t.EndExclusive;
+                    continue;
+                }
+            }
+        }
+
+        AppendRaw(stack, root, "\n");
+    }
+
     private static void Append(Stack<Frame> stack, StringBuilder root, string text)
     {
         if (stack.Count > 0) stack.Peek().Accumulator.AppendLine(text);
         else root.AppendLine(text);
+    }
+
+    private static void AppendRaw(Stack<Frame> stack, StringBuilder root, string text)
+    {
+        if (stack.Count > 0) stack.Peek().Accumulator.Append(text);
+        else root.Append(text);
+    }
+
+    private static TagToken? TryReadTagToken(string line, int openIdx)
+    {
+        if (line[openIdx] != '[') return null;
+
+        var closeIdx = line.IndexOf(']', openIdx + 1);
+        if (closeIdx < 0) return null;
+
+        var inner = line[(openIdx + 1)..closeIdx];
+        if (inner.Length == 0) return null;
+
+        if (inner[0] == '/')
+        {
+            var closeName = inner[1..].Trim();
+            if (!IsShortcodeName(closeName)) return null;
+            return new TagToken(
+                TagKind.Close,
+                closeName,
+                "",
+                line[openIdx..(closeIdx + 1)],
+                closeIdx + 1);
+        }
+
+        var tagBody = inner;
+        var tagBodyTrimmedEnd = tagBody.TrimEnd();
+        var isSelf = tagBodyTrimmedEnd.EndsWith("/", StringComparison.Ordinal);
+        if (isSelf)
+            tagBody = tagBodyTrimmedEnd[..^1];
+
+        var span = tagBody.AsSpan();
+        var j = 0;
+        while (j < span.Length && char.IsWhiteSpace(span[j])) j++;
+        if (j >= span.Length || !char.IsLetter(span[j])) return null;
+
+        var start = j;
+        j++;
+        while (j < span.Length && char.IsLetterOrDigit(span[j])) j++;
+        var name = span[start..j].ToString();
+        if (!IsShortcodeName(name)) return null;
+
+        var rawParams = j < span.Length ? span[j..].ToString() : "";
+        return new TagToken(
+            isSelf ? TagKind.Self : TagKind.Open,
+            name,
+            rawParams,
+            line[openIdx..(closeIdx + 1)],
+            closeIdx + 1);
+    }
+
+    private static bool IsShortcodeName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        if (!char.IsLetter(name[0])) return false;
+        for (int i = 1; i < name.Length; i++)
+            if (!char.IsLetterOrDigit(name[i])) return false;
+        return true;
+    }
+
+    private static bool IsLinkLikeContext(string line, int openIdx, int endExclusive)
+    {
+        // Markdown links/images should not be tokenized as shortcodes.
+        if (openIdx > 0 && line[openIdx - 1] == '!') return true;
+        if (endExclusive < line.Length && line[endExclusive] == '(') return true;
+        return false;
+    }
+
+    private static string NormalizeInnerMarkdown(string inner)
+    {
+        if (string.IsNullOrEmpty(inner)) return inner;
+
+        var lines = inner.ReplaceLineEndings("\n").Split('\n');
+        var normalized = lines.Select(NormalizeLeadingTabs).ToArray();
+
+        int? minIndent = null;
+        foreach (var ln in normalized)
+        {
+            if (string.IsNullOrWhiteSpace(ln)) continue;
+            int indent = 0;
+            while (indent < ln.Length && ln[indent] == ' ') indent++;
+            minIndent = minIndent is null ? indent : Math.Min(minIndent.Value, indent);
+            if (minIndent == 0) break;
+        }
+
+        if (minIndent is null || minIndent.Value == 0)
+            return string.Join("\n", normalized);
+
+        int remove = minIndent.Value;
+        for (int i = 0; i < normalized.Length; i++)
+        {
+            var ln = normalized[i];
+            if (ln.Length == 0) continue;
+            if (ln.Length >= remove) normalized[i] = ln[remove..];
+            else normalized[i] = "";
+        }
+
+        return string.Join("\n", normalized);
+    }
+
+    private static string NormalizeLeadingTabs(string line)
+    {
+        if (line.Length == 0) return line;
+
+        var sb = new StringBuilder(line.Length);
+        int i = 0;
+        while (i < line.Length)
+        {
+            var ch = line[i];
+            if (ch == '\t')
+            {
+                sb.Append("    ");
+                i++;
+                continue;
+            }
+            if (ch == ' ')
+            {
+                sb.Append(' ');
+                i++;
+                continue;
+            }
+            break;
+        }
+        if (i < line.Length) sb.Append(line[i..]);
+        return sb.ToString();
+    }
+
+    private static string ReplaceShortcodeInnerPlaceholders(string html, IReadOnlyDictionary<string, string> scInners)
+    {
+        bool changed;
+        do
+        {
+            changed = false;
+            foreach (var (placeholder, inner) in scInners)
+            {
+                var marker = $"<!--{placeholder}-->";
+                if (!html.Contains(marker, StringComparison.Ordinal))
+                    continue;
+
+                html = html.Replace(marker, inner, StringComparison.Ordinal);
+                changed = true;
+            }
+        }
+        while (changed);
+
+        return html;
     }
 
     /// <summary>Builds the data-params JSON for a shortcode sentinel from the raw params string.</summary>
