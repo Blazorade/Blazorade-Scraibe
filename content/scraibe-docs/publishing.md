@@ -18,13 +18,20 @@ When you ask Copilot to publish, it follows the structured instructions in `.git
 2. **Parse** the YAML frontmatter to extract metadata (title, description, slug, date, etc.).
 3. **Process shortcodes** — scan the body for `[ComponentName ...]` syntax and replace matched shortcodes with `<x-shortcode>` sentinel elements that the Blazor runtime will activate later.
 4. **Convert** the processed Markdown body to semantic HTML.
-5. **Wrap** the HTML in the page shell template from `{WebAppPath}/page-template.html`, substituting per-page tokens.
-6. **Write** the complete file to `{WebAppPath}/wwwroot/{path}.html`.
+5. **Rewrite relative URLs** in the generated HTML to root-relative form (for example `product1.jpg` becomes `/products/product1.jpg` when published from `content/products/home.md`). Relative links to Markdown files are also resolved to clean URLs (for example `product2.md` becomes `/products/product2`).
+6. **Wrap** the HTML in the page shell template from `{WebAppPath}/page-template.html`, substituting per-page tokens.
+7. **Write** the complete file to `{WebAppPath}/wwwroot/{path}.html`.
 
 After all pages are processed:
 
-7. **Delete stale files** — any `.html` files in `wwwroot/` that no longer have a corresponding source document are removed (except `index.html`, which is the Blazor app shell and is never touched).
-8. **Regenerate `sitemap.xml`** with an entry for every published page.
+8. **Delete stale files** — any `.html` files in `wwwroot/` that no longer have a corresponding source document are removed (except `index.html`, which is the Blazor app shell and is never touched).
+9. **Regenerate `sitemap.xml`** with an entry for every published page.
+10. **Sync static assets** — eligible non-Markdown files from `/content` are copied to `wwwroot/` at the same relative paths.
+11. **Update `staticwebapp.config.json`** — publish updates clean-URL rewrite routes and merges navigation fallback excludes additively.
+
+Content authors should write normal relative links and image references in Markdown so they work in local preview. The publisher rewrites them during publish; no manual root-relative URL maintenance is needed.
+
+Static assets are synced in the same publish run, so image and download links continue to resolve without manual copy steps.
 
 Navigation is not a separate generated file — it is embedded as a block of HTML inside each page during step 6 above. Every static `.html` file contains the full site navigation, so crawlers and AI bots see all the links immediately without running any JavaScript.
 
@@ -53,6 +60,8 @@ You do not need to tell Copilot *how* to publish — only *what* to publish. It 
 - How to embed the site navigation into each static HTML page.
 - How to regenerate the sitemap.
 - Which stale HTML files to clean up.
+- Which content-derived static assets to copy.
+- How `staticwebapp.config.json` is updated during full and partial publish runs.
 
 The instructions that govern all of this are version-controlled in `.github/instructions/publish.instructions.md`. You can read and modify them if you need to change how publishing behaves for your site.
 
@@ -80,8 +89,8 @@ The key tokens in the template:
 | `{title}` | Page title from frontmatter or first heading |
 | `{description}` | `description` frontmatter field |
 | `{slug}` | URL-relative path without extension |
-| `{redirect_to}` | Clean URL the SWA rewrite rule points to |
-| `{body_html}` | The converted HTML body of the page |
+| `{cleanSlug}` | Canonical clean URL path used in canonical/og tags |
+| `{layout_html}` | Fully composed layout HTML for the page |
 | `{keywords}` | `keywords` frontmatter field (line omitted if absent) |
 | `{author}` | `author` frontmatter field (line omitted if absent) |
 | `{date}` | `date` from frontmatter, or file last-modified timestamp |

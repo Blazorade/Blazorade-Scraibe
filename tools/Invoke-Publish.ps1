@@ -105,6 +105,7 @@ if (-not (Test-Path $assemblyPath)) {
 $contentPath   = Join-Path $RepoRoot 'content'
 $outputPath    = Join-Path $RepoRoot "$WebAppPath/wwwroot"
 $templatePath  = Join-Path $RepoRoot "$WebAppPath/page-template.html"
+$staticWebAppTemplatePath = Join-Path $RepoRoot "templates/web-app/wwwroot/staticwebapp.config.json"
 $layoutsPath   = Join-Path $RepoRoot "$ComponentLibraryPath/wwwroot/Layouts"
 $namespace     = "$ComponentLibraryName.ShortCodes"
 
@@ -131,6 +132,7 @@ $publishArgs = @(
     '--host',                $HostName,
     '--display-name',        $DisplayName,
     '--template',            $templatePath,
+    '--staticwebapp-template', $staticWebAppTemplatePath,
     '--assembly',            $assemblyPath,
     '--component-namespace', $namespace,
     '--layouts',             $layoutsPath

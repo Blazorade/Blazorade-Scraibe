@@ -1,4 +1,6 @@
 using Scraibe.Publisher;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 // ── Argument parsing ─────────────────────────────────────────────────────────
 
@@ -49,12 +51,205 @@ var opts = new PublishOptions(
     HostName:             Require(args, "--host"),
     DisplayName:          Require(args, "--display-name"),
     TemplatePath:         AbsPath(cwd, Require(args, "--template")),
+    StaticWebAppTemplatePath: AbsPath(cwd, Require(args, "--staticwebapp-template")),
     AssemblyPath:         AbsPath(cwd, Require(args, "--assembly")),
     ComponentNamespace:   Require(args, "--component-namespace"),
     LayoutsPath:          AbsPath(cwd, Require(args, "--layouts")),
     ExcludedPaths:        All(args, "--excluded"),
     BlazorScript:         blazorScript
 );
+
+static bool IsContentExcluded(PublishOptions options, string absPath)
+{
+    var rel = Path.GetRelativePath(options.ContentPath, absPath).Replace('\\', '/');
+    return options.ExcludedPaths.Any(ex =>
+        rel.Equals(ex, StringComparison.OrdinalIgnoreCase) ||
+        rel.StartsWith(ex.TrimEnd('/') + "/", StringComparison.OrdinalIgnoreCase));
+}
+
+static bool IsEligibleAssetFileName(string fileName)
+{
+    if (string.IsNullOrWhiteSpace(fileName)) return false;
+    return char.IsLetterOrDigit(fileName[0])
+        && !fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
+}
+
+static IEnumerable<string> EnumerateEligibleAssetRelativePaths(PublishOptions options)
+{
+    foreach (var sourceFile in Directory.GetFiles(options.ContentPath, "*", SearchOption.AllDirectories))
+    {
+        if (IsContentExcluded(options, sourceFile)) continue;
+
+        var fileName = Path.GetFileName(sourceFile);
+        if (!IsEligibleAssetFileName(fileName)) continue;
+
+        yield return Path.GetRelativePath(options.ContentPath, sourceFile).Replace('\\', '/');
+    }
+}
+
+static HashSet<string> DiscoverEligibleAssetFolderExcludes(PublishOptions options)
+{
+    var patterns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var rel in EnumerateEligibleAssetRelativePaths(options))
+    {
+        var folder = Path.GetDirectoryName(rel)?.Replace('\\', '/').Trim('/');
+        if (string.IsNullOrWhiteSpace(folder))
+        {
+            patterns.Add($"/{Path.GetFileName(rel)}");
+        }
+        else
+        {
+            patterns.Add($"/{folder}/*");
+        }
+    }
+    return patterns;
+}
+
+static (string Route, string Rewrite) ToRouteRewrite(PageInfo page)
+{
+    var slug = page.Slug.Replace('\\', '/').Trim('/');
+    var route = slug.Equals("home", StringComparison.OrdinalIgnoreCase)
+        ? "/"
+        : slug.EndsWith("/home", StringComparison.OrdinalIgnoreCase)
+            ? "/" + slug[..^5]
+            : "/" + slug;
+
+    route = string.IsNullOrWhiteSpace(route) ? "/" : route;
+    var rewrite = "/" + slug + ".html";
+
+    return (route, rewrite);
+}
+
+static JsonObject CreateRouteNode(string route, string rewrite)
+    => new()
+    {
+        ["route"] = route,
+        ["rewrite"] = rewrite
+    };
+
+static JsonObject ParseJsonObject(string json)
+    => JsonNode.Parse(json) as JsonObject ?? new JsonObject();
+
+static JsonObject LoadStaticWebAppConfigBase(PublishOptions options, bool useTemplateBase)
+{
+    var outputConfigPath = Path.Combine(options.OutputPath, "staticwebapp.config.json");
+    if (useTemplateBase && File.Exists(options.StaticWebAppTemplatePath))
+    {
+        return ParseJsonObject(File.ReadAllText(options.StaticWebAppTemplatePath));
+    }
+
+    if (File.Exists(outputConfigPath))
+    {
+        return ParseJsonObject(File.ReadAllText(outputConfigPath));
+    }
+
+    return new JsonObject
+    {
+        ["navigationFallback"] = new JsonObject
+        {
+            ["rewrite"] = "/index.html",
+            ["exclude"] = new JsonArray()
+        }
+    };
+}
+
+static int UpsertRoutes(JsonObject root, IEnumerable<PageInfo> pages, bool replaceAll)
+{
+    var routes = root["routes"] as JsonArray ?? new JsonArray();
+    root["routes"] = routes;
+
+    var byRoute = new Dictionary<string, JsonObject>(StringComparer.OrdinalIgnoreCase);
+    foreach (var item in routes.OfType<JsonObject>())
+    {
+        var key = item["route"]?.GetValue<string>();
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+            byRoute[key] = item;
+        }
+    }
+
+    if (replaceAll)
+    {
+        routes.Clear();
+        byRoute.Clear();
+    }
+
+    var changed = 0;
+    foreach (var page in pages)
+    {
+        var (route, rewrite) = ToRouteRewrite(page);
+        if (byRoute.TryGetValue(route, out var existing))
+        {
+            var currentRewrite = existing["rewrite"]?.GetValue<string>() ?? "";
+            if (!string.Equals(currentRewrite, rewrite, StringComparison.Ordinal))
+            {
+                existing["rewrite"] = rewrite;
+                changed++;
+            }
+        }
+        else
+        {
+            var node = CreateRouteNode(route, rewrite);
+            routes.Add(node);
+            byRoute[route] = node;
+            changed++;
+        }
+    }
+
+    return changed;
+}
+
+static int MergeNavigationFallbackExclusions(JsonObject root, IEnumerable<string> excludePatterns)
+{
+    var navigationFallback = root["navigationFallback"] as JsonObject ?? new JsonObject();
+    root["navigationFallback"] = navigationFallback;
+
+    if (navigationFallback["exclude"] is not JsonArray excludeArray)
+    {
+        excludeArray = new JsonArray();
+        navigationFallback["exclude"] = excludeArray;
+    }
+
+    var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var item in excludeArray)
+    {
+        if (item is JsonValue value)
+        {
+            var entry = value.GetValue<string>();
+            if (!string.IsNullOrWhiteSpace(entry))
+            {
+                existing.Add(entry);
+            }
+        }
+    }
+
+    var added = 0;
+    foreach (var pattern in excludePatterns
+        .Select(e => e.Trim())
+        .Where(e => e.Length > 0)
+        .Select(e => e.Replace('\\', '/'))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(e => e, StringComparer.OrdinalIgnoreCase))
+    {
+        if (existing.Contains(pattern))
+        {
+            continue;
+        }
+
+        excludeArray.Add(pattern);
+        existing.Add(pattern);
+        added++;
+    }
+
+    return added;
+}
+
+static void SaveStaticWebAppConfig(PublishOptions options, JsonObject root)
+{
+    var outputConfigPath = Path.Combine(options.OutputPath, "staticwebapp.config.json");
+    var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+    File.WriteAllText(outputConfigPath, root.ToJsonString(jsonOptions));
+}
 
 Console.WriteLine($"Scraibe Publisher");
 Console.WriteLine($"  Content : {opts.ContentPath}");
@@ -173,6 +368,16 @@ if (selectedPages.Count > 0)
         Console.WriteLine($"\n  ✓  sitemap.xml generated ({partialPublished.Count} entries).");
     }
 
+    var partialConfig = LoadStaticWebAppConfigBase(opts, useTemplateBase: false);
+    var partialRouteUpdates = UpsertRoutes(partialConfig, partialPublished, replaceAll: false);
+    var partialAssetFolderExcludes = DiscoverEligibleAssetFolderExcludes(opts);
+    var partialAddedExcludes = MergeNavigationFallbackExclusions(partialConfig, partialAssetFolderExcludes);
+    if (partialRouteUpdates > 0 || partialAddedExcludes > 0)
+    {
+        SaveStaticWebAppConfig(opts, partialConfig);
+        Console.WriteLine($"\n  ✓  staticwebapp.config.json updated ({partialRouteUpdates} route change(s), {partialAddedExcludes} exclude pattern(s) added).");
+    }
+
     Console.WriteLine($"""
 
 ── Publish summary ──────────────────────────────────
@@ -198,20 +403,12 @@ Console.WriteLine("\nScanning content...");
 var allMdFiles = Directory.GetFiles(opts.ContentPath, "*.md", SearchOption.AllDirectories);
 
 // Apply exclusions
-bool IsExcluded(string absPath)
-{
-    var rel = Path.GetRelativePath(opts.ContentPath, absPath).Replace('\\', '/');
-    return opts.ExcludedPaths.Any(ex =>
-        rel.Equals(ex, StringComparison.OrdinalIgnoreCase) ||
-        rel.StartsWith(ex.TrimEnd('/') + "/", StringComparison.OrdinalIgnoreCase));
-}
-
 // Skip _name.md part files from the page manifest — they are resolved per-page
 bool IsPartFile(string absPath)
     => Path.GetFileName(absPath).StartsWith('_');
 
 var candidates = allMdFiles
-    .Where(f => !IsExcluded(f) && !IsPartFile(f))
+    .Where(f => !IsContentExcluded(opts, f) && !IsPartFile(f))
     .ToList();
 
 // ── Validate: no index.md, no subdir named home, no flat+subdir conflicts ─────
@@ -328,13 +525,59 @@ var sitemapOutput = Path.Combine(opts.OutputPath, "sitemap.xml");
 SitemapGenerator.Generate(published, sitemapOutput, opts.HostName);
 Console.WriteLine($"\n  ✓  sitemap.xml updated ({published.Count} entries).");
 
+// ── Static asset sync ────────────────────────────────────────────────────────
+
+Console.WriteLine("\nSyncing static assets...");
+
+var copiedAssets     = 0;
+
+foreach (var sourceFile in Directory.GetFiles(opts.ContentPath, "*", SearchOption.AllDirectories))
+{
+    if (IsContentExcluded(opts, sourceFile)) continue;
+
+    var fileName = Path.GetFileName(sourceFile);
+    if (!IsEligibleAssetFileName(fileName)) continue;
+
+    var relative = Path.GetRelativePath(opts.ContentPath, sourceFile);
+    var destination = Path.Combine(opts.OutputPath, relative);
+    var destinationDir = Path.GetDirectoryName(destination);
+    if (!string.IsNullOrEmpty(destinationDir))
+        Directory.CreateDirectory(destinationDir);
+
+    File.Copy(sourceFile, destination, overwrite: true);
+    copiedAssets++;
+}
+
+Console.WriteLine($"  ✓  static assets synced ({copiedAssets} copied).");
+
+var existingConfig = LoadStaticWebAppConfigBase(opts, useTemplateBase: false);
+var existingExcludePatterns = new List<string>();
+if (existingConfig["navigationFallback"] is JsonObject existingFallback
+    && existingFallback["exclude"] is JsonArray existingExcludes)
+{
+    foreach (var item in existingExcludes.OfType<JsonValue>())
+    {
+        var value = item.GetValue<string>();
+        if (!string.IsNullOrWhiteSpace(value)) existingExcludePatterns.Add(value);
+    }
+}
+
+var rebuiltConfig = LoadStaticWebAppConfigBase(opts, useTemplateBase: true);
+var routeUpdates = UpsertRoutes(rebuiltConfig, published, replaceAll: true);
+var assetFolderExcludes = DiscoverEligibleAssetFolderExcludes(opts);
+var preservedExcludeAdds = MergeNavigationFallbackExclusions(rebuiltConfig, existingExcludePatterns);
+var assetExcludeAdds = MergeNavigationFallbackExclusions(rebuiltConfig, assetFolderExcludes);
+SaveStaticWebAppConfig(opts, rebuiltConfig);
+Console.WriteLine($"  ✓  staticwebapp.config.json updated ({routeUpdates} route(s), {assetExcludeAdds} asset folder exclusion(s), {preservedExcludeAdds} preserved exclusion(s) added).");
+
 // ── Stale file cleanup ───────────────────────────────────────────────────────
 
 Console.WriteLine("\nCleaning up stale files...");
 var publishedOutputs = new HashSet<string>(
     published.Select(p => p.OutputPath), StringComparer.OrdinalIgnoreCase);
 
-var deleted = new List<string>();
+var deletedHtml = new List<string>();
+
 foreach (var htmlFile in Directory.GetFiles(opts.OutputPath, "*.html", SearchOption.AllDirectories))
 {
     var name = Path.GetFileName(htmlFile);
@@ -342,7 +585,7 @@ foreach (var htmlFile in Directory.GetFiles(opts.OutputPath, "*.html", SearchOpt
     if (!publishedOutputs.Contains(htmlFile))
     {
         File.Delete(htmlFile);
-        deleted.Add(Path.GetRelativePath(opts.OutputPath, htmlFile));
+        deletedHtml.Add(Path.GetRelativePath(opts.OutputPath, htmlFile));
     }
 }
 
@@ -354,10 +597,13 @@ foreach (var dir in Directory.GetDirectories(opts.OutputPath, "*", SearchOption.
         Directory.Delete(dir);
 }
 
-if (deleted.Count > 0)
-    foreach (var d in deleted) Console.WriteLine($"  🗑  deleted: {d}");
-else
+if (deletedHtml.Count == 0)
     Console.WriteLine("  No stale files.");
+else
+{
+    foreach (var d in deletedHtml)
+        Console.WriteLine($"  🗑  deleted html: {d}");
+}
 
 // ── Summary ───────────────────────────────────────────────────────────────────
 
@@ -365,8 +611,9 @@ Console.WriteLine($"""
 
 ── Publish summary ──────────────────────────────────
   Pages published : {published.Count}
+  Assets copied   : {copiedAssets}
   Errors          : {errors.Count}
-  Stale deleted   : {deleted.Count}
+    Stale deleted   : {deletedHtml.Count}
 ─────────────────────────────────────────────────────
 """);
 

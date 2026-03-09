@@ -68,6 +68,26 @@ The published URL mirrors the `/content` folder structure exactly. Subdirectorie
 
 If the `slug` frontmatter field is set, it overrides the filename (but not the directory path).
 
+## Static Assets
+
+You can place non-Markdown files next to your Markdown content in `/content` (for example images, PDF files, or downloadable attachments). During publish, eligible static assets are copied to `wwwroot/` at the same relative path.
+
+Examples:
+
+| Source file | Published path |
+|-------------|----------------|
+| `content/img/logo.png` | `wwwroot/img/logo.png` |
+| `content/scraibe-docs/guide.pdf` | `wwwroot/scraibe-docs/guide.pdf` |
+
+Eligibility rule:
+
+- The filename must start with a letter or digit.
+- The filename must not end with `.md`.
+
+This means files like `_right-panel.md` and `.config.json` are excluded automatically.
+
+Author links in Markdown using normal relative paths (for example `![Screenshot](screenshot.png)` or `[Download PDF](guide.pdf)`). The publish pipeline rewrites those links in generated HTML to root-relative URLs that match the copied asset location.
+
 ## Heading Conventions
 
 - Use exactly one `#` heading per page. It becomes the `<h1>` and the page title if `title` is not set in frontmatter.

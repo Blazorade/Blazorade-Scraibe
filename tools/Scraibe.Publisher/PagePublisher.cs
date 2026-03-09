@@ -66,6 +66,9 @@ static class PagePublisher
             foreach (var (placeholder, innerHtml) in scResult.ShortcodeInners)
                 bodyHtml = bodyHtml.Replace($"<!--{placeholder}-->", innerHtml);
 
+            var contentRelativeDir = Path.GetDirectoryName(page.RelativePath)?.Replace('\\', '/') ?? "";
+            bodyHtml = UrlRewriter.Rewrite(bodyHtml, contentRelativeDir);
+
             bodyHtml = PostProcessHtml(bodyHtml);
 
             // 7. Merge parts: [Part] shortcodes → scoped _name.md files → page body → nav
@@ -229,18 +232,9 @@ static class PagePublisher
     // ── HTML post-processing ────────────────────────────────────────────────────
 
     private static readonly Regex RxLink    = new(@"<a\s[^>]*href=""(https?://[^""]+)""[^>]*>", RegexOptions.IgnoreCase);
-    private static readonly Regex RxMdLink  = new(@"href=""([^""]+\.md)(#[^""]*)?""",            RegexOptions.IgnoreCase);
 
     private static string PostProcessHtml(string html)
     {
-        // Rewrite .md links → .html (preserve #fragments)
-        html = RxMdLink.Replace(html, m =>
-        {
-            var path = m.Groups[1].Value.Replace(".md", ".html");
-            var frag = m.Groups[2].Value;
-            return $"href=\"{path}{frag}\"";
-        });
-
         // External links: add target/_blank + rel
         html = RxLink.Replace(html, m =>
         {

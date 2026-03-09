@@ -10,11 +10,13 @@ This file is the authoritative index of capabilities. When the user asks what yo
 - **File structure and routing** — advise on where a page should live, what URL it will get, and the rules around reserved filenames (`home.md`, blocked `index.md`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
 - **Content structure and information architecture** — advise on how to organise a section into pages, when a flat file should become a folder, and how the resulting navigation will look.
 - **Shortcodes** — embed live Blazor components in Markdown using self-closing or wrapping shortcode syntax, including nested and multi-line forms. See [content/scraibe-docs/shortcodes/home.md](../../content/scraibe-docs/shortcodes/home.md).
+- **Relative links in Markdown** — author normal relative links and image paths that work in Markdown preview; the publish pipeline rewrites them to root-relative URLs in generated HTML and resolves `.md` links to clean URLs automatically. See [content/scraibe-docs/publishing.md](../../content/scraibe-docs/publishing.md).
+- **Static assets** — place images and other files alongside Markdown under `/content`; eligible assets are copied to `wwwroot/` at the same relative path on publish, and links are rewritten to root-relative URLs.
 - **Mermaid diagrams** — generate Mermaid markup from a plain-language description, or embed/edit diagrams directly. Supported types: flowcharts, sequence diagrams, class diagrams, state machines, ER diagrams, Gantt charts, pie charts, and more. See [content/scraibe-docs/mermaid.md](../../content/scraibe-docs/mermaid.md).
 
 ## Publishing
 
-- **Running the publish pipeline** — regenerate all static HTML bootstrappers, `sitemap.xml`, `staticwebapp.config.json`, and `NavMenu.razor` from the Markdown sources. See [content/scraibe-docs/publishing.md](../../content/scraibe-docs/publishing.md).
+- **Running the publish pipeline** — regenerate all static HTML bootstrappers and `sitemap.xml`, sync eligible static assets from `/content`, and update `staticwebapp.config.json` route/exclude settings from publish output. See [content/scraibe-docs/publishing.md](../../content/scraibe-docs/publishing.md).
 - **Excluding content** — manage the exclusion list in `blazorade.config.md` to skip pages from publishing without deleting their source files.
 
 ## Site building

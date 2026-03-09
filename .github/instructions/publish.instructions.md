@@ -28,7 +28,7 @@ Do not hardcode any of these values. Always read them from `blazorade.config.md`
 .\tools\Invoke-Publish.ps1
 ```
 
-The script reads `blazorade.config.md`, builds the component library, then hands everything off to `tools/Scraibe.Publisher` — a .NET console tool that owns the complete pipeline: content walking, shortcode processing, Markdown→HTML conversion, template application, nav generation, sitemap generation, and stale-file cleanup. No page HTML is generated in the chat context.
+The script reads `blazorade.config.md`, builds the component library, then hands everything off to `tools/Scraibe.Publisher` — a .NET console tool that owns the complete pipeline: content walking, shortcode processing, Markdown→HTML conversion, template application, nav generation, sitemap generation, static asset sync, staticwebapp route/exclude updates, and stale-HTML cleanup. No page HTML is generated in the chat context.
 
 If the script reports errors, read the output, fix the problem in the relevant source file, and re-run. Do **not** attempt to replicate the pipeline manually.
 
@@ -84,6 +84,8 @@ The sections below document the rules implemented by `tools/Scraibe.Publisher`. 
 6. Write the output to `{WebAppPath}/wwwroot/{relative-path-without-extension}.html`, preserving subdirectory structure. Always write the complete file content in a single full overwrite — never patch or partially update an existing file.
 7. **Delete stale HTML files** — remove any `.html` files under `{WebAppPath}/wwwroot/` that do not correspond to a page in the current publish set.
 8. After all pages are processed, generate `{WebAppPath}/wwwroot/sitemap.xml`.
+9. Copy eligible static assets from `/content` to `{WebAppPath}/wwwroot/` preserving relative paths.
+10. Update `{WebAppPath}/wwwroot/staticwebapp.config.json` route rewrites and merge navigationFallback excludes.
 
 ## Excluded content
 
@@ -158,9 +160,9 @@ Each generated page is built from the single page shell template at `{WebAppPath
 
 The template uses two kinds of tokens:
 
-- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{body_html}`, `{slug}`, `{HostName}` (from `blazorade.config.md`), `{layout}`, `{parts_html}`. Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page. The `{layout}` token is **never omitted**: use the PascalCase-normalised layout name resolved from frontmatter, falling back to `Default` when the field is absent. The `{parts_html}` token is replaced with the serialised sibling part elements for the page (see **Content parts** below); replaced with an empty string when the page has no parts beyond `main`.
+- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{slug}`, `{HostName}` (from `blazorade.config.md`), `{layout}`, `{layout_html}`, `{cleanSlug}`, `{blazor_script}`. Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page. The `{layout}` token is **never omitted**: use the PascalCase-normalised layout name resolved from frontmatter, falling back to `Default` when the field is absent.
 
-The `{body_html}` placeholder is replaced with the fully converted and shortcode-processed HTML content of the page.
+The `{layout_html}` placeholder is replaced with the fully composed layout HTML for the page (converted body + resolved parts).
 
 ## HTML quality requirements for the `<main>` body
 
@@ -175,7 +177,7 @@ The HTML inside `<main>` must be semantic, accessible, and optimised for compreh
 - Do **not** include any Blazor-specific attributes or class names — the HTML must be standalone.
 - **External links:** Any `<a>` element whose `href` starts with `http://` or `https://` is external and must have `target="_blank" rel="noopener noreferrer"` added. This applies uniformly to links generated from Markdown `[text](https://example.com)` syntax, bare URL autolinking, and any other source. Since all intra-site links are relative paths, an absolute URL unambiguously identifies an external resource.
 - **Bare URL autolinking:** Any bare absolute URL (`http://` or `https://`) that appears as plain text in non-code Markdown content must be converted to an `<a href="...">...</a>` element using the URL itself as both the `href` and the link text. Apply external-link treatment as defined above.
-- **Internal link rewriting:** After Markdown-to-HTML conversion, scan every `<a href="...">` in the generated body HTML. Any `href` that is a relative path ending in `.md` must be rewritten to end in `.html` instead, preserving any `#fragment` suffix (e.g. `./about.md` → `./about.html`, `./about.md#section` → `./about.html#section`). Absolute URLs and non-`.md` relative links are left unchanged. Do not condense `home.html` paths — `../products/home.html` is the correct canonical URL for that page and must be preserved as-is.
+- **Internal link rewriting:** After Markdown-to-HTML conversion, scan every `<a href="...">` in the generated body HTML. Any relative `href` ending in `.md` must be rewritten to the clean URL form by stripping `.md` and any trailing `/home`, preserving query/fragment suffixes (e.g. `./about.md` → `/about`, `./products/home.md#specs` → `/products#specs`). Absolute URLs and non-`.md` relative links are left unchanged.
 
 ### Tag-balancing rule for shortcode sentinels
 
@@ -496,7 +498,12 @@ The following examples illustrate how source documents map to generated output f
 
 ## staticwebapp.config.json
 
-`{WebAppPath}/wwwroot/staticwebapp.config.json` is **not managed by the publish pipeline**. It contains only the `navigationFallback` block (falling back to `/index.html`) and the asset `exclude` list. Do not modify this file during publishing.
+`{WebAppPath}/wwwroot/staticwebapp.config.json` is managed by the publish pipeline.
+
+- **Full publish**: rebuild from `templates/web-app/wwwroot/staticwebapp.config.json` as base, regenerate all page rewrite routes, and merge existing plus discovered asset-folder excludes.
+- **Partial publish**: update only affected routes and merge newly discovered asset-folder excludes additively; never remove existing excludes.
+
+This keeps clean-URL route rewrites aligned with published pages while preserving manual or historical exclusions.
 
 ## Summary of what to report after publishing
 
@@ -506,4 +513,5 @@ When the publishing run is complete, report:
 - List of any skipped/blocked files and the reason.
 - List of any stale `.html` files deleted during cleanup (or confirmation that none needed to be deleted).
 - Confirmation that `sitemap.xml` was updated.
+- Confirmation that `staticwebapp.config.json` was updated (routes and/or excludes) when applicable.
 - The full output path of every file written.

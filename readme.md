@@ -37,6 +37,7 @@ It is not a generator. It is a collaborator that already knows how your site wor
 ## What you get
 
 - **SEO and AIO out of the box** — Static HTML on every page. Crawlers and AI bots see real content, not a JavaScript shell. No [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models#blazor-server) required.
+- **Content-linked static assets** — Place images and files next to Markdown in `/content`; publish copies them to matching paths in `wwwroot`.
 - **Shortcodes — [WordPress power](https://codex.wordpress.org/Shortcode_API), Blazor quality** — Embed fully interactive [Razor components](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/) directly in Markdown using a simple bracket syntax. Pure .NET, no sandboxing.
 - **Zero JavaScript. Fully responsive. Fully interactive.** — No npm, no bundlers, no JS config files. You write C# and Markdown. Blazorade handles the rest.
 - **Free hosting** — Designed for [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static): clean-URL routing, custom domains, and HTTPS on the free tier.
