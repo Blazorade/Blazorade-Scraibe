@@ -88,6 +88,18 @@ This means files like `_right-panel.md` and `.config.json` are excluded automati
 
 Author links in Markdown using normal relative paths (for example `![Screenshot](screenshot.png)` or `[Download PDF](guide.pdf)`). The publish pipeline rewrites those links in generated HTML to root-relative URLs that match the copied asset location.
 
+## Code Blocks
+
+Use fenced code blocks with three backticks (or tildes) for all code examples.
+
+```md
+~~~csharp
+var message = "Hello";
+~~~
+```
+
+Indented code blocks (created by leading tabs or spaces) are intentionally not supported by the publish pipeline.
+
 ## Heading Conventions
 
 - Use exactly one `#` heading per page. It becomes the `<h1>` and the page title if `title` is not set in frontmatter.

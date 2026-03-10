@@ -1,0 +1,17 @@
+
+.blz-layout-landing {
+	[x-part="hero"] .carousel {
+		@extend .text-bg-primary;
+		@extend .p-5;
+
+		color: $light;
+
+		a,
+		a:visited,
+		a:hover,
+		a:focus,
+		a:active {
+			color: $light;
+		}
+	}
+}

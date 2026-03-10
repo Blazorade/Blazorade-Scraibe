@@ -23,7 +23,7 @@ Content for this part goes here.
 Opening and closing tags may be adjacent to other shortcode tags on the same line when balanced. For example:
 
 ```
-[Part Name="image-header"][Carousel][Slide][Heading Display="1"]Blazorade[/Heading][/Slide][/Carousel][/Part]
+[Part Name="hero"][Carousel][Slide][Heading Display="1"]Blazorade[/Heading][/Slide][/Carousel][/Part]
 ```
 
 Leading indentation before shortcode tags is allowed.

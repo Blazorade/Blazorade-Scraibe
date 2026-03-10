@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Markdig;
 
 namespace Scraibe.Publisher;
 
@@ -14,10 +13,6 @@ static class ShortcodeProcessor
 {
     // Regex patterns — used for fenced block detection only.
     private static readonly Regex RxFenceOpen  = new(@"^(\s*)(```+|~~~+)(.*)?$",                       RegexOptions.Compiled);
-
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
-        .UseAdvancedExtensions()
-        .Build();
 
     // Stack frame for wrapping shortcodes. RawParams preserves opening-tag params
     // so [Part] can resolve Name/ElementName when the closing tag is encountered.
@@ -234,7 +229,7 @@ static class ShortcodeProcessor
                     stack.Pop();
                     var innerAccum = top.Accumulator.ToString().TrimEnd('\n');
                     var normalizedInner = NormalizeInnerMarkdown(innerAccum);
-                    var innerHtml = Markdig.Markdown.ToHtml(normalizedInner, Pipeline).Trim();
+                    var innerHtml = MarkdownRenderer.ToHtml(normalizedInner).Trim();
 
                     // Inline wrappers should keep previous behavior where a single paragraph
                     // does not force an extra <p> wrapper around simple text content.

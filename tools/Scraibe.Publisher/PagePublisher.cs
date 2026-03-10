@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using AngleSharp.Html.Parser;
-using Markdig;
 
 namespace Scraibe.Publisher;
 
@@ -12,10 +11,6 @@ namespace Scraibe.Publisher;
 /// </summary>
 static class PagePublisher
 {
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
-        .UseAdvancedExtensions()
-        .Build();
-
     /// <summary>
     /// Publishes one page. Returns a <see cref="PageResult"/> — never throws.
     /// The caller provides pre-built nav HTML so every page gets the same navbar.
@@ -54,9 +49,19 @@ static class PagePublisher
             // 5. Process shortcodes (returns processed markdown + [Part] entries)
             var scResult = ShortcodeProcessor.Process(body, registry, page.SourcePath, opts);
             var inlineParts = scResult.Parts;
+            var contentRelativeDir = Path.GetDirectoryName(page.RelativePath)?.Replace('\\', '/') ?? "";
+
+            // Inline [Part] shortcode content must flow through the same URL rewrite
+            // and post-process path as page body/scoped parts.
+            inlineParts = inlineParts
+                .Select(p => new PartInfo(
+                    p.Name,
+                    p.ElementName,
+                    PostProcessHtml(UrlRewriter.Rewrite(p.InnerHtml, contentRelativeDir))))
+                .ToList();
 
             // 6. Convert processed markdown to HTML
-            var bodyHtml = Markdig.Markdown.ToHtml(scResult.ProcessedMarkdown, Pipeline);
+            var bodyHtml = MarkdownRenderer.ToHtml(scResult.ProcessedMarkdown);
 
             // Inject wrapping-shortcode inner HTML now that Markdig has run.
             // This must happen BEFORE PostProcessHtml so that .md links inside shortcode
@@ -66,7 +71,6 @@ static class PagePublisher
             foreach (var (placeholder, innerHtml) in scResult.ShortcodeInners)
                 bodyHtml = bodyHtml.Replace($"<!--{placeholder}-->", innerHtml);
 
-            var contentRelativeDir = Path.GetDirectoryName(page.RelativePath)?.Replace('\\', '/') ?? "";
             bodyHtml = UrlRewriter.Rewrite(bodyHtml, contentRelativeDir);
 
             bodyHtml = PostProcessHtml(bodyHtml);
@@ -198,7 +202,7 @@ static class PagePublisher
 
                 // Reusable parts should follow the same processing path as page main content.
                 var scResult = ShortcodeProcessor.Process(body, registry, mdFile, opts);
-                var partHtml = Markdig.Markdown.ToHtml(scResult.ProcessedMarkdown, Pipeline);
+                var partHtml = MarkdownRenderer.ToHtml(scResult.ProcessedMarkdown);
 
                 foreach (var (placeholder, inner) in scResult.ShortcodeInners)
                     partHtml = partHtml.Replace($"<!--{placeholder}-->", inner);

@@ -1,0 +1,15 @@
+// Global carousel behavior tweaks.
+// Keep controls at a fixed gutter width and reserve matching content space.
+
+.carousel {
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: $carousel-control-fixed-width;
+    }
+
+    &:has(.carousel-control-prev, .carousel-control-next) {
+        .carousel-inner {
+            padding-inline: $carousel-control-fixed-width;
+        }
+    }
+}
