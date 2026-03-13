@@ -14,6 +14,13 @@
     <PackageReference Include="Markdig" Version="0.40.0" />
     <!-- AngleSharp: HTML parsing and DOM manipulation for layout slot injection -->
     <PackageReference Include="AngleSharp" Version="1.4.0" />
+    <!-- Denomica JSON utilities for dictionary-based parsing with typed values -->
+    <PackageReference Include="Denomica.Text.Json" Version="1.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Scraibe.Abstractions\Scraibe.Abstractions.csproj" />
+    <ProjectReference Include="..\Scraibe.ContentComposition\Scraibe.ContentComposition.csproj" />
   </ItemGroup>
 
 </Project>

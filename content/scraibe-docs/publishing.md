@@ -1,61 +1,74 @@
 ---
 title: Publishing
-description: How the Blazorade Scraibe publish workflow turns Markdown source files into static HTML pages using GitHub Copilot.
-keywords: publishing, publish, static HTML, GitHub Copilot, sitemap, navigation, wwwroot
+description: How the Blazorade Scraibe publish workflow turns Markdown source files into static HTML pages using a PowerShell script and Copilot skill.
+keywords: publishing, publish, static HTML, GitHub Copilot, sitemap, navigation, wwwroot, skill
 changefreq: monthly
 priority: 0.8
 ---
 
 # Publishing
 
-Publishing is the process of converting your Markdown source files in `/content` into static HTML files in `wwwroot/`. The entire workflow is driven by GitHub Copilot — there are no build scripts, CLI commands, or manual steps required.
+Publishing is the process of converting your Markdown source files in `/content` into static HTML files in `wwwroot/`. The workflow is driven by a combination of a GitHub Copilot skill (`.github/skills/publish/skill.md`) and a PowerShell script (`tools/Invoke-Publish.ps1`) that delegates to a .NET console tool. Copilot detects your publish request, chooses the correct mode (full or partial), and invokes the script — the entire HTML generation pipeline runs inside the tool, not in chat context.
 
-## How It Works
+## How it works
 
-When you ask Copilot to publish, it follows the structured instructions in `.github/instructions/publish.instructions.md`. The process for each page is:
+When you ask Copilot to publish, it reads `.github/skills/publish/skill.md` to determine the correct mode and invokes the script. The script reads `.config.json`, builds the component library, and hands everything off to `tools/Scraibe.Publisher` — a .NET console tool that owns the complete pipeline:
 
-1. **Read** the Markdown source file from disk.
+1. **Walk** all `.md` files recursively under `/content`.
 2. **Parse** the YAML frontmatter to extract metadata (title, description, slug, date, etc.).
-3. **Process shortcodes** — scan the body for `[ComponentName ...]` syntax and replace matched shortcodes with `<x-shortcode>` sentinel elements that the Blazor runtime will activate later.
+3. **Process shortcodes** — scan the body for `[ComponentName ...]` syntax and replace matched shortcodes with `<x-shortcode>` sentinel elements that the Blazor runtime activates later.
 4. **Convert** the processed Markdown body to semantic HTML.
 5. **Rewrite relative URLs** in the generated HTML to root-relative form (for example `product1.jpg` becomes `/products/product1.jpg` when published from `content/products/home.md`). Relative links to Markdown files are also resolved to clean URLs (for example `product2.md` becomes `/products/product2`).
-6. **Wrap** the HTML in the page shell template from `{WebAppPath}/page-template.html`, substituting per-page tokens.
-7. **Write** the complete file to `{WebAppPath}/wwwroot/{path}.html`.
+6. **Compose** the HTML using the layout template from `{ComponentLibraryPath}/wwwroot/Layouts/`, resolving parts from `_name.md` files and `[Part]` shortcodes.
+7. **Wrap** the composed layout in the page shell template from `{WebAppPath}/page-template.html`, substituting per-page tokens.
+8. **Write** the complete file to `{WebAppPath}/wwwroot/{path}.html`.
 
 After all pages are processed:
 
-8. **Delete stale files** — any `.html` files in `wwwroot/` that no longer have a corresponding source document are removed (except `index.html`, which is the Blazor app shell and is never touched).
-9. **Regenerate `sitemap.xml`** with an entry for every published page.
-10. **Sync static assets** — eligible non-Markdown files from `/content` are copied to `wwwroot/` at the same relative paths.
-11. **Update `staticwebapp.config.json`** — publish updates clean-URL rewrite routes and merges navigation fallback excludes additively.
+9. **Delete stale files** — any `.html` files in `wwwroot/` that no longer have a corresponding source document are removed (except `index.html`, which is the Blazor app shell and is never touched).
+10. **Regenerate `sitemap.xml`** with an entry for every published page.
+11. **Sync static assets** — eligible non-Markdown files from `/content` are copied to `wwwroot/` at the same relative paths.
+12. **Update `staticwebapp.config.json`** — publish updates clean-URL rewrite routes and merges navigation fallback excludes additively.
 
 Content authors should write normal relative links and image references in Markdown so they work in local preview. The publisher rewrites them during publish; no manual root-relative URL maintenance is needed.
 
-Static assets are synced in the same publish run, so image and download links continue to resolve without manual copy steps.
+## Running a publish
 
-Navigation is not a separate generated file — it is embedded as a block of HTML inside each page during step 6 above. Every static `.html` file contains the full site navigation, so crawlers and AI bots see all the links immediately without running any JavaScript.
+Open a Copilot chat in VS Code (`Ctrl+Alt+I` / `Cmd+Alt+I`) and describe what you want to publish. In Copilot skill mode, you can invoke the skill directly with `/publish` and include intent such as `/publish current page`, `/publish attached pages`, or `/publish content/about.md`. Copilot reads `.github/skills/publish/skill.md`, loads the site configuration from `.config.json`, and invokes the appropriate command.
 
-## Running a Publish
+### Full publish
 
-There are no build scripts, no CLI commands, and no pipelines to configure. Publishing is a conversation.
+A plain publish request with no specific page named always triggers a full publish.
 
-Open a Copilot chat in VS Code (`Ctrl+Alt+I` / `Cmd+Alt+I`) and simply describe what you want to publish. Copilot reads the structured instructions in `.github/instructions/publish.instructions.md`, loads the site configuration from `blazorade.config.md`, and does the rest autonomously.
-
-Some examples of things you can say:
+Examples of full publish requests:
 
 - *"Please publish my site."*
 - *"Publish all content."*
+- *"Run publish."*
+- *"Regenerate the site."*
+
+### Partial publish
+
+When you name specific pages, Copilot runs a partial publish. Only the specified pages' HTML files are regenerated, and their entries in `sitemap.xml` are patched (creating `sitemap.xml` if it does not exist). Partial publish does not delete stale `.html` files or sync static assets, but it may update `staticwebapp.config.json` when clean-URL routes or navigation fallback excludes change.
+
+Examples of partial publish requests:
+
+- *"Publish the current page."*
 - *"Publish content/about.md."*
+- *"Publish these files."* (with files attached to chat)
+- *"Publish the pages I have open."*
 
-Copilot will tell you what it is about to do before it starts, process each file, and give you a summary of everything that was written, updated, or deleted when it is done.
+Copilot builds the `-Pages` argument from your request and runs:
 
-### What Copilot Does Autonomously
+```powershell
+.\tools\Invoke-Publish.ps1 -Pages "about.md,scraibe-docs/mermaid.md"
+```
 
-You do not need to tell Copilot *how* to publish — only *what* to publish. It already knows:
+**Note:** partial publish requires that each page has been published at least once by a prior full publish run. If a page's `.html` file does not yet exist in `wwwroot/`, the script aborts with a pre-flight error. Run a full publish first.
 
 - How to parse frontmatter and derive titles, slugs, and dates.
 - How to resolve shortcodes against your component library.
-- Which files are excluded based on `blazorade.config.md`.
+- Which files are excluded based on `.config.json`.
 - How to build the page shell from `page-template.html`.
 - How to embed the site navigation into each static HTML page.
 - How to regenerate the sitemap.
@@ -63,20 +76,38 @@ You do not need to tell Copilot *how* to publish — only *what* to publish. It 
 - Which content-derived static assets to copy.
 - How `staticwebapp.config.json` is updated during full and partial publish runs.
 
-The instructions that govern all of this are version-controlled in `.github/instructions/publish.instructions.md`. You can read and modify them if you need to change how publishing behaves for your site.
+To build the component library in Release mode:
 
-## Excluded Content
+```powershell
+.\tools\Invoke-Publish.ps1 -Configuration Release
+```
 
-You can prevent specific files or directories from being published by adding them to `blazorade.config.md`:
+You can ask Copilot to use this by saying *"publish the site with a release build"* or similar.
 
-```markdown
-## Excluded Content
+## Excluded content
 
-- scraibe-docs
-- drafts
+You can prevent specific files or directories from being published by adding them to `scraibe.publish.excludedContent` in `.config.json`:
+
+```json
+{
+	"scoped": {
+		"scraibe.publish.excludedContent": [
+			"scraibe-docs",
+			"drafts"
+		]
+	}
+}
 ```
 
 Any path listed there (relative to `/content`) is skipped entirely on every publish run. The source files remain on disk and can be re-included at any time by removing the entry.
+
+## Folder configuration files
+
+The publish pipeline consumes `.config.json` files from repository root and nested folders to resolve effective configuration for each page. These files are control metadata:
+
+- They are parsed during publish.
+- They are not published as pages.
+- They are not copied to `wwwroot/` as static assets.
 
 ## The Page Template
 
@@ -95,7 +126,7 @@ The key tokens in the template:
 | `{author}` | `author` frontmatter field (line omitted if absent) |
 | `{date}` | `date` from frontmatter, or file last-modified timestamp |
 
-## URL Structure
+## URL structure
 
 Published URLs mirror the `/content` directory structure. The `.html` extension is hidden from users by the rewrite rules in `staticwebapp.config.json`:
 
@@ -112,8 +143,9 @@ The top navigation bar is regenerated from scratch on every publish run and embe
 
 Because the navigation is part of each static file rather than a separate component, crawlers and AI bots see the full site structure on every page without executing any JavaScript.
 
-## What Publishing Does Not Do
+## What publishing does not do
 
-- It does not run `dotnet build` or `dotnet publish`. The Blazor app is a separate concern.
-- It does not deploy to Azure Static Web Apps. Deployment is handled by your CI/CD pipeline or manually via the Azure CLI / SWA CLI.
+- It does not deploy to Azure Static Web Apps. Deployment is handled by your CI/CD pipeline or manually via the Azure CLI or SWA CLI.
 - It does not modify your Markdown source files. Frontmatter values (including `date`) are never written back by the pipeline.
+- It does not manually generate HTML in chat context. All HTML generation is performed by `tools/Scraibe.Publisher`. If Copilot appears to be generating HTML manually, that is a guardrail violation — tell it to run the script instead.
+

@@ -8,19 +8,23 @@ priority: 0.9
 
 # Blazorade Scraibe
 
-A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no app server, no runtime, and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static), which provides clean-URL routing, custom domains, and HTTPS — all on the free tier. Any static file host works too, but without routing rule support you lose the SEO and clean-URL benefits.
+A publishing framework that combines [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/hosting-models#blazor-webassembly) with GitHub Copilot-assisted content authoring. Write content in Markdown, embed live Blazor components via shortcodes, and publish to SEO-friendly static HTML — with no server runtime and no database required. Sites are designed to run on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static), which provides clean-URL routing, custom domains, and HTTPS — all on the free tier. Any static file host works too, but without routing rule support you lose the SEO and clean-URL benefits.
 
-> **There are no build scripts, no CLI commands, and no pipelines to configure.** To publish your site, you open a Copilot chat and say: *"Please publish my site."* Copilot reads your Markdown, generates the static HTML, updates the sitemap, and regenerates the navigation — all through conversation.
+> **You do not need to run publish tools manually.** Ask Copilot to publish your site and it will execute the repository's publish workflow, generate static HTML, update the sitemap, and refresh navigation.
 
 [Alert alert-info]
 ## Removing These Docs From Your Site
 
-This documentation is published on your site by default so you have working content to view immediately after setup and a reference for all built-in features. When your own content is ready and you no longer want these docs published, open `blazorade.config.md` in the repository root and add `scraibe-docs` as a bullet point under the `## Excluded Content` section:
+This documentation is published on your site by default so you have working content to view immediately after setup and a reference for all built-in features. When your own content is ready and you no longer want these docs published, add `scraibe-docs` to `scraibe.publish.excludedContent` in the repository-root `.config.json` file:
 
-```
-## Excluded Content
-
-- scraibe-docs
+```json
+{
+  "local": {
+    "scraibe.publish.excludedContent": [
+      "scraibe-docs"
+    ]
+  }
+}
 ```
 [/Alert]
 
@@ -33,6 +37,7 @@ The next publish run will skip all pages in this section. The source files remai
 - **[AI as Intelligent Collaborator](publishing.md)** — Copilot drafts content, suggests structure, generates layouts, creates Mermaid diagrams, and advises on styling — while traditional scripts handle the mechanical work. A junior site builder, available on demand through conversation.
 - **[Free SEO and AIO on Static Hosting](hosting.md)** — Full static HTML for every page, hosted free on Azure Static Web Apps. No [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models#blazor-server) app server required. Search engines and AI bots see real, indexable HTML — not an empty JavaScript shell.
 - **[Page Layouts](page-layouts.md)** — Named layouts for different page types (default, landing, custom). Shared content parts defined as `_name.md` scoped files or inline `[Part]` shortcodes.
+- **[Folder Configuration](folder-configuration.md)** — Define folder-level `.config.json` settings with `local` and `scoped` inheritance for publish and runtime behavior.
 - **[Styling](styling.md)** — Bootstrap 5 compiled from SCSS. Customise design tokens in `_variables.scss`. No Node.js, no npm.
 - **[Mermaid Diagrams](mermaid.md)** — Publish flowcharts, sequence diagrams, and more via a shortcode. The AI agent generates [Mermaid](https://mermaid.js.org) syntax from a plain-language description.
 - **[Todo Items](#todo-items)** — Track tasks and ideas in the repository itself. Copilot creates, updates, and closes todo items through conversation — no external tool required.
@@ -115,7 +120,7 @@ src/                      # Generated on first run — not committed to the temp
 
 ## Getting Started
 
-If you are setting up a new site from this repository, open it in VS Code with GitHub Copilot enabled. Copilot will detect the missing `blazorade.config.md` configuration file and walk you through the automated first-run setup, which scaffolds the Blazor projects, copies and configures all template files, and prepares the content folder.
+If you are setting up a new site from this repository, open it in VS Code with GitHub Copilot enabled. Copilot will detect missing setup configuration (or a legacy config that needs migration) and walk you through the first-run setup, which scaffolds the Blazor projects, copies and configures template files, and prepares the content folder.
 
 [LinkButton href="https://github.com/new?template_name=Blazorade-Scraibe&template_owner=Blazorade" OpenInNewTab="true" btn-success btn-lg my-4]Create your new repository here[/LinkButton]
 

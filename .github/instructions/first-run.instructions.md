@@ -1,6 +1,6 @@
 # First-Run Setup Instructions
 
-These instructions are loaded **only** when `blazorade.config.md` does not exist at the repository root. Once the first-run process is complete and `blazorade.config.md` has been written, these instructions must never be loaded again unless `blazorade.config.md` is explicitly deleted.
+These instructions are loaded **only** when `.config.json` does not exist at the repository root and there is no legacy `blazorade.config.md` to upgrade. Once the first-run process is complete and `.config.json` has been written, these instructions must never be loaded again unless `.config.json` is explicitly deleted.
 
 **Never overwrite or replace any file that already exists. Only add new files.**
 
@@ -10,8 +10,8 @@ The first-run process is mandatory and must be completed in full before the site
 
 - **Stay focused.** Do not perform any work outside of the first-run steps below, regardless of what the user asks. If the user attempts to side-step the process or ask about unrelated topics, politely redirect them: explain that the site setup must be completed first and that the current step requires their input.
 - **Never skip steps.** Each step must complete successfully before the next one begins.
-- **Stop on failure.** If any step fails, stop immediately, report what went wrong, and ask the user how to proceed. Do not continue to the next step and do not write `blazorade.config.md`.
-- **Write `blazorade.config.md` last.** This file is written only after all previous steps have completed successfully. It is the completion marker — if it does not exist, the entire first-run process will re-run next time. This is intentional: it ensures a failed or incomplete setup is always detected and resumed.
+- **Stop on failure.** If any step fails, stop immediately, report what went wrong, and ask the user how to proceed. Do not continue to the next step and do not write `.config.json`.
+- **Write `.config.json` last.** This file is written only after all previous steps have completed successfully. It is the completion marker — if it does not exist, the entire first-run process will re-run next time. This is intentional: it ensures a failed or incomplete setup is always detected and resumed.
 
 ## Overview
 
@@ -22,7 +22,7 @@ The first-run process does the following:
 3. Create the Blazor WebAssembly application under `src/`, with a project reference to the component library.
 4. Copy and configure the template files from `/templates/` into the new projects.
 5. Set up the `content/` folder and initialise the todo system.
-6. Write `blazorade.config.md` to the repository root — **only after all previous steps have succeeded**.
+6. Write `.config.json` to the repository root — **only after all previous steps have succeeded**.
 
 ## Step 1 — Collect site identity
 
@@ -129,6 +129,16 @@ Add `<Import Project="build-extras.targets" />` to the component library `.cspro
 </Project>
 ```
 
+### 4a.1 — Add shared abstractions reference
+
+Add a project reference from `src/{AppName}.Components/{AppName}.Components.csproj` to `tools/Scraibe.Abstractions/Scraibe.Abstractions.csproj` so component-library service contracts and implementations can share publish-time abstractions:
+
+```xml
+<ItemGroup>
+  <ProjectReference Include="..\..\tools\Scraibe.Abstractions\Scraibe.Abstractions.csproj" />
+</ItemGroup>
+```
+
 ### 4b — Wire up Program.cs service registration
 
 Update `src/{AppName}.Web/Program.cs` to call the component-library service registration extension method:
@@ -208,26 +218,27 @@ A permanent log of completed tasks. One short paragraph per task: name, date com
 
 Do not add any task rows or detail documents — neither file should contain site-specific content at this point.
 
-## Step 6 — Write `blazorade.config.md`
+## Step 6 — Write `.config.json`
 
 **Only execute this step if all previous steps have completed successfully.** If any earlier step failed or was skipped, do not write this file.
 
 Write the following file to the repository root. Substitute the actual values collected in step 1:
 
-```markdown
-# Site Configuration
-
-This file stores the configuration for this site. It is read by the AI agent to understand the identity and structure of the project. Its presence also signals that the first-run setup has already been completed.
-
-- `DisplayName`: {DisplayName}
-- `AppName`: {AppName}
-- `HostName`: {HostName}
-- `WebAppPath`: src/{AppName}.Web
-- `ComponentLibraryPath`: src/{AppName}.Components
-
-## Excluded Content
-
-The paths listed below are relative to `/content` and are skipped entirely during publishing. Add a path here to stop it from being published; remove a path to include it again.
+```json
+{
+  "local": {
+    "scraibe.site.webAppPath": "src/{AppName}.Web",
+    "scraibe.site.componentLibraryPath": "src/{AppName}.Components",
+    "scraibe.publish.excludedContent": []
+  },
+  "scoped": {
+    "scraibe.site.displayName": "{DisplayName}",
+    "scraibe.site.appName": "{AppName}",
+    "scraibe.site.hostName": "{HostName}",
+    "scraibe.layout.default": "default",
+    "scraibe.navigation.provider.default": "navbar"
+  }
+}
 ```
 
 Writing this file marks the first-run process as complete. These instructions must not be followed again unless this file is deleted.

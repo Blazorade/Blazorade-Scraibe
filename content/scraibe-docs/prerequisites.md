@@ -27,7 +27,7 @@ Install the stable release for your operating system (Windows, macOS, or Linux).
 
 **Learn more:** [github.com/features/copilot](https://github.com/features/copilot)
 
-GitHub Copilot is the AI engine behind Blazorade Scraibe. It reads your Markdown source files, applies the publishing instructions, generates static HTML bootstrappers, updates the sitemap, and regenerates the navigation menu — all without any build scripts or CLI tooling. Without an active Copilot session, none of the publishing or setup workflows will run.
+GitHub Copilot is the AI engine behind Blazorade Scraibe. It reads your Markdown source files, applies the publishing instructions, and runs the repository workflow that generates static HTML bootstrappers, updates the sitemap, and regenerates navigation. Without an active Copilot session, none of the publishing or setup workflows will run.
 
 You will need:
 

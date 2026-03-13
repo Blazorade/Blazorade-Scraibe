@@ -1,74 +1,21 @@
-# Publishing Instructions
+---
+applyTo: "tools/**"
+---
 
-These instructions apply when you are asked to **publish** content for this website. Publishing means converting markdown documents in the `/content` folder into static HTML pages in the `{WebAppPath}/wwwroot` folder, and generating a `sitemap.xml` that lists all published pages.
+# Publishing instructions
+
+These instructions document how the **publish pipeline tool** works internally. In this context, "publishing" means converting Markdown documents in the `/content` folder into static HTML pages in the `{WebAppPath}/wwwroot` folder, and generating a `sitemap.xml` that lists all published pages.
 
 **Notation used in these instructions:**
-- `{WebAppPath}` — the value of `WebAppPath` from `blazorade.config.md` (e.g. `src/MyCompany.Web`).
-- `{ComponentLibraryPath}` — the value of `ComponentLibraryPath` from `blazorade.config.md` (e.g. `src/MyCompany.Components`).
+- `{WebAppPath}` — the effective value of `scraibe.site.webAppPath` from `.config.json` (e.g. `src/MyCompany.Web`).
+- `{ComponentLibraryPath}` — the effective value of `scraibe.site.componentLibraryPath` from `.config.json` (e.g. `src/MyCompany.Components`).
 - `{ComponentLibraryName}` — the last path segment of `ComponentLibraryPath` (e.g. `MyCompany.Components`). Used as the assembly name and root namespace.
-- `{HostName}` — the value of `HostName` from `blazorade.config.md` (e.g. `www.mysite.com`).
-- `{DisplayName}` — the value of `DisplayName` from `blazorade.config.md` (e.g. `My Awesome Site`).
+- `{HostName}` — the effective value of `scraibe.site.hostName` from `.config.json` (e.g. `www.mysite.com`).
+- `{DisplayName}` — the effective value of `scraibe.site.displayName` from `.config.json` (e.g. `My Awesome Site`).
 
-## Before you begin
+## Skill delegation
 
-**Read `blazorade.config.md` from the repository root before starting any publish run.** The following values from that file are required during publishing:
-
-- `DisplayName` — used as the site brand name in the navbar.
-- `HostName` — used to construct canonical URLs and Open Graph URLs in the form `https://{HostName}/{slug}.html`.
-- `WebAppPath` — used to resolve the output path for generated files (e.g. `{WebAppPath}/wwwroot/`).
-- `ComponentLibraryPath` — used to resolve component namespaces for shortcode processing.
-
-Do not hardcode any of these values. Always read them from `blazorade.config.md`.
-
-## How to publish
-
-**Publishing is fully automated. Run the PowerShell script and wait for the summary output:**
-
-```powershell
-.\tools\Invoke-Publish.ps1
-```
-
-The script reads `blazorade.config.md`, builds the component library, then hands everything off to `tools/Scraibe.Publisher` — a .NET console tool that owns the complete pipeline: content walking, shortcode processing, Markdown→HTML conversion, template application, nav generation, sitemap generation, static asset sync, staticwebapp route/exclude updates, and stale-HTML cleanup. No page HTML is generated in the chat context.
-
-If the script reports errors, read the output, fix the problem in the relevant source file, and re-run. Do **not** attempt to replicate the pipeline manually.
-
-### Optional parameters
-
-```powershell
-.\tools\Invoke-Publish.ps1 -Configuration Release   # build the component library in Release
-```
-
-### Partial publish
-
-Use partial publish when a content author asks to publish one or a few specific pages rather than the whole site. Only the specified pages' HTML files are regenerated and their sitemap entries updated — all other files are untouched. No stale cleanup is performed in a partial run.
-
-**Trigger phrases** — use partial publish when the request matches one of:
-- "publish the current page" / "publish this page"
-- "publish attached documents" / "publish these files"
-- "publish [explicit path or filename]"
-- "publish the pages I have open" (use attached files or the active editor file; if neither is available, ask the user to specify)
-
-A plain "publish" or "run publish" with no page qualifier always triggers a **full publish** — no change to existing behaviour.
-
-**Resolving the page list** — before invoking the script, resolve which pages to publish from one of three forms:
-
-1. **"Publish the current page"** — use the active file path from the editor context.
-2. **Attached files** — one or more `.md` files attached to the chat; use their file paths.
-3. **Explicit path in chat** — the author mentions a path directly (e.g. `content/scraibe-docs/mermaid.md`); parse and use it.
-
-**Validation rule (mandatory for all three forms):** every resolved path must be inside the `/content` folder of the repository. If any path falls outside `/content`, reject the entire request with a clear error and do not publish anything. Perform this check before invoking the script.
-
-Convert each absolute path to a content-relative `.md` path for the `-Pages` argument (e.g. `C:\...\content\scraibe-docs\mermaid.md` → `scraibe-docs/mermaid.md`).
-
-**Invocation:**
-
-```powershell
-.\tools\Invoke-Publish.ps1 -Pages home.md,scraibe-docs/mermaid.md
-```
-
-Paths in `-Pages` are relative to `/content` and must include the `.md` extension. The publisher performs a pre-flight check: if any of the specified pages has never been published (its `.html` file does not exist in `wwwroot/`), the run aborts with a clear error before any work is done. Instruct the author to run a full publish first.
-
----
+**All operational workflow steps — triggers, preconditions, command invocation, error handling, and reporting — are defined in `.github/skills/publish/skill.md`.** Read and follow that skill file when handling any publish request. The sections below are a pipeline reference for debugging `tools/Scraibe.Publisher`; they are not agent instructions.
 
 ## Pipeline reference
 
@@ -89,7 +36,7 @@ The sections below document the rules implemented by `tools/Scraibe.Publisher`. 
 
 ## Excluded content
 
-Before walking the `/content` tree, read the `## Excluded Content` section of `blazorade.config.md`. Any bullet-list entries in that section are paths relative to `/content` that must be skipped entirely — no files under those paths are processed and no output is written for them. Apply exclusions silently; do not emit warnings for excluded files.
+Before walking the `/content` tree, read the effective `scraibe.publish.excludedContent` value from `.config.json`. Any entries there are paths relative to `/content` that must be skipped entirely — no files under those paths are processed and no output is written for them. Apply exclusions silently; do not emit warnings for excluded files.
 
 Example: if `scraibe-docs` is listed, skip all files under `/content/scraibe-docs/` without processing or reporting them.
 
@@ -160,7 +107,7 @@ Each generated page is built from the single page shell template at `{WebAppPath
 
 The template uses two kinds of tokens:
 
-- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{slug}`, `{HostName}` (from `blazorade.config.md`), `{layout}`, `{layout_html}`, `{cleanSlug}`, `{blazor_script}`. Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page. The `{layout}` token is **never omitted**: use the PascalCase-normalised layout name resolved from frontmatter, falling back to `Default` when the field is absent.
+- **Per-page tokens** (substituted fresh for every page): `{title}`, `{description}`, `{slug}`, `{HostName}` (from `.config.json`), `{layout}`, `{layout_html}`, `{cleanSlug}`, `{blazor_script}`. Optional tags — `{keywords}`, `{author}` — must be **omitted entirely** (whole line removed) when the corresponding frontmatter field is absent. The `{date}` token is **never omitted**: if `date` is set in frontmatter use that value verbatim; if absent, use the source file's last-modified timestamp formatted as `YYYY-MM-DD`; if the filesystem cannot provide a timestamp, fall back to today's date. This derived date must be used consistently in both the `<meta name="date">` tag and the sitemap `<lastmod>` entry for the same page. The `{layout}` token is **never omitted**: use the PascalCase-normalised layout name resolved from frontmatter, falling back to `Default` when the field is absent.
 
 The `{layout_html}` placeholder is replaced with the fully composed layout HTML for the page (converted body + resolved parts).
 
@@ -429,7 +376,7 @@ Parts come from three sources, resolved and merged per page:
 
 2. **`[Part]` shortcode** — Described in the **`[Part]` shortcode special handling** subsection above. The `Name` parameter becomes the part name; `ElementName` (if set) overrides the element name convention.
 
-3. **Auto-generated nav** — If no `_nav.md` resolves at any scope level for a given page, the pipeline auto-generates a Bootstrap navbar as the `nav` part. The generated HTML follows the same navigation structure rules previously used for `NavMenu.razor` generation: brand link to `/`, flat top-level pages as `<li class="nav-item">` items (excluding the home page), subdirectory dropdowns as `<li class="nav-item dropdown">` items with a non-navigating toggle button. The `DisplayName` value from `blazorade.config.md` is used as the `navbar-brand` text.
+3. **Auto-generated nav** — If no `_nav.md` resolves at any scope level for a given page, the pipeline auto-generates a Bootstrap navbar as the `nav` part. The generated HTML follows the same navigation structure rules previously used for `NavMenu.razor` generation: brand link to `/`, flat top-level pages as `<li class="nav-item">` items (excluding the home page), subdirectory dropdowns as `<li class="nav-item dropdown">` items with a non-navigating toggle button. The effective `scraibe.site.displayName` value from `.config.json` is used as the `navbar-brand` text.
 
    **Critical**: the generated HTML must be the **inner content** of the `<nav>` slot only — do **not** wrap it in another `<nav>` element. The layout's `<nav x-part="nav">` element is the sole root; the pipeline fills its children. Wrapping in a second `<nav>` produces two nested `<nav>` elements in the final page.
 

@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using AngleSharp.Html.Parser;
+using Scraibe.Abstractions.Configuration;
+using Scraibe.ContentComposition.Html;
 
 namespace Scraibe.Publisher;
 
@@ -18,12 +20,19 @@ static class PagePublisher
     public static PageResult Publish(
         PageInfo page,
         ComponentRegistry registry,
+        NavigationMarkupProviderFactory navigationProviders,
         PublishOptions opts,
-        string navHtml,
         IReadOnlyList<PageInfo> allPages)
     {
         try
         {
+            var layoutName = page.Frontmatter.Layout;
+            if (string.IsNullOrWhiteSpace(layoutName))
+            {
+                return new PageResult(page, false,
+                    "Layout could not be resolved for page. Set frontmatter layout or define scraibe.layout.default in effective folder configuration.");
+            }
+
             // 1. Read source fresh from disk
             var raw = File.ReadAllText(page.SourcePath);
 
@@ -31,16 +40,16 @@ static class PagePublisher
             var (_, body) = FrontmatterParser.Parse(raw, page.SourcePath);
 
             // 3. Verify layout exists
-            var layoutFile = Path.Combine(opts.LayoutsPath, page.Frontmatter.Layout + ".html");
+            var layoutFile = Path.Combine(opts.LayoutsPath, layoutName + ".html");
             if (!File.Exists(layoutFile))
             {
                 // Case-insensitive fallback
                 var match = Directory.GetFiles(opts.LayoutsPath, "*.html")
                     .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f)
-                        .Equals(page.Frontmatter.Layout, StringComparison.OrdinalIgnoreCase));
+                        .Equals(layoutName, StringComparison.OrdinalIgnoreCase));
                 if (match == null)
                     return new PageResult(page, false,
-                        $"Layout '{page.Frontmatter.Layout}' not found in '{opts.LayoutsPath}'.");
+                        $"Layout '{layoutName}' not found in '{opts.LayoutsPath}'.");
             }
 
             // 4. Resolve _name.md scoped parts (walk up from page's dir to /content)
@@ -60,6 +69,17 @@ static class PagePublisher
                     PostProcessHtml(UrlRewriter.Rewrite(p.InnerHtml, contentRelativeDir))))
                 .ToList();
 
+            // 5b. Resolve auto-nav for this page only when no scoped/inline nav override exists.
+            var hasNavOverride = scopedParts.Any(p => p.Name.Equals("nav", StringComparison.OrdinalIgnoreCase))
+                || inlineParts.Any(p => p.Name.Equals("nav", StringComparison.OrdinalIgnoreCase));
+
+            var navPart = ResolveNavigationPart(
+                page,
+                navigationProviders,
+                opts,
+                allPages,
+                hasNavOverride);
+
             // 6. Convert processed markdown to HTML
             var bodyHtml = MarkdownRenderer.ToHtml(scResult.ProcessedMarkdown);
 
@@ -76,7 +96,7 @@ static class PagePublisher
             bodyHtml = PostProcessHtml(bodyHtml);
 
             // 7. Merge parts: [Part] shortcodes → scoped _name.md files → page body → nav
-            var parts = MergeParts(inlineParts, scopedParts, navHtml, bodyHtml);
+            var parts = MergeParts(inlineParts, scopedParts, navPart, bodyHtml);
 
             // 8. Apply page template
             var html = ApplyTemplate(page, parts, opts);
@@ -115,14 +135,17 @@ static class PagePublisher
                 : page.Slug;
 
         // Build layout_html by injecting part content into each x-part slot.
-        var layoutFile = Path.Combine(opts.LayoutsPath, fm.Layout + ".html");
+        var layoutName = fm.Layout ?? throw new PublishException(
+            "Layout could not be resolved for page. Set frontmatter layout or define scraibe.layout.default in effective folder configuration.");
+
+        var layoutFile = Path.Combine(opts.LayoutsPath, layoutName + ".html");
         if (!File.Exists(layoutFile))
         {
             layoutFile = Directory.GetFiles(opts.LayoutsPath, "*.html")
                 .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f)
-                    .Equals(fm.Layout, StringComparison.OrdinalIgnoreCase)) ?? layoutFile;
+                    .Equals(layoutName, StringComparison.OrdinalIgnoreCase)) ?? layoutFile;
         }
-        var layoutHtml    = File.ReadAllText(layoutFile);
+        var layoutHtml    = PartSlotComposer.NormalizeSelfClosingSlotElements(File.ReadAllText(layoutFile));
         var layoutDoc     = HtmlParser.ParseDocument(layoutHtml);
         var partsByName   = parts.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
@@ -130,7 +153,19 @@ static class PagePublisher
         {
             var partName = slot.GetAttribute("x-part") ?? "";
             if (partsByName.TryGetValue(partName, out var part))
-                slot.InnerHtml = part.InnerHtml;
+            {
+                if (part.ReplaceElement)
+                {
+                    slot.OuterHtml = PartSlotComposer.BuildReplacementRootHtml(
+                        slot,
+                        part.InnerHtml,
+                        $"page '{page.RelativePath}'");
+                }
+                else
+                {
+                    slot.InnerHtml = part.InnerHtml;
+                }
+            }
             else
                 slot.Parent?.RemoveChild(slot); // no content → remove slot entirely
         }
@@ -144,7 +179,7 @@ static class PagePublisher
         result = result.Replace("{slug}",          page.Slug);
         result = result.Replace("{cleanSlug}",     cleanSlug);
         result = result.Replace("{HostName}",      opts.HostName);
-        result = result.Replace("{layout}",        fm.Layout);
+        result = result.Replace("{layout}",        layoutName);
         result = result.Replace("{date}",          lastMod);
         result = result.Replace("{layout_html}",   layoutHtmlResult);
         result = result.Replace("{blazor_script}", opts.BlazorScript);
@@ -197,7 +232,7 @@ static class PagePublisher
 
                 var raw      = File.ReadAllText(mdFile);
                 var (fm, body) = FrontmatterParser.Parse(raw, mdFile);
-                if (fm.RawFields().TryGetValue("element_name", out var elemOverride))
+                if (fm.RawFields.TryGetValue("element_name", out var elemOverride))
                     elemName = elemOverride;
 
                 // Reusable parts should follow the same processing path as page main content.
@@ -224,14 +259,14 @@ static class PagePublisher
     private static List<PartInfo> MergeParts(
         List<PartInfo> inlineParts,
         List<PartInfo> scopedParts,
-        string navHtml,
+        PartInfo navPart,
         string bodyHtml)
     {
         // Priority (highest → lowest): [Part] shortcode > _name.md > page body > auto-nav
         var merged = new Dictionary<string, PartInfo>(StringComparer.OrdinalIgnoreCase);
 
         // Auto-nav (lowest priority)
-        merged["nav"]  = new PartInfo("nav",  "nav",     navHtml);
+        merged["nav"]  = navPart;
 
         // Page body becomes the default "main" content
         merged["main"] = new PartInfo("main", "article", bodyHtml);
@@ -243,6 +278,75 @@ static class PagePublisher
         foreach (var p in inlineParts) merged[p.Name] = p;
 
         return [.. merged.Values];
+    }
+
+    private static PartInfo ResolveNavigationPart(
+        PageInfo page,
+        NavigationMarkupProviderFactory navigationProviders,
+        PublishOptions opts,
+        IReadOnlyList<PageInfo> allPages,
+        bool hasNavOverride)
+    {
+        if (hasNavOverride)
+            return new PartInfo("nav", "nav", "");
+
+        var layoutName = page.Frontmatter.Layout ?? "Default";
+        var layoutFile = Path.Combine(opts.LayoutsPath, layoutName + ".html");
+        if (!File.Exists(layoutFile))
+        {
+            layoutFile = Directory.GetFiles(opts.LayoutsPath, "*.html")
+                .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f)
+                    .Equals(layoutName, StringComparison.OrdinalIgnoreCase)) ?? layoutFile;
+        }
+
+        var layoutHtml = PartSlotComposer.NormalizeSelfClosingSlotElements(File.ReadAllText(layoutFile));
+        var layoutDoc = HtmlParser.ParseDocument(layoutHtml);
+        var navSlot = layoutDoc.QuerySelector("[x-part='nav']");
+        if (navSlot is null)
+            return new PartInfo("nav", "nav", "");
+
+        var fromLayout = navSlot.GetAttribute("x-provider")?.Trim();
+        var fromConfig = GetConfiguredDefaultProvider(page.EffectiveFolderConfig);
+
+        string providerName;
+        if (!string.IsNullOrWhiteSpace(fromLayout))
+        {
+            providerName = fromLayout!;
+        }
+        else if (!string.IsNullOrWhiteSpace(fromConfig))
+        {
+            providerName = fromConfig;
+        }
+        else
+        {
+            throw new PublishException(
+                $"Navigation provider could not be resolved for page '{page.RelativePath}'. Add x-provider on the layout nav slot or set '{ConfigKeys.ScraibeNavigationProviderDefault}' in effective .config.json.");
+        }
+
+        var provider = navigationProviders.ResolveOrThrow(
+            providerName,
+            $"page '{page.RelativePath}', layout '{Path.GetFileName(layoutFile)}'");
+
+        var model = NavGenerator.BuildModelForPage(
+            page,
+            allPages,
+            opts.DisplayName,
+            page.EffectiveFolderConfig);
+        var navHtml = provider.CreateMarkup(model, page.EffectiveFolderConfig);
+
+        return new PartInfo("nav", "nav", navHtml, ReplaceElement: true);
+    }
+
+    private static string? GetConfiguredDefaultProvider(Dictionary<string, object?> effectiveConfig)
+    {
+        if (effectiveConfig.TryGetValue(ConfigKeys.ScraibeNavigationProviderDefault, out var configured)
+            && configured is string value
+            && !string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        return null;
     }
 
     // ── HTML post-processing ────────────────────────────────────────────────────
@@ -264,11 +368,4 @@ static class PagePublisher
 
     private static string HtmlEncode(string s)
         => s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
-}
-
-// Extension to allow FrontmatterParser to expose raw fields for element_name override
-static class FrontmatterExtensions
-{
-    public static Dictionary<string, string> RawFields(this Frontmatter _)
-        => []; // placeholder — raw fields used only for element_name; implement if needed
 }

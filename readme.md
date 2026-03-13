@@ -42,6 +42,16 @@ It is not a generator. It is a collaborator that already knows how your site wor
 - **Zero JavaScript. Fully responsive. Fully interactive.** — No npm, no bundlers, no JS config files. You write C# and Markdown. Blazorade handles the rest.
 - **Free hosting** — Designed for [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static): clean-URL routing, custom domains, and HTTPS on the free tier.
 
+## Configuration
+
+Blazorade Scraibe uses `.config.json` files for machine-readable settings.
+
+- The root `.config.json` defines site identity (`scraibe.site.*`), publish exclusions (`scraibe.publish.excludedContent`), and the default layout (`scraibe.layout.default`).
+- Nested `.config.json` files support folder-level inheritance using `scoped` and folder-only overrides using `local`.
+- Effective settings are resolved from repository root to the target folder; nearest matching key wins.
+
+See [content/scraibe-docs/content-authoring.md](content/scraibe-docs/content-authoring.md) for full configuration rules and examples.
+
 ## Convinced? Start here
 
 **[Read the full documentation →](content/scraibe-docs/home.md)** — every feature, every concept, and every reason you should build your next site with Blazorade Scraibe instead of anything else.

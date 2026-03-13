@@ -34,6 +34,72 @@ If `title` is absent, it is derived from the first `#` heading in the body. If n
 
 When `date` is set in frontmatter, the pipeline uses that value verbatim on every publish run. The pipeline never writes back to the source file, so the date you set is permanent until you change it manually. When `date` is omitted, the file's last-modified timestamp on disk is used instead — but that derived date is never saved to your frontmatter.
 
+## Folder-level configuration (`.config.json`)
+
+You can place a `.config.json` file in any folder (including the repository root) to store machine-readable control settings that affect publish-time behavior. Their effects are visible at runtime through generated output files, but `.config.json` itself is not read by the running site. Configuration files are metadata, not content:
+
+- They never generate HTML pages.
+- They are never copied as static assets.
+- They are never treated as alternate Markdown content.
+
+The file supports two optional objects:
+
+```json
+{
+	"local": {
+		"setting1": "value1"
+	},
+	"scoped": {
+		"setting2": "value2"
+	}
+}
+```
+
+- `local` applies only to the folder where the file exists.
+- `scoped` applies to that folder and all descendant folders.
+- Within one file, the same key cannot appear in both `local` and `scoped`.
+
+### Inheritance model
+
+When resolving effective settings for a page, the pipeline walks from repository root to the page folder and applies settings in this order:
+
+1. Each folder's `scoped` keys.
+2. `local` keys from the closest folder in the chain that has a `.config.json` file.
+
+Nearest definitions win by key. This means child `scoped` overrides parent `scoped`, and the closest available `local` layer overrides inherited `scoped` for the target folder.
+
+Example:
+
+- `/content/.config.json`
+
+```json
+{
+	"local": {
+		"nav_mode": "compact-root"
+	},
+	"scoped": {
+		"page_layout": "docs",
+		"nav_mode": "full"
+	}
+}
+```
+
+- `/content/scraibe-docs/.config.json`
+
+```json
+{
+	"local": {
+		"nav_mode": "compact"
+	}
+}
+```
+
+Effective values:
+
+- Files directly in `/content/`: `page_layout=docs`, `nav_mode=compact-root`
+- Files directly in `/content/scraibe-docs/`: `page_layout=docs`, `nav_mode=compact`
+- Files in `/content/scraibe-docs/shortcodes/`: `page_layout=docs`, `nav_mode=full`
+
 ## Reserved Filenames
 
 ### `home.md`

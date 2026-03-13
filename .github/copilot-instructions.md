@@ -2,14 +2,15 @@
 
 ## First-run check
 
-**Before doing anything else**, check whether `blazorade.config.md` exists at the repository root.
+**Before doing anything else**, check whether `.config.json` exists at the repository root.
 
-- **If it does not exist:** read `.github/instructions/first-run.instructions.md` and follow it completely before proceeding with anything else. Do not perform any other work until first-run has completed and `blazorade.config.md` has been written.
-- **If it exists:** read it to load the site configuration (display name, app name, host name, project paths), then continue with the rest of these instructions.
+- **If `.config.json` exists:** read it to load site configuration values (display name, app name, host name, project paths), then continue with the rest of these instructions.
+- **If `.config.json` does not exist but `blazorade.config.md` exists:** run a legacy upgrade flow that migrates the values into `.config.json` (including `scraibe.layout.default = default`) and deletes `blazorade.config.md` only after successful migration.
+- **If neither file exists:** read `.github/instructions/first-run.instructions.md` and follow it completely before proceeding with anything else. Do not perform any other work until first-run has completed and `.config.json` has been written.
 
 ## Project overview
 
-This is the source repository for a static Blazor WebAssembly website built with Blazorade Scraibe. The site identity and project structure are defined in `blazorade.config.md` at the repository root. Read that file first to load `{WebAppPath}`, `{ComponentLibraryPath}`, `{HostName}`, and `{DisplayName}` — do not hardcode any of these values.
+This is the source repository for a static Blazor WebAssembly website built with Blazorade Scraibe. The site identity and project structure are defined in `.config.json` at the repository root. Read effective values from that file first to load `{WebAppPath}`, `{ComponentLibraryPath}`, `{HostName}`, and `{DisplayName}` — do not hardcode any of these values.
 
 Content is authored as Markdown files in `/content`, published to static HTML bootstrappers under `{WebAppPath}/wwwroot/`, and served by a Blazor WASM app that fetches and renders each page at runtime.
 
@@ -28,7 +29,7 @@ Generated files under `{WebAppPath}/wwwroot/` (`*.html`, `sitemap.xml`, `staticw
 
 - **Help** — triggered when the user asks what you can help with, what you do, or asks about your capabilities. Read [help.instructions.md](./instructions/help.instructions.md) and present the relevant capabilities based on the user's context.
 - **Publishing content** — triggered when the user asks to publish, regenerate, or update the site pages. Follow [publish.instructions.md](./instructions/publish.instructions.md).
-- **First-run setup** — triggered when `blazorade.config.md` does not exist. Follow [first-run.instructions.md](./instructions/first-run.instructions.md).
+- **First-run setup** — triggered when both `.config.json` and `blazorade.config.md` are missing. Follow [first-run.instructions.md](./instructions/first-run.instructions.md).
 - **Todo items** — triggered when the user wants to note something for later, review outstanding tasks, or close a completed one. Follow [todo.instructions.md](./instructions/todo.instructions.md).
 - **Playbooks** — triggered when the user asks to run a playbook, or makes a request that may match a site-defined procedure. Read `playbooks/home.md` to identify the correct playbook, then load and follow it. Follow [playbooks.instructions.md](./instructions/playbooks.instructions.md).
 

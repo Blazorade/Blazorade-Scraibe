@@ -8,6 +8,7 @@ This file is the authoritative index of capabilities. When the user asks what yo
 - **SEO metadata** — not just field names but actively drafting effective `title`, `description`, and `keywords` values for a page: concise titles that work in browser tabs and search results, meta descriptions that summarise the page in 150–160 characters, and relevant keyword sets derived from the page content.
 - **Content quality** — proofread pages for spelling, grammar, and clarity; improve sentence structure and flow; suggest better phrasing; ensure consistent tone and terminology across multiple pages. Just ask with the page open or attached.
 - **File structure and routing** — advise on where a page should live, what URL it will get, and the rules around reserved filenames (`home.md`, blocked `index.md`). See [content/scraibe-docs/content-authoring.md](../../content/scraibe-docs/content-authoring.md).
+- **Folder configuration (`.config.json`)** — create and edit folder-level configuration files, explain `local` vs `scoped` inheritance, and help choose where a setting should live for the intended effective behavior. See [content/scraibe-docs/folder-configuration.md](../../content/scraibe-docs/folder-configuration.md).
 - **Content structure and information architecture** — advise on how to organise a section into pages, when a flat file should become a folder, and how the resulting navigation will look.
 - **Shortcodes** — embed live Blazor components in Markdown using self-closing or wrapping shortcode syntax, including nested and multi-line forms. See [content/scraibe-docs/shortcodes/home.md](../../content/scraibe-docs/shortcodes/home.md).
 - **Relative links in Markdown** — author normal relative links and image paths that work in Markdown preview; the publish pipeline rewrites them to root-relative URLs in generated HTML and resolves `.md` links to clean URLs automatically. See [content/scraibe-docs/publishing.md](../../content/scraibe-docs/publishing.md).
@@ -17,7 +18,9 @@ This file is the authoritative index of capabilities. When the user asks what yo
 ## Publishing
 
 - **Running the publish pipeline** — regenerate all static HTML bootstrappers and `sitemap.xml`, sync eligible static assets from `/content`, and update `staticwebapp.config.json` route/exclude settings from publish output. See [content/scraibe-docs/publishing.md](../../content/scraibe-docs/publishing.md).
-- **Excluding content** — manage the exclusion list in `blazorade.config.md` to skip pages from publishing without deleting their source files.
+- **Excluding content** — manage `scraibe.publish.excludedContent` in `.config.json` to skip pages from publishing without deleting their source files.
+- **Config-related publish troubleshooting** — diagnose invalid `.config.json` shape errors, resolve duplicate `local`/`scoped` keys, and explain layout resolution failures tied to missing `scraibe.layout.default`.
+- **Navigation configuration and behavior** — help configure folder-level navigation settings and explain how those settings affect generated pages and publish output. See [content/scraibe-docs/folder-configuration.md](../../content/scraibe-docs/folder-configuration.md) and [content/scraibe-docs/publishing.md](../../content/scraibe-docs/publishing.md).
 
 ## Site building
 

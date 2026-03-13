@@ -1,3 +1,4 @@
+using Scraibe.Abstractions.Configuration;
 using Scraibe.Publisher;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -27,6 +28,38 @@ static List<string> All(string[] args, string flag)
 static string AbsPath(string root, string path)
     => Path.IsPathRooted(path) ? path : Path.GetFullPath(Path.Combine(root, path));
 
+static List<PageInfo> BuildNavigationManifest(PublishOptions opts)
+{
+    var pages = new List<PageInfo>();
+
+    foreach (var sourceFile in Directory.GetFiles(opts.ContentPath, "*.md", SearchOption.AllDirectories))
+    {
+        var relativePath = Path.GetRelativePath(opts.ContentPath, sourceFile).Replace('\\', '/');
+
+        if (Path.GetFileName(sourceFile).StartsWith('_')) continue;
+        if (Path.GetFileNameWithoutExtension(sourceFile).Equals("index", StringComparison.OrdinalIgnoreCase)) continue;
+
+        var dir = Path.GetDirectoryName(relativePath)?.Replace('\\', '/') ?? "";
+        var stem = Path.GetFileNameWithoutExtension(relativePath);
+        var raw = File.ReadAllText(sourceFile);
+        var (frontmatter, _) = FrontmatterParser.Parse(raw, sourceFile);
+        var slug = frontmatter.Slug ?? stem;
+        var fullSlug = string.IsNullOrEmpty(dir) ? slug : $"{dir}/{slug}";
+
+        pages.Add(new PageInfo(
+            SourcePath: sourceFile,
+            RelativePath: relativePath,
+            OutputPath: Path.Combine(opts.OutputPath, fullSlug.Replace('/', Path.DirectorySeparatorChar) + ".html"),
+            Slug: fullSlug,
+            CanonicalUrl: $"https://{opts.HostName}/{fullSlug}.html",
+            Frontmatter: frontmatter,
+            LastModified: File.GetLastWriteTime(sourceFile),
+            EffectiveFolderConfig: new Dictionary<string, object?>()));
+    }
+
+    return pages;
+}
+
 var cwd        = Directory.GetCurrentDirectory();
 var outputPath = AbsPath(cwd, Require(args, "--output"));
 
@@ -46,6 +79,7 @@ if (File.Exists(indexHtmlPath))
 }
 
 var opts = new PublishOptions(
+    RepoRootPath:         AbsPath(cwd, Require(args, "--repo-root")),
     ContentPath:          AbsPath(cwd, Require(args, "--content")),
     OutputPath:           outputPath,
     HostName:             Require(args, "--host"),
@@ -59,6 +93,30 @@ var opts = new PublishOptions(
     BlazorScript:         blazorScript
 );
 
+static string ResolveLayout(Frontmatter frontmatter, Dictionary<string, object?> effectiveConfig, string sourcePath)
+{
+    if (!string.IsNullOrWhiteSpace(frontmatter.Layout))
+        return frontmatter.Layout;
+
+    if (effectiveConfig.TryGetValue(ConfigKeys.ScraibeLayoutDefault, out var configuredLayout)
+        && configuredLayout is string configuredLayoutName
+        && !string.IsNullOrWhiteSpace(configuredLayoutName))
+    {
+        return ToPascalCase(configuredLayoutName);
+    }
+
+    throw new PublishException(
+        $"Layout is not set in frontmatter and '{ConfigKeys.ScraibeLayoutDefault}' is not defined for '{sourcePath}'.");
+}
+
+static string ToPascalCase(string s)
+{
+    if (string.IsNullOrWhiteSpace(s)) return "Default";
+    var parts = s.Split('-', '_', ' ');
+    return string.Concat(parts.Select(p =>
+        p.Length == 0 ? "" : char.ToUpperInvariant(p[0]) + p[1..].ToLowerInvariant()));
+}
+
 static bool IsContentExcluded(PublishOptions options, string absPath)
 {
     var rel = Path.GetRelativePath(options.ContentPath, absPath).Replace('\\', '/');
@@ -70,6 +128,7 @@ static bool IsContentExcluded(PublishOptions options, string absPath)
 static bool IsEligibleAssetFileName(string fileName)
 {
     if (string.IsNullOrWhiteSpace(fileName)) return false;
+    if (fileName.Equals(".config.json", StringComparison.OrdinalIgnoreCase)) return false;
     return char.IsLetterOrDigit(fileName[0])
         && !fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase);
 }
@@ -251,6 +310,11 @@ static void SaveStaticWebAppConfig(PublishOptions options, JsonObject root)
     File.WriteAllText(outputConfigPath, root.ToJsonString(jsonOptions));
 }
 
+try
+{
+
+var folderConfigParser = new FolderConfigParser(opts.RepoRootPath);
+
 Console.WriteLine($"Scraibe Publisher");
 Console.WriteLine($"  Content : {opts.ContentPath}");
 Console.WriteLine($"  Output  : {opts.OutputPath}");
@@ -259,6 +323,7 @@ Console.WriteLine($"  Host    : {opts.HostName}");
 // ── Load component registry ──────────────────────────────────────────────────
 
 var registry = new ComponentRegistry(opts.AssemblyPath, opts.ComponentNamespace);
+var navigationProviders = new NavigationMarkupProviderFactory(opts.AssemblyPath);
 
 // ── Partial publish (--page args supplied) ────────────────────────────────────
 
@@ -292,6 +357,11 @@ if (selectedPages.Count > 0)
         var raw = File.ReadAllText(src);
         var (fm, _) = FrontmatterParser.Parse(raw, src);
 
+        var relForConfig = Path.GetRelativePath(opts.RepoRootPath, src).Replace('\\', '/');
+        var effectiveFolderConfig = folderConfigParser.GetEffectiveSettings(relForConfig);
+        var resolvedLayout = ResolveLayout(fm, effectiveFolderConfig, src);
+        fm = fm with { Layout = resolvedLayout };
+
         var dir  = Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
         var stem = Path.GetFileNameWithoutExtension(rel);
         var slug = fm.Slug ?? stem;
@@ -301,7 +371,6 @@ if (selectedPages.Count > 0)
             fullSlug.Replace('/', Path.DirectorySeparatorChar) + ".html");
         var canonicalUrl = $"https://{opts.HostName}/{fullSlug}.html";
         var lastMod      = File.GetLastWriteTime(src);
-
         partialPageInfos.Add(new PageInfo(
             SourcePath:   src,
             RelativePath: rel,
@@ -309,7 +378,8 @@ if (selectedPages.Count > 0)
             Slug:         fullSlug,
             CanonicalUrl: canonicalUrl,
             Frontmatter:  fm,
-            LastModified: lastMod));
+            LastModified: lastMod,
+            EffectiveFolderConfig: effectiveFolderConfig));
     }
 
     // Step 2: pre-flight — all target .html files must already exist
@@ -325,15 +395,9 @@ if (selectedPages.Count > 0)
         Environment.Exit(1);
     }
 
-    // Step 5: extract nav HTML from the first existing output file
-    var partialNavHtml = "";
-    {
-        var existingHtml = File.ReadAllText(partialPageInfos[0].OutputPath);
-        var parser       = new AngleSharp.Html.Parser.HtmlParser();
-        var doc          = parser.ParseDocument(existingHtml);
-        var navEl        = doc.QuerySelector("[x-part='nav']");
-        partialNavHtml = navEl?.InnerHtml ?? "";
-    }
+    var navManifest = BuildNavigationManifest(opts)
+        .Where(p => !IsContentExcluded(opts, p.SourcePath))
+        .ToList();
 
     // Step 6: publish only the specified pages
     Console.WriteLine("\nPublishing pages...");
@@ -342,7 +406,7 @@ if (selectedPages.Count > 0)
 
     foreach (var page in partialPageInfos)
     {
-        var result = PagePublisher.Publish(page, registry, opts, partialNavHtml, partialPageInfos);
+        var result = PagePublisher.Publish(page, registry, navigationProviders, opts, navManifest);
         if (result.Success)
         {
             Console.WriteLine($"  ✓  {page.Slug}.html");
@@ -463,6 +527,11 @@ foreach (var f in candidates)
     var raw = File.ReadAllText(f);
     var (fm, _) = FrontmatterParser.Parse(raw, f);
 
+    var relForConfig = Path.GetRelativePath(opts.RepoRootPath, f).Replace('\\', '/');
+    var effectiveFolderConfig = folderConfigParser.GetEffectiveSettings(relForConfig);
+    var resolvedLayout = ResolveLayout(fm, effectiveFolderConfig, f);
+    fm = fm with { Layout = resolvedLayout };
+
     var rel  = Path.GetRelativePath(opts.ContentPath, f).Replace('\\', '/');
     var dir  = Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
     var stem = Path.GetFileNameWithoutExtension(rel);
@@ -479,7 +548,6 @@ foreach (var f in candidates)
     var canonicalUrl = $"https://{opts.HostName}/{fullSlug}.html";
 
     var lastMod = File.GetLastWriteTime(f);
-
     pages.Add(new PageInfo(
         SourcePath:   f,
         RelativePath: rel,
@@ -487,15 +555,12 @@ foreach (var f in candidates)
         Slug:         fullSlug,
         CanonicalUrl: canonicalUrl,
         Frontmatter:  fm,
-        LastModified: lastMod
+        LastModified: lastMod,
+        EffectiveFolderConfig: effectiveFolderConfig
     ));
 }
 
 Console.WriteLine($"  {pages.Count} page(s) to publish.");
-
-// ── Generate shared navbar ────────────────────────────────────────────────────
-
-var navHtml = NavGenerator.Generate(pages, opts.DisplayName);
 
 // ── Publish each page ─────────────────────────────────────────────────────────
 
@@ -505,7 +570,7 @@ var errors    = new List<PageResult>();
 
 foreach (var page in pages)
 {
-    var result = PagePublisher.Publish(page, registry, opts, navHtml, pages);
+    var result = PagePublisher.Publish(page, registry, navigationProviders, opts, pages);
     if (result.Success)
     {
         Console.WriteLine($"  ✓  {page.Slug}.html");
@@ -622,5 +687,12 @@ if (errors.Count > 0)
     Console.Error.WriteLine("Errors:");
     foreach (var e in errors)
         Console.Error.WriteLine($"  {e.Page.Slug}: {e.Error}");
+    Environment.Exit(1);
+}
+
+}
+catch (PublishException ex)
+{
+    Console.Error.WriteLine($"Error: {ex.Message}");
     Environment.Exit(1);
 }

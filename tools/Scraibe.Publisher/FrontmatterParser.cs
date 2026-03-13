@@ -57,9 +57,11 @@ static class FrontmatterParser
             title = char.ToUpperInvariant(title[0]) + title[1..];
         }
 
-        // Layout: normalise to PascalCase
-        var layout = raw.GetValueOrDefault("layout", "default");
-        layout = ToPascalCase(layout);
+        // Layout is optional. When absent, publish orchestration resolves default
+        // from effective folder configuration (scraibe.layout.default).
+        string? layout = null;
+        if (raw.TryGetValue("layout", out var rawLayout) && !string.IsNullOrWhiteSpace(rawLayout))
+            layout = ToPascalCase(rawLayout);
 
         double priority = 0.8;
         if (raw.TryGetValue("priority", out var priStr))
@@ -76,7 +78,8 @@ static class FrontmatterParser
                 Date:        raw.GetValueOrDefault("date"),
                 Layout:      layout,
                 ChangeFreq:  raw.GetValueOrDefault("changefreq", "monthly"),
-                Priority:    priority
+                Priority:    priority,
+                RawFields:   new Dictionary<string, string>(raw, StringComparer.OrdinalIgnoreCase)
             ),
             body
         );

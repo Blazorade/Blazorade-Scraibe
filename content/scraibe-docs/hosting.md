@@ -8,7 +8,7 @@ priority: 0.7
 
 # Hosting
 
-A Blazorade Scraibe site is a Blazor WebAssembly application that serves pre-generated static HTML pages. Because there is no app server or runtime, it can run on any host that serves static files — but not all hosts deliver the same experience to search engines and bots.
+A Blazorade Scraibe site is a Blazor WebAssembly application that serves pre-generated static HTML pages. Because there is no server runtime, it can run on any host that serves static files — but not all hosts deliver the same experience to search engines and bots.
 
 ## Why hosting matters for SEO
 

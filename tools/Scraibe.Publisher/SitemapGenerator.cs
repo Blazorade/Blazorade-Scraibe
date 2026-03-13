@@ -59,13 +59,20 @@ static class SitemapGenerator
         var doc    = XDocument.Load(sitemapPath);
         var urlset = doc.Root!;
 
-        // Index existing entries by their <loc> value for O(1) lookup
-        var existingByLoc = urlset
-            .Elements(Ns + "url")
-            .ToDictionary(
-                el => el.Element(Ns + "loc")?.Value ?? "",
-                el => el,
-                StringComparer.OrdinalIgnoreCase);
+        // Index existing entries by <loc> while tolerating and cleaning duplicates.
+        // Older sitemap files can contain duplicate URLs; keep the first and drop extras.
+        var existingByLoc = new Dictionary<string, XElement>(StringComparer.OrdinalIgnoreCase);
+        foreach (var el in urlset.Elements(Ns + "url").ToList())
+        {
+            var locValue = el.Element(Ns + "loc")?.Value ?? "";
+            if (existingByLoc.ContainsKey(locValue))
+            {
+                el.Remove();
+                continue;
+            }
+
+            existingByLoc[locValue] = el;
+        }
 
         foreach (var p in updatedPages)
         {
@@ -89,9 +96,15 @@ static class SitemapGenerator
                     .ToString("0.0#", System.Globalization.CultureInfo.InvariantCulture)));
 
             if (existingByLoc.TryGetValue(loc, out var existing))
+            {
                 existing.ReplaceWith(newElement);
+                existingByLoc[loc] = newElement;
+            }
             else
+            {
                 urlset.Add(newElement);
+                existingByLoc[loc] = newElement;
+            }
         }
 
         // Re-sort all entries by <loc>

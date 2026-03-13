@@ -1,7 +1,8 @@
 namespace Scraibe.Publisher;
 
-/// <summary>All configuration resolved from CLI args and blazorade.config.md.</summary>
+/// <summary>All configuration resolved from CLI args and .config.json.</summary>
 record PublishOptions(
+    string RepoRootPath,          // absolute path to repository root
     string ContentPath,           // absolute path to /content
     string OutputPath,            // absolute path to wwwroot
     string HostName,              // e.g. blazorade.com
@@ -23,7 +24,8 @@ record PageInfo(
     string Slug,            // e.g. "products/widget"   (no leading slash, no .html)
     string CanonicalUrl,    // e.g. https://blazorade.com/products/widget.html
     Frontmatter Frontmatter,
-    DateTime LastModified
+    DateTime LastModified,
+    Dictionary<string, object?> EffectiveFolderConfig
 );
 
 /// <summary>Parsed YAML frontmatter for one page.</summary>
@@ -34,16 +36,18 @@ record Frontmatter(
     string? Keywords,
     string? Author,
     string? Date,          // ISO date string if explicitly set in frontmatter
-    string Layout,         // PascalCase layout name, defaults to "Default"
+    string? Layout,        // effective PascalCase layout name used for publishing (frontmatter override or scraibe.layout.default)
     string ChangeFreq,     // sitemap changefreq, defaults to "monthly"
-    double Priority        // sitemap priority, defaults to 0.8
+    double Priority,       // sitemap priority, defaults to 0.8
+    Dictionary<string, string> RawFields // original parsed frontmatter values for feature-specific lookups
 );
 
 /// <summary>A named HTML fragment to be injected into an x-part slot in the layout.</summary>
 record PartInfo(
     string Name,          // e.g. "nav", "footer", "right-panel"
     string ElementName,   // e.g. "nav", "footer", "aside"
-    string InnerHtml      // inner HTML content (NOT wrapped in the element tag — PagePublisher wraps it)
+    string InnerHtml,     // inner HTML content (NOT wrapped in the element tag — PagePublisher wraps it)
+    bool ReplaceElement = false // true when layout slot root must be replaced instead of setting InnerHtml
 );
 
 /// <summary>Outcome of publishing one page.</summary>
