@@ -26,11 +26,29 @@ The first-run process does the following:
 
 ## Step 1 — Collect site identity
 
-Ask the user for the following values before doing anything else. Do not proceed until all three are explicitly confirmed by the user — do not assume or infer values without confirmation.
+Collect the following values before doing anything else. Ask for them **one at a time** in this exact order: `DisplayName` → `AppName` → `HostName`.
 
-- **DisplayName** — the human-readable name of the site. Used in the navbar brand, page titles, and meta tags. Example: `My Awesome Site`.
-- **AppName** — the technical/code-safe name. Used for project names, namespaces, and folder names. Must be a valid C# identifier (no spaces or special characters). Example: `MyAwesomeSite`. Suggest a derived value from `DisplayName` for the user to confirm.
-- **HostName** — the hostname where the site will be published. Used for canonical URLs and the sitemap. Example: `www.mysite.com`.
+Prompting rules for this step:
+
+- Ask exactly one value per prompt.
+- Use `vscode_askQuestions` for each prompt.
+- Configure each prompt as a single free-text input field (`allowFreeformInput: true`) with no predefined options.
+- Include a compact "used for" description in each prompt so the user understands what to enter.
+- Do not combine multiple values into one question.
+- Do not proceed to the next value until the current one is provided and confirmed.
+- Do not assume or infer values without explicit user confirmation.
+
+- **DisplayName** — ask for the human-readable site name.
+  Used for: navbar brand text, page titles, and page metadata.
+  Example: `My Awesome Site`.
+- **AppName** — ask for the technical/code-safe app name.
+  Used for: project names, namespaces, and folder names.
+  Must be a valid C# identifier (no spaces or special characters).
+  Example: `MyAwesomeSite`.
+  Suggest a derived value from `DisplayName` for the user to confirm.
+- **HostName** — ask for the production host name.
+  Used for: canonical URLs and sitemap entries.
+  Example: `www.mysite.com`.
 
 Do not proceed to step 2 until all three values are explicitly confirmed by the user.
 
@@ -79,7 +97,24 @@ After creating the project, clean it up:
 
 Wire up the following:
 - Add a project reference from `{AppName}.Web` to `{AppName}.Components`.
-- Ensure the solution file (if one exists) includes both projects. Add both projects directly to the solution root — do **not** create any solution folders (e.g. `src`). The `NestedProjects` global section must not be present in the solution file.
+- Ensure the solution file is named `{AppName}.sln` (for example `MyAwesomeSite.sln`). The solution name must match `scraibe.site.appName` and use the `.sln` extension.
+- Ensure the solution includes these projects:
+  - `src/{AppName}.Components/{AppName}.Components.csproj`
+  - `src/{AppName}.Web/{AppName}.Web.csproj`
+  - `tools/Scraibe.Publisher/Scraibe.Publisher.csproj`
+  - `tools/Scraibe.Abstractions/Scraibe.Abstractions.csproj`
+  - `tools/Scraibe.ContentComposition/Scraibe.ContentComposition.csproj`
+- Ensure solution folder layout is exactly:
+  - No `src` solution folder.
+  - A `web` solution folder exists.
+  - A `tools` solution folder exists.
+  - `{AppName}.Web` is under the `web` solution folder.
+  - `Scraibe.Publisher`, `Scraibe.Abstractions`, and `Scraibe.ContentComposition` are under the `tools` solution folder.
+  - `{AppName}.Components` is the only project at the solution root (not under any solution folder).
+  - Never place `{AppName}.Components` under `web`, `tools`, or any other solution folder.
+- In the `.sln` file, the `NestedProjects` mapping must include `{AppName}.Web` under `web` and the Scraibe tools projects under `tools`.
+- In the `.sln` file, the `NestedProjects` mapping must not include `{AppName}.Components`.
+- Validate the final `.sln` structure before continuing. If any of the rules above are not met, fix the solution file immediately before moving to the next step.
 
 Then add the following NuGet package to the web app project. **Before adding it, check NuGet for the latest stable published version** (no prerelease) and use that version number. The version shown below was current at the time these instructions were written and is provided as a fallback only.
 

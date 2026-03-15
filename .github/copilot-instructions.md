@@ -2,11 +2,12 @@
 
 ## First-run check
 
-**Before doing anything else**, check whether `.config.json` exists at the repository root.
+`first-run.instructions.md` is the only source of truth for first-run behavior.
 
-- **If `.config.json` exists:** read it to load site configuration values (display name, app name, host name, project paths), then continue with the rest of these instructions.
-- **If `.config.json` does not exist but `blazorade.config.md` exists:** run a legacy upgrade flow that migrates the values into `.config.json` (including `scraibe.layout.default = default`) and deletes `blazorade.config.md` only after successful migration.
-- **If neither file exists:** read `.github/instructions/first-run.instructions.md` and follow it completely before proceeding with anything else. Do not perform any other work until first-run has completed and `.config.json` has been written.
+Before doing anything else, check whether `.config.json` exists at the repository root:
+
+- If `.config.json` exists, read it to load site configuration values (display name, app name, host name, project paths), then continue with the rest of these instructions.
+- If `.config.json` does not exist, immediately load and follow `.github/instructions/first-run.instructions.md` in full. Do not duplicate or reinterpret first-run rules from this file.
 
 ## Project overview
 
@@ -29,7 +30,7 @@ Generated files under `{WebAppPath}/wwwroot/` (`*.html`, `sitemap.xml`, `staticw
 
 - **Help** — triggered when the user asks what you can help with, what you do, or asks about your capabilities. Read [help.instructions.md](./instructions/help.instructions.md) and present the relevant capabilities based on the user's context.
 - **Publishing content** — triggered when the user asks to publish, regenerate, or update the site pages. Follow [publish.instructions.md](./instructions/publish.instructions.md).
-- **First-run setup** — triggered when both `.config.json` and `blazorade.config.md` are missing. Follow [first-run.instructions.md](./instructions/first-run.instructions.md).
+- **First-run setup** — follow [first-run.instructions.md](./instructions/first-run.instructions.md) whenever `.config.json` is missing.
 - **Todo items** — triggered when the user wants to note something for later, review outstanding tasks, or close a completed one. Follow [todo.instructions.md](./instructions/todo.instructions.md).
 - **Playbooks** — triggered when the user asks to run a playbook, or makes a request that may match a site-defined procedure. Read `playbooks/home.md` to identify the correct playbook, then load and follow it. Follow [playbooks.instructions.md](./instructions/playbooks.instructions.md).
 
