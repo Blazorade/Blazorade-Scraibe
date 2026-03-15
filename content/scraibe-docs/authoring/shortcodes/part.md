@@ -103,5 +103,5 @@ The sidebar content is extracted at publish time and placed in the `<aside hidde
 
 ## See Also
 
-- [Page Layouts](../page-layouts.md) — how layouts and content parts work together.
+- [Page Layouts](../../site-building/page-layouts.md) — how layouts and content parts work together.
 - [Content Authoring](../content-authoring.md) — the full frontmatter reference.

@@ -48,6 +48,11 @@ public static class ConfigKeys
     public const string ScraibeNavigationProviderDefault = "scraibe.navigation.provider.default";
 
     /// <summary>
+    /// Default slot content provider name when a non-navigation layout slot does not define x-provider.
+    /// </summary>
+    public const string ScraibeContentSlotProviderDefault = "scraibe.content.slot.provider.default";
+
+    /// <summary>
     /// Number of descendant folder levels to include under navigation item children.
     /// Default is <c>1</c> when not configured.
     /// </summary>

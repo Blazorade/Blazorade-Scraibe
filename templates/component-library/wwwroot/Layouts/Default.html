@@ -1,14 +1,14 @@
 <div class="blz-layout-default">
-    <x-placeholder class="navbar-expand-lg bg-primary" data-bs-theme="dark" x-part="nav" x-provider="navbar" />
+    <nav class="navbar-expand-lg bg-primary" data-bs-theme="dark" x-part="nav" x-provider="navbar" />
     <div class="container mt-4">
-        <aside x-part="left-panel"></aside>
+        <aside x-part="left-panel" x-provider="default"></aside>
         <main>
-          <article x-part="main"></article>
+          <article x-part="main" x-provider="default"></article>
         </main>
-        <aside x-part="right-panel"></aside>
+        <aside x-part="right-panel" x-provider="default"></aside>
     </div>
     <footer class="text-bg-dark">
-      <div class="container-fluid mt-4 p-4" x-part="footer"></div>
+      <div class="container-fluid mt-4 p-4" x-part="footer" x-provider="default"></div>
     </footer>
     <div class="navigation-indicator" aria-hidden="true">
         <div class="spinner-border" role="status">

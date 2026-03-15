@@ -14,6 +14,20 @@ Shortcodes let you drop fully fledged Blazor components into Markdown using a br
 
 If you have used WordPress shortcodes, these follow the same `[Name Param="value"]...[/Name]` pattern, so the syntax will feel familiar. For more background, see the [WordPress shortcode reference](https://codex.wordpress.org/Shortcode).
 
+For runtime terminology used on this page, see [Runtime glossary](../../core/runtime-glossary.md).
+
+## When to use shortcodes
+
+Use shortcodes when you need reusable interactive behavior or component-level presentation logic.
+
+Prefer plain Markdown when static text structure is enough.
+
+Use this decision guide:
+
+- Use Markdown for headings, paragraphs, lists, tables, and links that do not require component logic.
+- Use shortcodes for interactive UI, parameterized reusable blocks, or content that should be rendered by a Razor component.
+- Avoid wrapping plain prose in shortcodes when no component behavior is needed.
+
 ## Anatomy of a Shortcode
 
 Use the self-closing form when no child content is needed:
@@ -139,6 +153,12 @@ More detail.
 Shortcode detection is skipped inside code contexts so you can document examples safely:
 - Inline code spans: `[Badge ui="pill"]` stays literal when wrapped in single backticks.
 - Fenced code blocks (with or without a language hint): shortcode-like text is not parsed and remains verbatim.
+
+## Sentinel and fallback behavior
+
+At publish time, matched shortcodes are converted into `<x-shortcode>` sentinel elements. The static HTML remains crawler-readable, and runtime enhancement resolves each sentinel into a live component when the app executes.
+
+If a shortcode component cannot be resolved at runtime, the static content path remains the baseline for crawler readability and graceful degradation.
 
 ## Tips
 

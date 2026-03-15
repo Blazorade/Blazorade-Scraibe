@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using AngleSharp.Html.Parser;
 using Scraibe.Abstractions.Configuration;
+using Scraibe.Abstractions.Content;
 using Scraibe.ContentComposition.Html;
 
 namespace Scraibe.Publisher;
@@ -21,6 +22,7 @@ static class PagePublisher
         PageInfo page,
         ComponentRegistry registry,
         NavigationMarkupProviderFactory navigationProviders,
+        SlotContentProviderFactory slotContentProviders,
         PublishOptions opts,
         IReadOnlyList<PageInfo> allPages)
     {
@@ -99,7 +101,7 @@ static class PagePublisher
             var parts = MergeParts(inlineParts, scopedParts, navPart, bodyHtml);
 
             // 8. Apply page template
-            var html = ApplyTemplate(page, parts, opts);
+            var html = ApplyTemplate(page, parts, slotContentProviders, opts);
 
             // 9. Write output
             Directory.CreateDirectory(Path.GetDirectoryName(page.OutputPath)!);
@@ -121,7 +123,7 @@ static class PagePublisher
 
     private static readonly HtmlParser HtmlParser = new();
 
-    private static string ApplyTemplate(PageInfo page, List<PartInfo> parts, PublishOptions opts)
+    private static string ApplyTemplate(PageInfo page, List<PartInfo> parts, SlotContentProviderFactory slotContentProviders, PublishOptions opts)
     {
         var template = File.ReadAllText(opts.TemplatePath);
         var fm       = page.Frontmatter;
@@ -163,7 +165,33 @@ static class PagePublisher
                 }
                 else
                 {
-                    slot.InnerHtml = part.InnerHtml;
+                    var providerName = slot.GetAttribute("x-provider")?.Trim();
+                    if (string.IsNullOrWhiteSpace(providerName))
+                        providerName = GetConfiguredDefaultSlotProvider(page.EffectiveFolderConfig);
+
+                    if (string.IsNullOrWhiteSpace(providerName))
+                    {
+                        throw new PublishException(
+                            $"Slot content provider could not be resolved for page '{page.RelativePath}', layout '{Path.GetFileName(layoutFile)}', slot '{partName}'. Add x-provider on the layout slot or set '{ConfigKeys.ScraibeContentSlotProviderDefault}' in effective .config.json.");
+                    }
+
+                    var provider = slotContentProviders.ResolveOrThrow(
+                        providerName,
+                        $"page '{page.RelativePath}', layout '{Path.GetFileName(layoutFile)}', slot '{partName}'");
+
+                    var elementNameHint = slot.LocalName;
+                    var placeholderAttributes = slot.Attributes.ToDictionary(a => a.Name, a => a.Value);
+
+                    var providerHtml = provider.CreateSlotContent(
+                        elementNameHint,
+                        part.InnerHtml,
+                        placeholderAttributes,
+                        page.EffectiveFolderConfig);
+
+                    slot.OuterHtml = PartSlotComposer.BuildReplacementRootHtml(
+                        slot,
+                        providerHtml,
+                        $"page '{page.RelativePath}', slot '{partName}', slot provider '{providerName}'");
                 }
             }
             else
@@ -340,6 +368,18 @@ static class PagePublisher
     private static string? GetConfiguredDefaultProvider(Dictionary<string, object?> effectiveConfig)
     {
         if (effectiveConfig.TryGetValue(ConfigKeys.ScraibeNavigationProviderDefault, out var configured)
+            && configured is string value
+            && !string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        return null;
+    }
+
+    private static string? GetConfiguredDefaultSlotProvider(Dictionary<string, object?> effectiveConfig)
+    {
+        if (effectiveConfig.TryGetValue(ConfigKeys.ScraibeContentSlotProviderDefault, out var configured)
             && configured is string value
             && !string.IsNullOrWhiteSpace(value))
         {

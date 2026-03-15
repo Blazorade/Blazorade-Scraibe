@@ -236,7 +236,8 @@ Write the following file to the repository root. Substitute the actual values co
     "scraibe.site.appName": "{AppName}",
     "scraibe.site.hostName": "{HostName}",
     "scraibe.layout.default": "default",
-    "scraibe.navigation.provider.default": "navbar"
+    "scraibe.navigation.provider.default": "navbar",
+    "scraibe.content.slot.provider.default": "Default"
   }
 }
 ```

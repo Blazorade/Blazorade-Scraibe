@@ -52,7 +52,7 @@ These instructions define the standards for all markdown documents in this repos
 
 - Use descriptive link text that makes sense out of context
 - NEVER use "click here" or "this link" as link text
-- Prefer inline links: `[descriptive text](url)` over reference-style links
+- Prefer inline links: ``[descriptive text](https://example.com)`` over reference-style links
 - For internal repository links, use relative paths from the repository root
 - External links should use HTTPS when available
 - Ensure all links are functional and point to stable, authoritative sources

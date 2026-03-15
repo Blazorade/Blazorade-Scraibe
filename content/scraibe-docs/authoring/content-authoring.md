@@ -10,6 +10,8 @@ priority: 0.8
 
 All site content lives in the `/content` folder as plain Markdown files. Each file becomes one page on the published site. This page covers everything you need to know to write and structure content correctly.
 
+For runtime-model context behind these rules, see [Architecture positioning](../core/architecture-positioning.md) and [Runtime glossary](../core/runtime-glossary.md).
+
 ## Frontmatter
 
 Every content file should start with a YAML frontmatter block, delimited by `---` lines. All fields are optional unless noted.
@@ -34,71 +36,18 @@ If `title` is absent, it is derived from the first `#` heading in the body. If n
 
 When `date` is set in frontmatter, the pipeline uses that value verbatim on every publish run. The pipeline never writes back to the source file, so the date you set is permanent until you change it manually. When `date` is omitted, the file's last-modified timestamp on disk is used instead — but that derived date is never saved to your frontmatter.
 
-## Folder-level configuration (`.config.json`)
+## Writing workflow
 
-You can place a `.config.json` file in any folder (including the repository root) to store machine-readable control settings that affect publish-time behavior. Their effects are visible at runtime through generated output files, but `.config.json` itself is not read by the running site. Configuration files are metadata, not content:
+Use this practical flow when authoring a new page:
 
-- They never generate HTML pages.
-- They are never copied as static assets.
-- They are never treated as alternate Markdown content.
+1. Create the file in the correct folder under `/content` based on URL intent.
+2. Add frontmatter first (`title`, `description`, and optional SEO fields).
+3. Write one clear `#` page heading that matches the page intent.
+4. Draft content using `##` and `###` headings with short, focused sections.
+5. Add links, images, and shortcodes only where they improve comprehension.
+6. Proofread for clarity and consistency before publishing.
 
-The file supports two optional objects:
-
-```json
-{
-	"local": {
-		"setting1": "value1"
-	},
-	"scoped": {
-		"setting2": "value2"
-	}
-}
-```
-
-- `local` applies only to the folder where the file exists.
-- `scoped` applies to that folder and all descendant folders.
-- Within one file, the same key cannot appear in both `local` and `scoped`.
-
-### Inheritance model
-
-When resolving effective settings for a page, the pipeline walks from repository root to the page folder and applies settings in this order:
-
-1. Each folder's `scoped` keys.
-2. `local` keys from the closest folder in the chain that has a `.config.json` file.
-
-Nearest definitions win by key. This means child `scoped` overrides parent `scoped`, and the closest available `local` layer overrides inherited `scoped` for the target folder.
-
-Example:
-
-- `/content/.config.json`
-
-```json
-{
-	"local": {
-		"nav_mode": "compact-root"
-	},
-	"scoped": {
-		"page_layout": "docs",
-		"nav_mode": "full"
-	}
-}
-```
-
-- `/content/scraibe-docs/.config.json`
-
-```json
-{
-	"local": {
-		"nav_mode": "compact"
-	}
-}
-```
-
-Effective values:
-
-- Files directly in `/content/`: `page_layout=docs`, `nav_mode=compact-root`
-- Files directly in `/content/scraibe-docs/`: `page_layout=docs`, `nav_mode=compact`
-- Files in `/content/scraibe-docs/shortcodes/`: `page_layout=docs`, `nav_mode=full`
+For folder-level configuration and inheritance behavior, see [Folder configuration](folder-configuration.md).
 
 ## Reserved Filenames
 
@@ -133,6 +82,18 @@ The published URL mirrors the `/content` folder structure exactly. Subdirectorie
 | `content/docs/api/reference.md` | `/docs/api/reference` |
 
 If the `slug` frontmatter field is set, it overrides the filename (but not the directory path).
+
+## Content structure patterns
+
+Use these patterns to keep pages consistent and easy to scan:
+
+- Start with a short opening paragraph that tells readers what they will learn.
+- Group related information under descriptive `##` headings.
+- Use bullet lists for options, rules, and checklists.
+- Use tables only when comparing structured values.
+- Keep sections focused; split oversized pages into multiple pages when needed.
+
+When in doubt, optimize for fast comprehension over narrative length.
 
 ## Static Assets
 
@@ -210,3 +171,5 @@ Shortcodes are never processed inside code spans or fenced code blocks, so docum
 - Use lists and tables for structured information rather than long prose.
 - Prefer concrete, specific headings over vague ones — they anchor navigation and accessibility labels.
 - The `description` frontmatter field appears in search result snippets; make it useful and accurate.
+- Prefer plain Markdown first; add shortcodes only when you need component behavior.
+- Use consistent terminology across related pages in the same section.

@@ -324,6 +324,7 @@ Console.WriteLine($"  Host    : {opts.HostName}");
 
 var registry = new ComponentRegistry(opts.AssemblyPath, opts.ComponentNamespace);
 var navigationProviders = new NavigationMarkupProviderFactory(opts.AssemblyPath);
+var slotContentProviders = new SlotContentProviderFactory(opts.AssemblyPath);
 
 // ── Partial publish (--page args supplied) ────────────────────────────────────
 
@@ -406,7 +407,7 @@ if (selectedPages.Count > 0)
 
     foreach (var page in partialPageInfos)
     {
-        var result = PagePublisher.Publish(page, registry, navigationProviders, opts, navManifest);
+        var result = PagePublisher.Publish(page, registry, navigationProviders, slotContentProviders, opts, navManifest);
         if (result.Success)
         {
             Console.WriteLine($"  ✓  {page.Slug}.html");
@@ -570,7 +571,7 @@ var errors    = new List<PageResult>();
 
 foreach (var page in pages)
 {
-    var result = PagePublisher.Publish(page, registry, navigationProviders, opts, pages);
+    var result = PagePublisher.Publish(page, registry, navigationProviders, slotContentProviders, opts, pages);
     if (result.Success)
     {
         Console.WriteLine($"  ✓  {page.Slug}.html");

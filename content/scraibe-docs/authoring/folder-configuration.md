@@ -10,9 +10,13 @@ priority: 0.7
 
 Blazorade Scraibe supports folder-level `.config.json` files so you can define machine-readable settings that control publish-time behavior. Their effects are visible at runtime through generated output files, but `.config.json` itself is not read by the running site. Configuration files are metadata, not content, so they are read by the pipeline but never published as pages.
 
+For architecture context on publish versus runtime responsibilities, see [Architecture positioning](../core/architecture-positioning.md) and [Runtime glossary](../core/runtime-glossary.md).
+
 ## What `.config.json` is used for
 
 A `.config.json` file can define site-level and folder-level settings, such as default layout and excluded content paths. The key behavior is inheritance: settings can apply to only one folder or flow to descendants.
+
+For page-by-page behavior (layout and navigation), effective values are resolved from repository root to the page folder. For publish-run behavior (`scraibe.publish.excludedContent`), values are resolved from the repository-root `.config.json` used by the publish entry script.
 
 Configuration files are never emitted as website artifacts:
 
@@ -96,7 +100,7 @@ Effective values:
 
 - Files directly in `/content/`: `page_layout=docs`, `nav_mode=compact-root`
 - Files directly in `/content/scraibe-docs/`: `page_layout=docs`, `nav_mode=compact`
-- Files in `/content/scraibe-docs/shortcodes/`: `page_layout=docs`, `nav_mode=full`
+- Files in `/content/scraibe-docs/authoring/shortcodes/`: `page_layout=docs`, `nav_mode=full`
 
 If `/tools` has no `.config.json`, the repository-root `.config.json` still applies there: all inherited `scoped` keys apply, and the root `local` keys are treated as the effective local layer for `/tools`.
 
@@ -106,19 +110,20 @@ These keys are currently used by the framework:
 
 - `scraibe.site.displayName`: Human-readable site name used in generated UI and metadata. This value is used by generated navigation branding and other site identity output.
 - `scraibe.site.appName`: Technical app identifier used for project and namespace identity.
-- `scraibe.site.hostName`: Host name used for canonical URLs and sitemap `<loc>` generation. See [publishing](./publishing.md).
+- `scraibe.site.hostName`: Host name used for canonical URLs and sitemap `<loc>` generation. See [publishing](../operations/publishing.md).
 - `scraibe.site.webAppPath`: Repository-relative path to the Blazor WebAssembly web app project.
 - `scraibe.site.componentLibraryPath`: Repository-relative path to the component library project where shortcodes, layouts, and styling assets live.
-- `scraibe.layout.default`: Default layout name when page frontmatter does not define `layout`. See [page layouts](./page-layouts.md) and [content authoring](./content-authoring.md).
-- `scraibe.publish.excludedContent`: Array of content-relative paths that publish skips entirely. See [publishing](./publishing.md).
-- `scraibe.navigation.provider.default`: Default navigation provider name when the active layout does not set `x-provider` on its `x-part="nav"` slot. See [page layouts](./page-layouts.md) and [publishing](./publishing.md).
-- `scraibe.navigation.children.depth`: Number of descendant folder levels to include under navigation item children. `0` means no descendant folder expansion, `1` includes one level, and larger values include deeper nesting. See [publishing](./publishing.md).
-- `scraibe.navigation.context.pinned`: Enables pinned navigation context from the folder where it is set.
+- `scraibe.layout.default`: Default layout name when page frontmatter does not define `layout`. See [page layouts](../site-building/page-layouts.md) and [content authoring](./content-authoring.md).
+- `scraibe.publish.excludedContent`: Array of content-relative paths that publish skips entirely. See [publishing](../operations/publishing.md).
+- `scraibe.navigation.provider.default`: Default navigation provider name when the active layout does not set `x-provider` on its `x-part="nav"` slot. See [page layouts](../site-building/page-layouts.md) and [publishing](../operations/publishing.md).
+- `scraibe.content.slot.provider.default`: Default slot content provider name when a non-navigation layout slot does not set `x-provider`. If both are missing, publish fails for that slot.
+- `scraibe.navigation.children.depth`: Number of descendant folder levels to include under navigation item children. `0` means no descendant folder expansion, `1` includes one level, and larger values include deeper nesting. If omitted or invalid, the effective default is `1`. Negative values are clamped to `0`.
+- `scraibe.navigation.context.pinned`: Enables pinned navigation context from the folder where it is set. Supports boolean values (`true`/`false`) and boolean strings (`"true"`/`"false"`, case-insensitive).
 
 Recommended placement at repository root:
 
 - Put `scraibe.site.webAppPath`, `scraibe.site.componentLibraryPath`, and `scraibe.publish.excludedContent` in `local`.
-- Put shared identity/layout defaults (`scraibe.site.displayName`, `scraibe.site.appName`, `scraibe.site.hostName`, `scraibe.layout.default`) in `scoped`.
+- Put shared identity/layout defaults (`scraibe.site.displayName`, `scraibe.site.appName`, `scraibe.site.hostName`, `scraibe.layout.default`, `scraibe.navigation.provider.default`, `scraibe.content.slot.provider.default`) in `scoped`.
 
 If frontmatter `layout` is missing on a page, publish resolves layout from `scraibe.layout.default`. If neither exists, publish fails with a clear error.
 
@@ -132,6 +137,8 @@ Navigation behavior is controlled by three primary keys that can be used togethe
 
 In practice, use these keys as a set: choose the provider, choose how deep child links should go, then choose whether folder context should stay anchored. Provider rendering details still belong to the selected navigation provider implementation.
 
+For layout slot behavior and provider selection context, see [page layouts](../site-building/page-layouts.md). For publish output implications, see [publishing](../operations/publishing.md).
+
 ## Pinned navigation context
 
 Use `scraibe.navigation.context.pinned` to control whether a folder becomes the navigation context root for descendant pages.
@@ -143,10 +150,11 @@ In practice, sticky means pages can keep using an ancestor folder as their navig
 
 When a lower folder sets `scraibe.navigation.context.pinned` to `false`, it stops inheriting pinned context behavior from higher folders for that branch. From that point downward, navigation context falls back to the normal per-folder behavior unless that branch sets `scraibe.navigation.context.pinned` to `true` again.
 
-`local` versus `scoped` semantics follow normal configuration inheritance rules:
+`local` versus `scoped` semantics follow normal configuration inheritance rules, with one important detail for pinned context:
 
 - `scoped` applies to the folder and descendants until overridden.
 - `local` from the nearest `.config.json` remains the effective local layer for the target folder resolution.
+- If a folder has a `.config.json` but no `local.scraibe.navigation.context.pinned`, pinned behavior for that branch falls back to inherited `scoped` values.
 
 Example:
 
@@ -162,6 +170,7 @@ The publish pipeline only builds the navigation model context. Rendering details
 
 Typical validation failures are:
 
+- Invalid JSON syntax in `.config.json`.
 - `.config.json` root is not an object.
 - `local` exists but is not an object.
 - `scoped` exists but is not an object.

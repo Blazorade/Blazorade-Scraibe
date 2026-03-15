@@ -10,6 +10,8 @@ priority: 0.7
 
 This page lists all software that must be available on your machine before Blazorade Scraibe will run correctly. Each item explains what it is used for and where to get it.
 
+If you are reading docs in order, start from [Blazorade Scraibe](../home.md) and [Architecture positioning](../core/architecture-positioning.md), then return here for setup tooling.
+
 ## Required Software
 
 ### An IDE with GitHub Copilot Support

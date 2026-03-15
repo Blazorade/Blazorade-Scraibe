@@ -140,7 +140,7 @@ The `[Part]` shortcode adds a named part inline in a content page body. The part
 ```
 [Part Name="right-panel"]
 ## Related Links
-- [Item one](/item-one)
+- [Item one](https://example.com/item-one)
 [/Part]
 ```
 

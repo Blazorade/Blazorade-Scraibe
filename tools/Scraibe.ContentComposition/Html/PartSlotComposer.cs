@@ -76,8 +76,6 @@ public static class PartSlotComposer
         {
             if (attr.Name.Equals("class", StringComparison.OrdinalIgnoreCase))
                 continue;
-            if (attr.Name.Equals("x-provider", StringComparison.OrdinalIgnoreCase))
-                continue;
 
             root.SetAttribute(attr.Name, attr.Value);
         }
@@ -87,7 +85,6 @@ public static class PartSlotComposer
         else
             root.RemoveAttribute("class");
 
-        root.RemoveAttribute("x-provider");
         return root.OuterHtml ?? string.Empty;
     }
 

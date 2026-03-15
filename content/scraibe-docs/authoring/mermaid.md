@@ -10,6 +10,8 @@ priority: 0.8
 
 Blazorade Scraibe has built-in support for [Mermaid](https://mermaid.js.org/) diagrams. Write a fenced code block with the `mermaid` language identifier and the diagram is rendered as an interactive, scalable graphic in the browser — nothing else required.
 
+For runtime context on how diagram content is published and enhanced, see [Architecture positioning](../core/architecture-positioning.md) and [Runtime glossary](../core/runtime-glossary.md).
+
 ````markdown
 ```mermaid
 flowchart LR
