@@ -33,9 +33,18 @@ class ComponentRegistry
         {
             var assembly = Assembly.LoadFrom(assemblyPath);
             Type[] types;
-            try { types = assembly.GetTypes(); }
+            try
+            {
+                types = assembly.GetTypes();
+            }
             catch (ReflectionTypeLoadException e)
-            { types = e.Types.Where(t => t != null).ToArray()!; }
+            {
+                LogLoaderExceptions(e, assemblyPath);
+                throw new PublishException(
+                    $"Could not load shortcode component types from '{assemblyPath}'. " +
+                    "Required dependency assemblies are likely missing from the component output folder. " +
+                    "Rebuild the component library with CopyLocalLockFileAssemblies=true and run publish again.");
+            }
 
             foreach (var type in types)
             {
@@ -56,12 +65,56 @@ class ComponentRegistry
                 _components[type.Name] = new ComponentInfo(type.Name, paramMap, typeMap);
             }
 
+            if (_components.Count == 0)
+            {
+                throw new PublishException(
+                    $"Shortcode component registry is empty for namespace '{shortcodesNamespace}' " +
+                    $"in assembly '{assemblyPath}'. This usually indicates unresolved component dependencies " +
+                    "during reflection. Ensure the component output folder contains all NuGet dependency " +
+                    "assemblies by setting CopyLocalLockFileAssemblies=true.");
+            }
+
             Loaded = true;
             Console.WriteLine($"  Component registry: {_components.Count} shortcode component(s) loaded.");
         }
         catch (Exception ex)
         {
+            if (ex is PublishException)
+                throw;
+
             Console.Error.WriteLine($"Warning: could not load component assembly: {ex.Message}");
+        }
+    }
+
+    private static void LogLoaderExceptions(ReflectionTypeLoadException exception, string assemblyPath)
+    {
+        Console.Error.WriteLine(
+            $"Error: reflection failed while loading shortcode types from '{assemblyPath}'.");
+
+        var loaderExceptions = exception.LoaderExceptions ?? Array.Empty<Exception>();
+        if (loaderExceptions.Length == 0)
+        {
+            Console.Error.WriteLine("  No loader exceptions were provided by the runtime.");
+            return;
+        }
+
+        for (var i = 0; i < loaderExceptions.Length; i++)
+        {
+            var loader = loaderExceptions[i];
+            if (loader is null)
+            {
+                Console.Error.WriteLine($"  Loader exception [{i + 1}]: <null>");
+                continue;
+            }
+
+            Console.Error.WriteLine($"  Loader exception [{i + 1}]: {loader.GetType().Name}: {loader.Message}");
+
+            if (loader is FileNotFoundException fnf && !string.IsNullOrWhiteSpace(fnf.FileName))
+                Console.Error.WriteLine($"    Missing assembly: {fnf.FileName}");
+            else if (loader is FileLoadException fle && !string.IsNullOrWhiteSpace(fle.FileName))
+                Console.Error.WriteLine($"    Failed assembly: {fle.FileName}");
+            else if (loader is BadImageFormatException bif && !string.IsNullOrWhiteSpace(bif.FileName))
+                Console.Error.WriteLine($"    Invalid assembly format: {bif.FileName}");
         }
     }
 

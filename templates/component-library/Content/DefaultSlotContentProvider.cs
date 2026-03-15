@@ -1,4 +1,4 @@
-﻿using Scraibe.Abstractions.Annotation;
+using Scraibe.Abstractions.Annotation;
 using Scraibe.Abstractions.Content;
 using System;
 using System.Collections.Generic;

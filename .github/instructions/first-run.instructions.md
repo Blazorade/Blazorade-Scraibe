@@ -164,6 +164,18 @@ Add `<Import Project="build-extras.targets" />` to the component library `.cspro
 </Project>
 ```
 
+### 4a.0 — Ensure component dependency assemblies are copied to output
+
+Ensure the component library project has `CopyLocalLockFileAssemblies` enabled so publish-time reflection can materialize shortcode component types and their transitive dependencies:
+
+```xml
+<PropertyGroup>
+  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+</PropertyGroup>
+```
+
+The preferred source of truth is `Directory.Build.props` copied from `templates/component-library/`. If the generated project does not inherit this setting for any reason, add it directly to `src/{AppName}.Components/{AppName}.Components.csproj` before continuing.
+
 ### 4a.1 — Add shared abstractions reference
 
 Add a project reference from `src/{AppName}.Components/{AppName}.Components.csproj` to `tools/Scraibe.Abstractions/Scraibe.Abstractions.csproj` so component-library service contracts and implementations can share publish-time abstractions:

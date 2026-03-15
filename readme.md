@@ -11,11 +11,13 @@ Blazor WebAssembly ships an empty HTML shell. Crawlers and AI bots see nothing. 
 
 There has never been a good middle ground. Until now.
 
+Blazorade Scraibe solves a real gap that mainstream Blazor workflows still leave open: crawler-visible static content plus live Blazor component enhancement, without forcing you into server-side rendering infrastructure.
+
 ## What Blazorade Scraibe does
 
-Write your content in Markdown. Open a Copilot chat. Say *"publish my site"*. Every page becomes a fully-formed, crawler-visible static HTML file — served for free on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static). No app server. No pipeline. No JavaScript to write.
+Write your content in Markdown. Open a Copilot chat. Say *"publish my site"*. Every page becomes a fully-formed, crawler-visible static HTML file — served for free on [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static). No app server. No pipeline engineering. No custom JavaScript required from content authors or site builders.
 
-**Every problem you will run into has already been solved and captured as structured instructions for GitHub Copilot.** Content authoring, shortcode resolution, page layouts, navigation, sitemap generation, styling conventions, first-run setup, repeatable procedures — all of it is in `.github/instructions/`, version-controlled with your site, and followed autonomously by Copilot every time you ask.
+**The hard parts you run into have already been solved and captured as structured instructions for GitHub Copilot.** Content authoring, shortcode resolution, page layouts, navigation, sitemap generation, styling conventions, first-run setup, repeatable procedures — all of it is version-controlled with your site and followed autonomously by Copilot every time you ask.
 
 You do not configure tools. You have a conversation.
 
@@ -39,7 +41,7 @@ It is not a generator. It is a collaborator that already knows how your site wor
 - **SEO and AIO out of the box** — Static HTML on every page. Crawlers and AI bots see real content, not a JavaScript shell. No [Blazor Server](https://learn.microsoft.com/en-us/aspnet/core/blazor/hosting-models#blazor-server) required.
 - **Content-linked static assets** — Place images and files next to Markdown in `/content`; publish copies them to matching paths in `wwwroot`.
 - **Shortcodes — [WordPress power](https://codex.wordpress.org/Shortcode_API), Blazor quality** — Embed fully interactive [Razor components](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/) directly in Markdown using a simple bracket syntax. Pure .NET, no sandboxing.
-- **Zero JavaScript. Fully responsive. Fully interactive.** — No npm, no bundlers, no JS config files. You write C# and Markdown. Blazorade handles the rest.
+- **Zero custom JavaScript. Fully responsive. Fully interactive.** — No npm app stack, no bundlers to maintain, no JS authoring burden for content authors or site builders. You write C# and Markdown. Blazorade handles the rest.
 - **Free hosting** — Designed for [Azure Static Web Apps](https://azure.microsoft.com/products/app-service/static): clean-URL routing, custom domains, and HTTPS on the free tier.
 
 ## Configuration
@@ -50,7 +52,7 @@ Blazorade Scraibe uses `.config.json` files for machine-readable settings.
 - Nested `.config.json` files support folder-level inheritance using `scoped` and folder-only overrides using `local`.
 - Effective settings are resolved from repository root to the target folder; nearest matching key wins.
 
-See [content/scraibe-docs/content-authoring.md](content/scraibe-docs/content-authoring.md) for full configuration rules and examples.
+See [content/scraibe-docs/authoring/content-authoring.md](content/scraibe-docs/authoring/content-authoring.md) for full configuration rules and examples.
 
 ## Convinced? Start here
 
