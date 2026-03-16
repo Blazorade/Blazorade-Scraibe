@@ -89,7 +89,7 @@ public sealed class NavbarProvider : INavigationMarkupProvider
             {
                 sb.AppendLine("            <li class=\"dropdown-submenu\">");
 
-                sb.AppendLine($"              <a class=\"dropdown-item dropdown-toggle\" href=\"#\" aria-expanded=\"false\">{HtmlEncode(child.Title)}</a>");
+                sb.AppendLine($"              <button type=\"button\" class=\"dropdown-item dropdown-toggle\" aria-expanded=\"false\">{HtmlEncode(child.Title)}</button>");
 
                 sb.AppendLine("              <ul class=\"dropdown-menu\">");
 

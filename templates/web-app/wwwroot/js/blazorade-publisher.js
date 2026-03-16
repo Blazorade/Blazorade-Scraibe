@@ -77,3 +77,65 @@ window.blazoradePublisher = {
         });
     }
 };
+
+if (!window.__blazoradeNestedDropdownInit) {
+    window.__blazoradeNestedDropdownInit = true;
+
+    // Use delegated events so newly rendered navigation trees work without re-initialization.
+    document.addEventListener('click', function (event) {
+        const toggle = event.target.closest('.dropdown-submenu > .dropdown-toggle');
+        if (!toggle) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') {
+            event.stopImmediatePropagation();
+        }
+
+        const submenu = toggle.nextElementSibling;
+        if (!submenu || !submenu.classList.contains('dropdown-menu')) {
+            return;
+        }
+
+        const parentMenu = toggle.closest('.dropdown-menu');
+        if (parentMenu) {
+            parentMenu.querySelectorAll(':scope > .dropdown-submenu > .dropdown-menu.show').forEach(function (openMenu) {
+                if (openMenu !== submenu) {
+                    openMenu.classList.remove('show');
+                    const openToggle = openMenu.previousElementSibling;
+                    if (openToggle && openToggle.classList.contains('dropdown-toggle')) {
+                        openToggle.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        }
+
+        const willOpen = !submenu.classList.contains('show');
+        submenu.classList.toggle('show', willOpen);
+        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }, true);
+
+    // When a top-level dropdown closes, clear all nested submenu state.
+    document.addEventListener('hidden.bs.dropdown', function (event) {
+        if (!(event.target instanceof Element)) {
+            return;
+        }
+
+        const dropdown = event.target.classList.contains('dropdown')
+            ? event.target
+            : event.target.closest('.dropdown');
+        if (!dropdown) {
+            return;
+        }
+
+        dropdown.querySelectorAll('.dropdown-submenu > .dropdown-menu.show').forEach(function (openMenu) {
+            openMenu.classList.remove('show');
+            const openToggle = openMenu.previousElementSibling;
+            if (openToggle && openToggle.classList.contains('dropdown-toggle')) {
+                openToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    });
+}
