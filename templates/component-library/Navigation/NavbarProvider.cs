@@ -85,6 +85,12 @@ public sealed class NavbarProvider : INavigationMarkupProvider
     {
         foreach (var child in children)
         {
+            if (child.Children.Count == 0 && string.IsNullOrWhiteSpace(child.Url))
+            {
+                // Omit non-clickable empty leaf items.
+                continue;
+            }
+
             if (child.Children.Count > 0)
             {
                 sb.AppendLine("            <li class=\"dropdown-submenu\">");
@@ -104,14 +110,7 @@ public sealed class NavbarProvider : INavigationMarkupProvider
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(child.Url))
-                {
-                    sb.AppendLine($"            <li><a class=\"dropdown-item\" href=\"{HtmlEncode(child.Url)}\">{HtmlEncode(child.Title)}</a></li>");
-                }
-                else
-                {
-                    sb.AppendLine($"            <li><h6 class=\"dropdown-header\">{HtmlEncode(child.Title)}</h6></li>");
-                }
+                sb.AppendLine($"            <li><a class=\"dropdown-item\" href=\"{HtmlEncode(child.Url)}\">{HtmlEncode(child.Title)}</a></li>");
             }
         }
     }
