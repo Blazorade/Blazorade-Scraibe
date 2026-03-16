@@ -1,14 +1,24 @@
 window.blazoradePublisher = {
     /**
-     * Parses an HTML string and returns the innerHTML of the first <main> element.
-     * Used by Blazor content pages to extract body content from generated HTML files
-     * while ignoring the redirect script and head metadata.
+     * Parses an HTML string and returns the published layout container HTML.
+     * The publisher writes one layout root element in <body> with a class that starts
+     * with "blz-layout-". Returning this root preserves nav/footer/parts at runtime.
+     * Falls back to the previous <main> extraction behavior for compatibility.
      * @param {string} html - Full HTML page content
-     * @returns {string|null} innerHTML of <main>, or null if not found
+     * @returns {string|null} outerHTML of layout root, or main.innerHTML as fallback
      */
-    extractMain: function (html) {
+    extractPageContent: function (html) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
+
+        for (const el of doc.body.children) {
+            for (const cls of el.classList) {
+                if (cls.startsWith('blz-layout-')) {
+                    return el.outerHTML;
+                }
+            }
+        }
+
         const main = doc.querySelector('main');
         return main ? main.innerHTML : null;
     },

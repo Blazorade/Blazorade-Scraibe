@@ -79,14 +79,14 @@ else
             }
             else
             {
-                var main = await JS.InvokeAsync<string?>("blazoradePublisher.extractMain", resolvedHtml);
-                if (string.IsNullOrEmpty(main))
+                var pageContent = await JS.InvokeAsync<string?>("blazoradePublisher.extractPageContent", resolvedHtml);
+                if (string.IsNullOrEmpty(pageContent))
                 {
                     _notFound = true;
                 }
                 else
                 {
-                    _content = main;
+                    _content = pageContent;
                     _pageTitle = PageContentUtilities.ExtractTitle(resolvedHtml);
                     _headMeta = await JS.InvokeAsync<string>("blazoradePublisher.extractHeadMeta", resolvedHtml);
                 }
