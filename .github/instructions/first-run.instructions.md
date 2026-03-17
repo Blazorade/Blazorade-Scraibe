@@ -32,7 +32,10 @@ Prompting rules for this step:
 
 - Ask exactly one value per prompt.
 - Use `vscode_askQuestions` for each prompt.
-- Configure each prompt as a single free-text input field (`allowFreeformInput: true`) with no predefined options.
+- Configure prompts per field type:
+  - Use free-text input (`allowFreeformInput: true`) for `DisplayName`, `HostName`, and all color prompts.
+  - Use fixed clickable options for `DefineThemeColors` with exactly two options: `Yes` and `No`.
+  - Use mixed input for `AppName`: include one clickable suggested option derived from `DisplayName` and also allow free-text input.
 - Include a compact "used for" description in each prompt so the user understands what to enter.
 - Do not combine multiple values into one question.
 - Do not proceed to the next value until the current one is provided and confirmed.
@@ -54,13 +57,14 @@ Prompting rules for this step:
   Used for: project names, namespaces, and folder names.
   Must be a valid C# identifier (no spaces or special characters).
   Example: `MyAwesomeSite`.
-  Suggest a derived value from `DisplayName` for the user to confirm.
+  Provide one clickable suggested option derived from `DisplayName` (for example `My Company` → `MyCompany`) and mark it as recommended.
+  Also allow free-text input so the user can provide a different value.
 - **HostName** — ask for the production host name.
   Used for: canonical URLs and sitemap entries.
   Example: `www.mysite.com`.
 - **DefineThemeColors** — ask whether the user wants to define custom Bootstrap theme colors now.
   Used for: deciding whether to prompt for optional theme color overrides during first-run.
-  Accepts: `Yes` or `No`.
+  Present exactly two clickable options: `Yes` and `No` (no free-text input for this question).
 - **PrimaryColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the default Bootstrap `$primary` theme color.
   Used for: initial value of `$primary` in `Styles/_variables.scss` during first-run template substitution.
   Accepts: valid hex or CSS named color. Empty input keeps template default (`#7030A0`).
