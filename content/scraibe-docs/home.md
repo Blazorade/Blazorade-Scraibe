@@ -54,17 +54,16 @@ If you are a site builder, start with:
 
 If you are new to Scraibe, read these pages first and in order:
 
-1. [Core concepts](core/home.md)
+1. [Core concepts](core/architecture-positioning.md)
 2. [What Scraibe is and is not](core/what-scraibe-is-and-is-not.md)
 3. [Constraints and rationale](core/constraints-and-rationale.md)
-4. [Operations](operations/home.md)
+4. [Operations](operations/publishing.md)
 5. [Runtime glossary](core/runtime-glossary.md)
 
 The next publish run will skip all pages in this section. The source files remain in `/content/scraibe-docs/` and can be re-included at any time by removing the entry.
 
 ## Core concepts
 
-- [Core concepts home](core/home.md) - Overview of this section and links to all core concept docs.
 - [Architecture positioning](core/architecture-positioning.md) - The runtime model and execution contexts in one page.
 - [What Scraibe is and is not](core/what-scraibe-is-and-is-not.md) - Product boundaries and non-goals.
 - [Constraints and rationale](core/constraints-and-rationale.md) - Plain-language explanation of core architecture constraints.
@@ -72,7 +71,6 @@ The next publish run will skip all pages in this section. The source files remai
 
 ## Authoring guides
 
-- [Authoring guides home](authoring/home.md) - Overview of authoring topics and links to all authoring docs.
 - [Content authoring](authoring/content-authoring.md) - Frontmatter, structure, routing, assets, and content rules.
 - [Folder configuration](authoring/folder-configuration.md) - local and scoped configuration inheritance.
 - [Shortcodes](authoring/shortcodes/home.md) - Embed live Blazor components in Markdown.
@@ -80,7 +78,6 @@ The next publish run will skip all pages in this section. The source files remai
 
 ## Site builder guides
 
-- [Site building home](site-building/home.md) - Overview of site builder topics and links to all site-building docs.
 - [Page layouts](site-building/page-layouts.md) - Layout slots and content-part composition.
 - [Styling](site-building/styling.md) - Bootstrap SCSS pipeline and theme customization.
 - [Hosting](site-building/hosting.md) - Hosting choices and why routing support matters.
@@ -88,7 +85,6 @@ The next publish run will skip all pages in this section. The source files remai
 
 ## Operational reference
 
-- [Operations home](operations/home.md) - Overview of operational workflows and references.
 - [Publishing](operations/publishing.md) - How publish runs, what it generates, and what it does not do.
 - [Runtime glossary](core/runtime-glossary.md) - Definitions for core terms used across docs.
 - [Hosting](site-building/hosting.md) - Routing support implications for SEO and crawler visibility.
@@ -105,8 +101,8 @@ Read [Architecture positioning](core/architecture-positioning.md) for the full m
 
 ## Related repository workflows
 
-- [todo/home.md](../../todo/home.md) - Active tasks, backlog, and completed task flow.
-- [playbooks/home.md](../../playbooks/home.md) - Site-specific repeatable procedures.
+- todo/home.md - Active tasks, backlog, and completed task flow.
+- playbooks/home.md - Site-specific repeatable procedures.
 
 ## Project structure
 
