@@ -22,7 +22,8 @@ The first-run process does the following:
 3. Create the Blazor WebAssembly application under `src/`, with a project reference to the component library.
 4. Copy and configure the template files from `/templates/` into the new projects.
 5. Set up the `content/` folder and initialise the todo system.
-6. Write `.config.json` to the repository root — **only after all previous steps have succeeded**.
+6. Ask whether to run a full publish immediately.
+7. Write `.config.json` to the repository root — **only after all previous steps have succeeded**.
 
 ## Step 1 — Collect site identity
 
@@ -323,7 +324,22 @@ A permanent log of completed tasks. One short paragraph per task: name, date com
 
 Do not add any task rows or detail documents — neither file should contain site-specific content at this point.
 
-## Step 6 — Write `.config.json`
+## Step 6 — Optional first publish
+
+At the end of setup, ask the user whether to run publish immediately so they can run the app with generated site content.
+
+Use `vscode_askQuestions` with exactly two clickable options: `Yes` and `No`.
+
+- If the user selects `No`: skip publishing and continue to Step 7.
+- If the user selects `Yes`: run a full publish for all pages by executing:
+
+```powershell
+.\tools\Invoke-Publish.ps1
+```
+
+If publish fails, stop immediately, report the failure, and ask how the user wants to proceed. Do not continue to Step 7 until publish succeeds or the user explicitly chooses to skip it.
+
+## Step 7 — Write `.config.json`
 
 **Only execute this step if all previous steps have completed successfully.** If any earlier step failed or was skipped, do not write this file.
 
