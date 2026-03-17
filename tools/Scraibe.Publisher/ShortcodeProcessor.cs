@@ -229,7 +229,15 @@ static class ShortcodeProcessor
                     stack.Pop();
                     var innerAccum = top.Accumulator.ToString().TrimEnd('\n');
                     var normalizedInner = NormalizeInnerMarkdown(innerAccum);
-                    var innerHtml = MarkdownRenderer.ToHtml(normalizedInner).Trim();
+
+                    // Prevent nested sentinel HTML blocks from suppressing markdown parsing
+                    // in the surrounding shortcode body.
+                    var protectedInner = ProtectNestedShortcodeSentinels(
+                        normalizedInner,
+                        out var protectedSentinels);
+
+                    var innerHtml = MarkdownRenderer.ToHtml(protectedInner).Trim();
+                    innerHtml = ReplaceShortcodeInnerPlaceholders(innerHtml, protectedSentinels);
 
                     // Inline wrappers should keep previous behavior where a single paragraph
                     // does not force an extra <p> wrapper around simple text content.
@@ -435,6 +443,81 @@ static class ShortcodeProcessor
         while (changed);
 
         return html;
+    }
+
+    private static string ProtectNestedShortcodeSentinels(
+        string markdown,
+        out Dictionary<string, string> protectedSentinels)
+    {
+        protectedSentinels = new Dictionary<string, string>();
+
+        if (string.IsNullOrEmpty(markdown) ||
+            markdown.IndexOf("<x-shortcode", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            return markdown;
+        }
+
+        const string openTag = "<x-shortcode";
+        const string closeTag = "</x-shortcode>";
+
+        var result = new StringBuilder(markdown.Length);
+        int cursor = 0;
+        int idx = 0;
+
+        while (cursor < markdown.Length)
+        {
+            var openStart = markdown.IndexOf(openTag, cursor, StringComparison.OrdinalIgnoreCase);
+            if (openStart < 0)
+            {
+                result.Append(markdown[cursor..]);
+                break;
+            }
+
+            if (openStart > cursor)
+                result.Append(markdown[cursor..openStart]);
+
+            int scan = openStart;
+            int depth = 0;
+            int blockEnd = -1;
+
+            while (scan < markdown.Length)
+            {
+                var nextOpen = markdown.IndexOf(openTag, scan, StringComparison.OrdinalIgnoreCase);
+                var nextClose = markdown.IndexOf(closeTag, scan, StringComparison.OrdinalIgnoreCase);
+
+                if (nextClose < 0)
+                    break;
+
+                if (nextOpen >= 0 && nextOpen < nextClose)
+                {
+                    depth++;
+                    scan = nextOpen + openTag.Length;
+                    continue;
+                }
+
+                depth--;
+                scan = nextClose + closeTag.Length;
+                if (depth == 0)
+                {
+                    blockEnd = scan;
+                    break;
+                }
+            }
+
+            if (blockEnd < 0)
+            {
+                result.Append(markdown[openStart..]);
+                break;
+            }
+
+            var block = markdown[openStart..blockEnd];
+            var placeholder = $"x-sc-protect-{idx++}";
+            protectedSentinels[placeholder] = block;
+            result.Append($"<!--{placeholder}-->");
+            cursor = blockEnd;
+        }
+
+        return result.ToString();
     }
 
     /// <summary>Builds the data-params JSON for a shortcode sentinel from the raw params string.</summary>
