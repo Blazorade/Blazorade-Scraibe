@@ -26,7 +26,7 @@ The first-run process does the following:
 
 ## Step 1 — Collect site identity
 
-Collect the following values before doing anything else. Ask for them **one at a time** in this exact order: `DisplayName` → `AppName` → `HostName` → `PrimaryColor` (optional) → `SecondaryColor` (optional).
+Collect the following values before doing anything else. Ask for them **one at a time** in this exact order: `DisplayName` → `AppName` → `HostName` → `DefineThemeColors` (Yes/No) → optional theme colors (if Yes).
 
 Prompting rules for this step:
 
@@ -37,9 +37,12 @@ Prompting rules for this step:
 - Do not combine multiple values into one question.
 - Do not proceed to the next value until the current one is provided and confirmed.
 - Do not assume or infer values without explicit user confirmation.
-- `PrimaryColor` and `SecondaryColor` are optional and must allow an empty input to skip.
+- `DefineThemeColors` is required and must be collected before any theme color prompt.
+- If `DefineThemeColors` is `No`, skip all theme color prompts and use defaults.
+- If `DefineThemeColors` is `Yes`, prompt for all theme colors listed below; each one is optional and must allow an empty input to skip.
+- Immediately after the user selects `DefineThemeColors = Yes`, include this helper resource in your next user-facing message before the first color prompt: `https://huemint.com/bootstrap-basic/`.
 - Color validation must run before accepting a non-empty color value.
-- Accepted color formats for `PrimaryColor` and `SecondaryColor` are:
+- Accepted color formats for every theme color prompt are:
   - Hex notation: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`
   - CSS named colors (case-insensitive), for example `rebeccapurple`, `navy`, `goldenrod`
 - If the user enters an invalid non-empty color value, re-prompt for that same field until the value is valid or the user skips by submitting an empty input.
@@ -55,14 +58,35 @@ Prompting rules for this step:
 - **HostName** — ask for the production host name.
   Used for: canonical URLs and sitemap entries.
   Example: `www.mysite.com`.
-- **PrimaryColor** (optional) — ask for the default Bootstrap `$primary` theme color.
+- **DefineThemeColors** — ask whether the user wants to define custom Bootstrap theme colors now.
+  Used for: deciding whether to prompt for optional theme color overrides during first-run.
+  Accepts: `Yes` or `No`.
+- **PrimaryColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the default Bootstrap `$primary` theme color.
   Used for: initial value of `$primary` in `Styles/_variables.scss` during first-run template substitution.
   Accepts: valid hex or CSS named color. Empty input keeps template default (`#7030A0`).
-- **SecondaryColor** (optional) — ask for the default Bootstrap `$secondary` theme color.
+- **SecondaryColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the default Bootstrap `$secondary` theme color.
   Used for: initial value of `$secondary` in `Styles/_variables.scss` during first-run template substitution.
   Accepts: valid hex or CSS named color. Empty input keeps template default (`#FFC622`).
+- **SuccessColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$success` theme color.
+  Used for: initial value of `$success` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#2A7E4F`).
+- **InfoColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$info` theme color.
+  Used for: initial value of `$info` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#1A85A0`).
+- **WarningColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$warning` theme color.
+  Used for: initial value of `$warning` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#E8750A`).
+- **DangerColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$danger` theme color.
+  Used for: initial value of `$danger` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#BF2A35`).
+- **LightColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$light` theme color.
+  Used for: initial value of `$light` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#F6F4F9`).
+- **DarkColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$dark` theme color.
+  Used for: initial value of `$dark` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#2D2B36`).
 
-Do not proceed to step 2 until `DisplayName`, `AppName`, and `HostName` are explicitly confirmed, and both optional color prompts are resolved (valid value or explicit skip).
+Do not proceed to step 2 until `DisplayName`, `AppName`, `HostName`, and `DefineThemeColors` are explicitly confirmed, and (when `DefineThemeColors = Yes`) all optional theme color prompts are resolved (valid value or explicit skip).
 
 ## Step 2 — Create the Razor component library
 
@@ -160,6 +184,12 @@ Copy files from `/templates/web-app/` into `src/{AppName}.Web/` and from `/templ
 - `{{ComponentLibraryServiceRegistrationMethod}}` → `Register{AppName}ComponentServices`
 - `{{PrimaryColor}}` → `{PrimaryColor}` when provided; otherwise `#7030A0`
 - `{{SecondaryColor}}` → `{SecondaryColor}` when provided; otherwise `#FFC622`
+- `{{SuccessColor}}` → `{SuccessColor}` when provided; otherwise `#2A7E4F`
+- `{{InfoColor}}` → `{InfoColor}` when provided; otherwise `#1A85A0`
+- `{{WarningColor}}` → `{WarningColor}` when provided; otherwise `#E8750A`
+- `{{DangerColor}}` → `{DangerColor}` when provided; otherwise `#BF2A35`
+- `{{LightColor}}` → `{LightColor}` when provided; otherwise `#F6F4F9`
+- `{{DarkColor}}` → `{DarkColor}` when provided; otherwise `#2D2B36`
 
 Files to copy from `/templates/web-app/` → `src/{AppName}.Web/`:
 - Copy all files and folders from `templates/web-app/` into `src/{AppName}.Web/`, creating any necessary subdirectories that don't exist
