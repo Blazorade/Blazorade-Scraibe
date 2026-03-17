@@ -112,6 +112,10 @@ Wire up the following:
   - `Scraibe.Publisher`, `Scraibe.Abstractions`, and `Scraibe.ContentComposition` are under the `tools` solution folder.
   - `{AppName}.Components` is the only project at the solution root (not under any solution folder).
   - Never place `{AppName}.Components` under `web`, `tools`, or any other solution folder.
+- If `dotnet sln add` creates a `src` solution folder, remove it immediately and keep `{AppName}.Components` at solution root:
+  - Remove the nested mapping for `{AppName}.Components` from the `.sln` `NestedProjects` section.
+  - Remove the `src` solution-folder project entry from the `.sln` file.
+  - Re-validate that `{AppName}.Components` still exists as a normal project entry at solution root.
 - In the `.sln` file, the `NestedProjects` mapping must include `{AppName}.Web` under `web` and the Scraibe tools projects under `tools`.
 - In the `.sln` file, the `NestedProjects` mapping must not include `{AppName}.Components`.
 - Validate the final `.sln` structure before continuing. If any of the rules above are not met, fix the solution file immediately before moving to the next step.

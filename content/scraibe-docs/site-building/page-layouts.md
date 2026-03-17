@@ -172,3 +172,15 @@ If no `_nav.md` file resolves for a page at any scope level, the publish pipelin
 To customise the navigation for your whole site, create `content/_nav.md` and write any HTML or Markdown you need. To override it for a specific section, place `_nav.md` in that subdirectory.
 
 Navigation provider and context behavior are controlled via `.config.json`; see [Folder configuration](../authoring/folder-configuration.md).
+
+### Nested submenu behavior
+
+Bootstrap supports one dropdown level out of the box. Multi-level dropdowns are not a built-in Bootstrap feature, so Scraibe adds a small runtime handler for nested submenu toggles in the generated navbar.
+
+Expected behavior for nested items:
+
+- Clicking a submenu toggle opens that submenu and does not navigate.
+- Closing the parent dropdown resets nested submenu open state.
+- Empty non-clickable leaf items are omitted from generated navigation.
+
+This behavior applies to the auto-generated navbar provider (`navbar`) used when no scoped `_nav.md` override is present.
