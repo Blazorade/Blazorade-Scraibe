@@ -26,7 +26,7 @@ The first-run process does the following:
 
 ## Step 1 — Collect site identity
 
-Collect the following values before doing anything else. Ask for them **one at a time** in this exact order: `DisplayName` → `AppName` → `HostName`.
+Collect the following values before doing anything else. Ask for them **one at a time** in this exact order: `DisplayName` → `AppName` → `HostName` → `PrimaryColor` (optional) → `SecondaryColor` (optional).
 
 Prompting rules for this step:
 
@@ -37,6 +37,12 @@ Prompting rules for this step:
 - Do not combine multiple values into one question.
 - Do not proceed to the next value until the current one is provided and confirmed.
 - Do not assume or infer values without explicit user confirmation.
+- `PrimaryColor` and `SecondaryColor` are optional and must allow an empty input to skip.
+- Color validation must run before accepting a non-empty color value.
+- Accepted color formats for `PrimaryColor` and `SecondaryColor` are:
+  - Hex notation: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`
+  - CSS named colors (case-insensitive), for example `rebeccapurple`, `navy`, `goldenrod`
+- If the user enters an invalid non-empty color value, re-prompt for that same field until the value is valid or the user skips by submitting an empty input.
 
 - **DisplayName** — ask for the human-readable site name.
   Used for: navbar brand text, page titles, and page metadata.
@@ -49,8 +55,14 @@ Prompting rules for this step:
 - **HostName** — ask for the production host name.
   Used for: canonical URLs and sitemap entries.
   Example: `www.mysite.com`.
+- **PrimaryColor** (optional) — ask for the default Bootstrap `$primary` theme color.
+  Used for: initial value of `$primary` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#7030A0`).
+- **SecondaryColor** (optional) — ask for the default Bootstrap `$secondary` theme color.
+  Used for: initial value of `$secondary` in `Styles/_variables.scss` during first-run template substitution.
+  Accepts: valid hex or CSS named color. Empty input keeps template default (`#FFC622`).
 
-Do not proceed to step 2 until all three values are explicitly confirmed by the user.
+Do not proceed to step 2 until `DisplayName`, `AppName`, and `HostName` are explicitly confirmed, and both optional color prompts are resolved (valid value or explicit skip).
 
 ## Step 2 — Create the Razor component library
 
@@ -146,6 +158,8 @@ Copy files from `/templates/web-app/` into `src/{AppName}.Web/` and from `/templ
 - `{{WebAppName}}` → `{AppName}.Web`
 - `{{ComponentLibraryName}}` → `{AppName}.Components`
 - `{{ComponentLibraryServiceRegistrationMethod}}` → `Register{AppName}ComponentServices`
+- `{{PrimaryColor}}` → `{PrimaryColor}` when provided; otherwise `#7030A0`
+- `{{SecondaryColor}}` → `{SecondaryColor}` when provided; otherwise `#FFC622`
 
 Files to copy from `/templates/web-app/` → `src/{AppName}.Web/`:
 - Copy all files and folders from `templates/web-app/` into `src/{AppName}.Web/`, creating any necessary subdirectories that don't exist
