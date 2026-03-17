@@ -36,6 +36,10 @@ Prompting rules for this step:
   - Use free-text input (`allowFreeformInput: true`) for `DisplayName`, `HostName`, and all color prompts.
   - Use fixed clickable options for `DefineThemeColors` with exactly two options: `Yes` and `No`.
   - Use mixed input for `AppName`: include one clickable suggested option derived from `DisplayName` and also allow free-text input.
+- Color prompt UX must be compact and easy to scan:
+  - Keep the prompt text itself as short as possible and start it with the color name (for example: `PrimaryColor` or `PrimaryColor (optional)`).
+  - Avoid extra formatting and visual noise in color prompt text.
+  - Put brief guidance in secondary description text, not in the main prompt question.
 - Include a compact "used for" description in each prompt so the user understands what to enter.
 - Do not combine multiple values into one question.
 - Do not proceed to the next value until the current one is provided and confirmed.
@@ -46,8 +50,10 @@ Prompting rules for this step:
 - Immediately after the user selects `DefineThemeColors = Yes`, include this helper resource in your next user-facing message before the first color prompt: `https://huemint.com/bootstrap-basic/`.
 - Color validation must run before accepting a non-empty color value.
 - Accepted color formats for every theme color prompt are:
-  - Hex notation: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`
+  - Hex notation with prefix: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`
+  - Hex notation without prefix: `RGB`, `RRGGBB`
   - CSS named colors (case-insensitive), for example `rebeccapurple`, `navy`, `goldenrod`
+- If the user enters a valid bare hex value (`RGB` or `RRGGBB`), normalize it to prefixed form (`#RGB` or `#RRGGBB`) before storing and substituting it.
 - If the user enters an invalid non-empty color value, re-prompt for that same field until the value is valid or the user skips by submitting an empty input.
 
 - **DisplayName** — ask for the human-readable site name.
@@ -67,28 +73,28 @@ Prompting rules for this step:
   Present exactly two clickable options: `Yes` and `No` (no free-text input for this question).
 - **PrimaryColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the default Bootstrap `$primary` theme color.
   Used for: initial value of `$primary` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#7030A0`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#7030A0`).
 - **SecondaryColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the default Bootstrap `$secondary` theme color.
   Used for: initial value of `$secondary` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#FFC622`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#FFC622`).
 - **SuccessColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$success` theme color.
   Used for: initial value of `$success` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#2A7E4F`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#2A7E4F`).
 - **InfoColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$info` theme color.
   Used for: initial value of `$info` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#1A85A0`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#1A85A0`).
 - **WarningColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$warning` theme color.
   Used for: initial value of `$warning` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#E8750A`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#E8750A`).
 - **DangerColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$danger` theme color.
   Used for: initial value of `$danger` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#BF2A35`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#BF2A35`).
 - **LightColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$light` theme color.
   Used for: initial value of `$light` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#F6F4F9`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#F6F4F9`).
 - **DarkColor** (optional, asked only when `DefineThemeColors = Yes`) — ask for the Bootstrap `$dark` theme color.
   Used for: initial value of `$dark` in `Styles/_variables.scss` during first-run template substitution.
-  Accepts: valid hex or CSS named color. Empty input keeps template default (`#2D2B36`).
+  Accepts: valid hex (with or without `#`) or CSS named color. Empty input keeps template default (`#2D2B36`).
 
 Do not proceed to step 2 until `DisplayName`, `AppName`, `HostName`, and `DefineThemeColors` are explicitly confirmed, and (when `DefineThemeColors = Yes`) all optional theme color prompts are resolved (valid value or explicit skip).
 
