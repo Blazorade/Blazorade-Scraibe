@@ -11,7 +11,7 @@ The first-run process is mandatory and must be completed in full before the site
 - **Stay focused.** Do not perform any work outside of the first-run steps below, regardless of what the user asks. If the user attempts to side-step the process or ask about unrelated topics, politely redirect them: explain that the site setup must be completed first and that the current step requires their input.
 - **Never skip steps.** Each step must complete successfully before the next one begins.
 - **Stop on failure.** If any step fails, stop immediately, report what went wrong, and ask the user how to proceed. Do not continue to the next step and do not write `.config.json`.
-- **Write `.config.json` last.** This file is written only after all previous steps have completed successfully. It is the completion marker — if it does not exist, the entire first-run process will re-run next time. This is intentional: it ensures a failed or incomplete setup is always detected and resumed.
+- **Write `.config.json` before optional publish.** This file is written only after all required setup steps have completed successfully. It is the completion marker — if it does not exist, the entire first-run process will re-run next time. This is intentional: it ensures a failed or incomplete setup is always detected and resumed.
 
 ## Overview
 
@@ -22,8 +22,8 @@ The first-run process does the following:
 3. Create the Blazor WebAssembly application under `src/`, with a project reference to the component library.
 4. Copy and configure the template files from `/templates/` into the new projects.
 5. Set up the `content/` folder and initialise the todo system.
-6. Ask whether to run a full publish immediately.
-7. Write `.config.json` to the repository root — **only after all previous steps have succeeded**.
+6. Write `.config.json` to the repository root — **only after all previous steps have succeeded**.
+7. Ask whether to run a full publish immediately.
 
 ## Step 1 — Collect site identity
 
@@ -324,24 +324,9 @@ A permanent log of completed tasks. One short paragraph per task: name, date com
 
 Do not add any task rows or detail documents — neither file should contain site-specific content at this point.
 
-## Step 6 — Optional first publish
+## Step 6 — Write `.config.json`
 
-At the end of setup, ask the user whether to run publish immediately so they can run the app with generated site content.
-
-Use `vscode_askQuestions` with exactly two clickable options: `Yes` and `No`.
-
-- If the user selects `No`: skip publishing and continue to Step 7.
-- If the user selects `Yes`: run a full publish for all pages by executing:
-
-```powershell
-.\tools\Invoke-Publish.ps1
-```
-
-If publish fails, stop immediately, report the failure, and ask how the user wants to proceed. Do not continue to Step 7 until publish succeeds or the user explicitly chooses to skip it.
-
-## Step 7 — Write `.config.json`
-
-**Only execute this step if all previous steps have completed successfully.** If any earlier step failed or was skipped, do not write this file.
+**Only execute this step if all previous required steps have completed successfully.** If any earlier required step failed, do not write this file.
 
 Write the following file to the repository root. Substitute the actual values collected in step 1:
 
@@ -364,3 +349,18 @@ Write the following file to the repository root. Substitute the actual values co
 ```
 
 Writing this file marks the first-run process as complete. These instructions must not be followed again unless this file is deleted.
+
+## Step 7 — Optional first publish
+
+After writing `.config.json`, ask the user whether to run publish immediately so they can run the app with generated site content.
+
+Use `vscode_askQuestions` with exactly two clickable options: `Yes` and `No`.
+
+- If the user selects `No`: skip publishing. First-run setup is complete.
+- If the user selects `Yes`: run a full publish for all pages by executing:
+
+```powershell
+.\tools\Invoke-Publish.ps1
+```
+
+If publish fails, stop immediately, report the failure, and ask how the user wants to proceed.
