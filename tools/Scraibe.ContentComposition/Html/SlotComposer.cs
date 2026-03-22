@@ -7,15 +7,15 @@ namespace Scraibe.ContentComposition.Html;
 /// <summary>
 /// Provides shared HTML composition helpers for replacing layout slot elements with page part content.
 /// </summary>
-public static class PartSlotComposer
+public static class SlotComposer
 {
     private static readonly HtmlParser HtmlParser = new();
     private static readonly Regex SelfClosingSlotElementRegex = new(
-        @"<(?<tag>[A-Za-z][A-Za-z0-9:_\-]*)(?<attrs>[^>]*\bx-part\s*=\s*(?:""[^""]*""|'[^']*')[^>]*)/>",
+        @"<(?<tag>[A-Za-z][A-Za-z0-9:_\-]*)(?<attrs>[^>]*\bx-slot\s*=\s*(?:""[^""]*""|'[^']*')[^>]*)/>",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     /// <summary>
-    /// Converts self-closing slot elements (elements carrying <c>x-part</c>) to explicit open/close form
+    /// Converts self-closing slot elements (elements carrying <c>x-slot</c>) to explicit open/close form
     /// so HTML parsers preserve sibling structure for custom element names.
     /// </summary>
     /// <param name="html">Raw layout markup.</param>
@@ -37,7 +37,7 @@ public static class PartSlotComposer
     /// Replaces a slot element with the root element from source part HTML while preserving slot-level
     /// attributes and merging CSS classes with publish/runtime parity.
     /// </summary>
-    /// <param name="slotElement">The slot element from the layout document (typically identified by <c>x-part</c>).</param>
+    /// <param name="slotElement">The slot element from the layout document (typically identified by <c>x-slot</c>).</param>
     /// <param name="sourcePartOuterHtml">The source part HTML containing exactly one root element.</param>
     /// <param name="errorContext">Optional context used in exception messages when source HTML is invalid.</param>
     /// <returns>The merged replacement root element as outer HTML.</returns>

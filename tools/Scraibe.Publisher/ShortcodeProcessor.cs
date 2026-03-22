@@ -7,7 +7,7 @@ namespace Scraibe.Publisher;
 /// <summary>
 /// Implements the stack-based shortcode parser described in publish.instructions.md.
 /// Scans Markdown line-by-line, replaces known shortcodes with x-shortcode sentinel elements,
-/// extracts [Part] blocks, and returns processed Markdown ready for Markdig conversion.
+/// extracts [Slot] blocks, and returns processed Markdown ready for Markdig conversion.
 /// </summary>
 static class ShortcodeProcessor
 {
@@ -15,7 +15,7 @@ static class ShortcodeProcessor
     private static readonly Regex RxFenceOpen  = new(@"^(\s*)(```+|~~~+)(.*)?$",                       RegexOptions.Compiled);
 
     // Stack frame for wrapping shortcodes. RawParams preserves opening-tag params
-    // so [Part] can resolve Name/ElementName when the closing tag is encountered.
+    // so [Slot] can resolve Name/ElementName when the closing tag is encountered.
     private record Frame(string ComponentName, string DataParams, string RawParams, StringBuilder Accumulator, int OpenLineNo);
 
     private enum TagKind { Open, Close, Self }
@@ -26,7 +26,7 @@ static class ShortcodeProcessor
 
     /// <summary>
     /// Processes shortcodes in the raw Markdown body and returns processed Markdown
-    /// (with x-shortcode sentinels) plus any extracted [Part] entries.
+    /// (with x-shortcode sentinels) plus any extracted [Slot] entries.
     /// Throws <see cref="PublishException"/> for fatal shortcode errors.
     /// </summary>
     public static Result Process(string markdownBody, ComponentRegistry registry,
@@ -247,18 +247,18 @@ static class ShortcodeProcessor
                         innerHtml = innerHtml[3..^4];
                     }
 
-                    // [Part] special handling: extract and store, emit nothing into content
-                    if (t.Name.Equals("Part", StringComparison.OrdinalIgnoreCase))
+                    // [Slot] special handling: extract and store, emit nothing into content
+                    if (t.Name.Equals("Slot", StringComparison.OrdinalIgnoreCase))
                     {
                         if (stack.Count > 0)
                             throw new PublishException(
-                                $"{filePath}:{lineNo}: [Part] may only appear at root level.");
+                                $"{filePath}:{lineNo}: [Slot] may only appear at root level.");
 
                         innerHtml = ReplaceShortcodeInnerPlaceholders(innerHtml, scInners);
 
                         var partParams = ParseNamedParams(top.RawParams);
                         var partName = partParams.FirstOrDefault(p =>
-                            p.Key.Equals("Name", StringComparison.OrdinalIgnoreCase)).Value ?? "part";
+                            p.Key.Equals("Name", StringComparison.OrdinalIgnoreCase)).Value ?? "slot";
                         partName = partName.ToLowerInvariant();
                         var elemOverride = partParams.FirstOrDefault(p =>
                             p.Key.Equals("ElementName", StringComparison.OrdinalIgnoreCase)).Value;

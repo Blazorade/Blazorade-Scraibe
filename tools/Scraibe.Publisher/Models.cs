@@ -42,7 +42,7 @@ record Frontmatter(
     Dictionary<string, string> RawFields // original parsed frontmatter values for feature-specific lookups
 );
 
-/// <summary>A named HTML fragment to be injected into an x-part slot in the layout.</summary>
+/// <summary>A named HTML fragment to be injected into an x-slot slot in the layout.</summary>
 record PartInfo(
     string Name,          // e.g. "nav", "footer", "right-panel"
     string ElementName,   // e.g. "nav", "footer", "aside"

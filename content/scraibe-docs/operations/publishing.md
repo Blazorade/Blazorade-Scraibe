@@ -25,6 +25,8 @@ Each publish run updates or generates:
 
 Published HTML is the crawler-readable baseline. Runtime interactivity is layered on by Blazor at runtime.
 
+For layout composition, the runtime matches named content fragments to layout placeholders using the `x-slot` attribute contract.
+
 For detailed pipeline internals, see the repository publish instructions and tool source. For layout and part behavior, see [Page layouts](../site-building/page-layouts.md). For authoring rules that affect publish output, see [Content authoring](../authoring/content-authoring.md).
 
 ## Running a publish

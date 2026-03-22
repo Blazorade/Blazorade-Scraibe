@@ -1,7 +1,7 @@
 ---
 title: Page Layouts
 description: How to use named layouts to control page chrome — navbar, footer, and additional content parts — in Blazorade Scraibe.
-keywords: page layout, layout, content parts, _name.md, Part shortcode, nav, footer, x-part
+keywords: page layout, layout, content parts, _name.md, Slot shortcode, nav, footer, x-slot
 changefreq: monthly
 priority: 0.8
 ---
@@ -39,13 +39,13 @@ layout: landing
 
 ## How Layouts Work
 
-A layout file contains named slots marked with an `x-part` attribute. The publish pipeline collects all content parts for the page and serialises them as sibling `<main>`, `<nav>`, `<footer>`, and `<aside>` elements in the static HTML — visible to search engines and AI crawlers. At runtime, the Blazor app splices each part's content into its matching layout slot before rendering.
+A layout file contains named slots marked with an `x-slot` attribute. The publish pipeline collects all content parts for the page and serialises them as sibling `<main>`, `<nav>`, `<footer>`, and `<aside>` elements in the static HTML — visible to search engines and AI crawlers. At runtime, the Blazor app splices each part's content into its matching layout slot before rendering.
 
 If a layout slot has no matching part, a placeholder comment is inserted. If a page defines a part that has no slot in the layout, the part is still present in the static HTML for crawlers but is not placed in the visual output.
 
 ## Slot content providers
 
-Every `x-part` slot is resolved through a provider. The provider returns one root element, and that element replaces the slot placeholder in the layout.
+Every `x-slot` slot is resolved through a provider. The provider returns one root element, and that element replaces the slot placeholder in the layout.
 
 For non-navigation parts, provider selection uses this precedence:
 
@@ -58,23 +58,23 @@ For navigation, provider selection remains separate: `x-provider` on the nav slo
 
 ### Slot provider attributes
 
-- `x-part` identifies which named part is inserted into the slot.
+- `x-slot` identifies which named part is inserted into the slot.
 - `x-provider` selects the slot provider. When omitted for non-nav slots, the provider comes from `scraibe.content.slot.provider.default`.
 
 Example:
 
 ```html
-<aside x-part="left-panel"></aside>
-<article x-part="main" x-provider="Default"></article>
-<nav x-part="nav" x-provider="navbar"></nav>
+<aside x-slot="left-panel"></aside>
+<article x-slot="main" x-provider="Default"></article>
+<nav x-slot="nav" x-provider="navbar"></nav>
 ```
 
 ### Element hint behavior
 
 The placeholder element tag name is passed to the slot provider as a hint.
 
-- `<aside x-part="left-panel">` sends `aside` as the hint.
-- `<article x-part="main">` sends `article` as the hint.
+- `<aside x-slot="left-panel">` sends `aside` as the hint.
+- `<article x-slot="main">` sends `article` as the hint.
 - Custom elements are valid hints too (for example `<x-placeholder ...>` sends `x-placeholder`).
 
 The hint is advisory. Providers may follow it, ignore it, transform it, or enforce provider-specific rules.
@@ -95,8 +95,8 @@ This includes `x-provider` and any other `x-*` attributes: attributes are not tr
 Slot placeholders can be written as self-closing or explicit open/close elements. Both forms are equivalent:
 
 ```html
-<aside x-part="left-panel" />
-<aside x-part="left-panel"></aside>
+<aside x-slot="left-panel" />
+<aside x-slot="left-panel"></aside>
 ```
 
 ### Provider naming scope
@@ -146,24 +146,24 @@ element_name: section
 ---
 ```
 
-This makes `_right-panel.md` render as `<section hidden x-part="right-panel">` instead of `<aside ...>`. For frontmatter basics, see [Content authoring](../authoring/content-authoring.md).
+This makes `_right-panel.md` render as `<section hidden x-slot="right-panel">` instead of `<aside ...>`. For frontmatter basics, see [Content authoring](../authoring/content-authoring.md).
 
-### The `[Part]` Shortcode
+### The `[Slot]` Shortcode
 
-Use the `[Part]` shortcode to define a named part inline in a page body. The block is completely extracted from the primary content flow — nothing remains in its place in the page body.
+Use the `[Slot]` shortcode to define a named part inline in a page body. The block is completely extracted from the primary content flow — nothing remains in its place in the page body.
 
 ```
-[Part Name="right-panel"]
+[Slot Name="right-panel"]
 ## Related Links
 
 - [Getting Started](../home.md)
 - [Content Authoring](../authoring/content-authoring.md)
-[/Part]
+[/Slot]
 ```
 
-`[Part]` only works at the root level of a page body — it cannot be nested inside another shortcode.
+`[Slot]` only works at the root level of a page body — it cannot be nested inside another shortcode.
 
-For full parameter reference, see the [Part shortcode](../authoring/shortcodes/part.md) page.
+For full parameter reference, see the [Slot shortcode](../authoring/shortcodes/slot.md) page.
 
 ### Auto-Generated Nav
 

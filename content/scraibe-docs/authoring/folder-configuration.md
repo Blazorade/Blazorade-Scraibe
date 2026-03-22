@@ -115,7 +115,7 @@ These keys are currently used by the framework:
 - `scraibe.site.componentLibraryPath`: Repository-relative path to the component library project where shortcodes, layouts, and styling assets live.
 - `scraibe.layout.default`: Default layout name when page frontmatter does not define `layout`. See [page layouts](../site-building/page-layouts.md) and [content authoring](./content-authoring.md).
 - `scraibe.publish.excludedContent`: Array of content-relative paths that publish skips entirely. See [publishing](../operations/publishing.md).
-- `scraibe.navigation.provider.default`: Default navigation provider name when the active layout does not set `x-provider` on its `x-part="nav"` slot. See [page layouts](../site-building/page-layouts.md) and [publishing](../operations/publishing.md).
+- `scraibe.navigation.provider.default`: Default navigation provider name when the active layout does not set `x-provider` on its `x-slot="nav"` slot. See [page layouts](../site-building/page-layouts.md) and [publishing](../operations/publishing.md).
 - `scraibe.content.slot.provider.default`: Default slot content provider name when a non-navigation layout slot does not set `x-provider`. If both are missing, publish fails for that slot.
 - `scraibe.navigation.children.depth`: Number of descendant folder levels to include under navigation item children. `0` means no descendant folder expansion, `1` includes one level, and larger values include deeper nesting. If omitted or invalid, the effective default is `1`. Negative values are clamped to `0`.
 - `scraibe.navigation.context.pinned`: Enables pinned navigation context from the folder where it is set. Supports boolean values (`true`/`false`) and boolean strings (`"true"`/`"false"`, case-insensitive).

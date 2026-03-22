@@ -1,6 +1,6 @@
 
 .blz-layout-landing {
-	[x-part="hero"] .carousel {
+	[x-slot="hero"] .carousel {
 		@extend .text-bg-primary;
 		@extend .p-5;
 

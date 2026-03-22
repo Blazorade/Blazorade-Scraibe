@@ -57,12 +57,12 @@ static class PagePublisher
             // 4. Resolve _name.md scoped parts (walk up from page's dir to /content)
             var scopedParts = ResolveScopedParts(page, opts, registry, allPages);
 
-            // 5. Process shortcodes (returns processed markdown + [Part] entries)
+            // 5. Process shortcodes (returns processed markdown + [Slot] entries)
             var scResult = ShortcodeProcessor.Process(body, registry, page.SourcePath, opts);
             var inlineParts = scResult.Parts;
             var contentRelativeDir = Path.GetDirectoryName(page.RelativePath)?.Replace('\\', '/') ?? "";
 
-            // Inline [Part] shortcode content must flow through the same URL rewrite
+            // Inline [Slot] shortcode content must flow through the same URL rewrite
             // and post-process path as page body/scoped parts.
             inlineParts = inlineParts
                 .Select(p => new PartInfo(
@@ -97,7 +97,7 @@ static class PagePublisher
 
             bodyHtml = PostProcessHtml(bodyHtml);
 
-            // 7. Merge parts: [Part] shortcodes → scoped _name.md files → page body → nav
+            // 7. Merge parts: [Slot] shortcodes → scoped _name.md files → page body → nav
             var parts = MergeParts(inlineParts, scopedParts, navPart, bodyHtml);
 
             // 8. Apply page template
@@ -136,7 +136,7 @@ static class PagePublisher
                 ? page.Slug[..^5]
                 : page.Slug;
 
-        // Build layout_html by injecting part content into each x-part slot.
+        // Build layout_html by injecting part content into each x-slot slot.
         var layoutName = fm.Layout ?? throw new PublishException(
             "Layout could not be resolved for page. Set frontmatter layout or define scraibe.layout.default in effective folder configuration.");
 
@@ -147,18 +147,18 @@ static class PagePublisher
                 .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f)
                     .Equals(layoutName, StringComparison.OrdinalIgnoreCase)) ?? layoutFile;
         }
-        var layoutHtml    = PartSlotComposer.NormalizeSelfClosingSlotElements(File.ReadAllText(layoutFile));
+        var layoutHtml    = SlotComposer.NormalizeSelfClosingSlotElements(File.ReadAllText(layoutFile));
         var layoutDoc     = HtmlParser.ParseDocument(layoutHtml);
         var partsByName   = parts.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var slot in layoutDoc.QuerySelectorAll("[x-part]").ToList())
+        foreach (var slot in layoutDoc.QuerySelectorAll("[x-slot]").ToList())
         {
-            var partName = slot.GetAttribute("x-part") ?? "";
+            var partName = slot.GetAttribute("x-slot") ?? "";
             if (partsByName.TryGetValue(partName, out var part))
             {
                 if (part.ReplaceElement)
                 {
-                    slot.OuterHtml = PartSlotComposer.BuildReplacementRootHtml(
+                    slot.OuterHtml = SlotComposer.BuildReplacementRootHtml(
                         slot,
                         part.InnerHtml,
                         $"page '{page.RelativePath}'");
@@ -188,7 +188,7 @@ static class PagePublisher
                         placeholderAttributes,
                         page.EffectiveFolderConfig);
 
-                    slot.OuterHtml = PartSlotComposer.BuildReplacementRootHtml(
+                    slot.OuterHtml = SlotComposer.BuildReplacementRootHtml(
                         slot,
                         providerHtml,
                         $"page '{page.RelativePath}', slot '{partName}', slot provider '{providerName}'");
@@ -290,7 +290,7 @@ static class PagePublisher
         PartInfo navPart,
         string bodyHtml)
     {
-        // Priority (highest → lowest): [Part] shortcode > _name.md > page body > auto-nav
+        // Priority (highest → lowest): [Slot] shortcode > _name.md > page body > auto-nav
         var merged = new Dictionary<string, PartInfo>(StringComparer.OrdinalIgnoreCase);
 
         // Auto-nav (lowest priority)
@@ -302,7 +302,7 @@ static class PagePublisher
         // Scoped _name.md files overwrite (including _main.md if present)
         foreach (var p in scopedParts) merged[p.Name] = p;
 
-        // Inline [Part] shortcodes (highest priority)
+        // Inline [Slot] shortcodes (highest priority)
         foreach (var p in inlineParts) merged[p.Name] = p;
 
         return [.. merged.Values];
@@ -327,9 +327,9 @@ static class PagePublisher
                     .Equals(layoutName, StringComparison.OrdinalIgnoreCase)) ?? layoutFile;
         }
 
-        var layoutHtml = PartSlotComposer.NormalizeSelfClosingSlotElements(File.ReadAllText(layoutFile));
+        var layoutHtml = SlotComposer.NormalizeSelfClosingSlotElements(File.ReadAllText(layoutFile));
         var layoutDoc = HtmlParser.ParseDocument(layoutHtml);
-        var navSlot = layoutDoc.QuerySelector("[x-part='nav']");
+        var navSlot = layoutDoc.QuerySelector("[x-slot='nav']");
         if (navSlot is null)
             return new PartInfo("nav", "nav", "");
 

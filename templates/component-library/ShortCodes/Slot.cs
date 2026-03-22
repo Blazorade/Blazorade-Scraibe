@@ -7,13 +7,13 @@ namespace {{ComponentLibraryName}}.ShortCodes
 {
 
     /// <summary>
-    /// Represents a content part shortcode component that you use to map parts of your content to parts defined in a page layout.
+    /// Represents a content slot shortcode component that you use to map parts of your content to slots defined in a page layout.
     /// </summary>
-    public class Part : ShortCodeComponentBase
+    public class Slot : ShortCodeComponentBase
     {
 
         /// <summary>
-        /// The name of the content part. In order for the content part to render, it must have a corresponding content part in the page layout.
+        /// The name of the content slot. In order for the content slot to render, it must have a corresponding slot in the page layout.
         /// </summary>
         [Parameter]
         public string Name { get; set; } = string.Empty;

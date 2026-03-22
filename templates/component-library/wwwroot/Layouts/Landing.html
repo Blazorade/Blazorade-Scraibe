@@ -1,13 +1,13 @@
 <div class="blz-layout-landing">
-    <div x-part="hero" x-provider="default"></div>
-    <nav class="navbar-expand-lg" data-bs-theme="light" x-part="nav" x-provider="navbar" />
+    <div x-slot="hero" x-provider="default"></div>
+    <nav class="navbar-expand-lg" data-bs-theme="light" x-slot="nav" x-provider="navbar" />
     <div class="container mt-4">
         <main>
-            <article x-part="main" x-provider="default"></article>
+            <article x-slot="main" x-provider="default"></article>
         </main>
     </div>
     <footer class="text-bg-dark">
-        <div class="container-fluid mt-4 p-4" x-part="footer" x-provider="default"></div>
+        <div class="container-fluid mt-4 p-4" x-slot="footer" x-provider="default"></div>
     </footer>
     <div class="navigation-indicator" aria-hidden="true">
         <div class="spinner-border" role="status">

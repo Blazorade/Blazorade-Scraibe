@@ -13,8 +13,8 @@
         min-width: 0;
     }
 
-    .container > [x-part="left-panel"],
-    .container > [x-part="right-panel"] {
+    .container > [x-slot="left-panel"],
+    .container > [x-slot="right-panel"] {
         flex: 0 0 clamp(14rem, 22vw, 18rem);
         min-width: 0;
     }
@@ -31,13 +31,13 @@
             width: 100%;
         }
 
-        .container > [x-part="left-panel"] {
+        .container > [x-slot="left-panel"] {
             order: 2;
             flex: 1 1 auto;
             width: 100%;
         }
 
-        .container > [x-part="right-panel"] {
+        .container > [x-slot="right-panel"] {
             order: 3;
             flex: 1 1 auto;
             width: 100%;

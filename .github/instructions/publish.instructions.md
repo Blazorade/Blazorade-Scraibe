@@ -203,7 +203,7 @@ This is the content of the second slide.
 ### Syntax rules
 
 - Shortcode detection is **token-based**, not line-based. Tags may appear back-to-back on one line and may be indented.
-- Back-to-back nested tags are valid when balanced, for example: `[Part Name="hero"][Carousel][Slide]...[/Slide][/Carousel][/Part]`.
+- Back-to-back nested tags are valid when balanced, for example: `[Slot Name="hero"][Carousel][Slide]...[/Slide][/Carousel][/Slot]`.
 - **Inline wrapping:** `[Name Params]inner text[/Name]` is valid.
 - **Multi-line wrapping:** opening and closing tags may appear on separate lines with mixed Markdown and nested shortcodes between them.
 - The opening tag may contain two kinds of tokens, both whitespace-separated. Closing tags carry no tokens.
@@ -289,7 +289,7 @@ Processing a popped frame:
 - Normalize inner markdown with dedent-before-Markdown.
 - Convert the normalized content to HTML.
 - For normal wrapping shortcodes, emit a sentinel with static inner HTML.
-- For `[Part]`, store `{ name, elementName, innerHtml }` and emit nothing into main content.
+- For `[Slot]`, store `{ name, elementName, innerHtml }` and emit nothing into main content.
 
 For example, the mixed-content `[Carousel]` frame above accumulates:
 ```
@@ -313,16 +313,16 @@ This full HTML block then becomes the inner body of the `<x-shortcode name="Caro
 
 After all lines are processed, convert the root accumulator (which may also contain a mix of Markdown and injected sentinel HTML) through the Markdown-to-HTML converter. The result is the `{body_html}` value for the page template.
 
-### `[Part]` shortcode special handling
+### `[Slot]` shortcode special handling
 
-`Part` is a known wrapping shortcode with special output behaviour, processed within the same stack-based parser but producing no sentinel in the main content accumulator:
+`Slot` is a known wrapping shortcode with special output behaviour, processed within the same stack-based parser but producing no sentinel in the main content accumulator:
 
-- `[Part]` is only valid at **root level** (stack depth 0). A `[Part]` appearing inside another wrapping shortcode is a fatal publish error.
-- When the parser pops a `[Part Name="..."]...[/Part]` frame, instead of emitting an `<x-shortcode>` sentinel into the root accumulator, it:
+- `[Slot]` is only valid at **root level** (stack depth 0). A `[Slot]` appearing inside another wrapping shortcode is a fatal publish error.
+- When the parser pops a `[Slot Name="..."]...[/Slot]` frame, instead of emitting an `<x-shortcode>` sentinel into the root accumulator, it:
   1. Converts the frame's accumulated inner content to HTML (same as any wrapping shortcode).
   2. Stores it as a named part entry `{ name, elementName, innerHtml }`. `name` is taken from the `Name` parameter (lowercased). `elementName` is taken from the `ElementName` parameter if provided, otherwise derived from `name` per the element name convention in **Content parts** below.
   3. Emits **nothing** into the root content accumulator — the block is fully removed from the primary content flow.
-- After all lines are processed, stored `[Part]` entries are merged with parts from `_name.md` files and serialised into `{parts_html}`.
+- After all lines are processed, stored `[Slot]` entries are merged with parts from `_name.md` files and serialised into `{parts_html}`.
 
 ### Sentinel element format
 
@@ -366,7 +366,7 @@ All shortcode errors are fatal — the publish run must stop and report a clear 
 
 ## Content parts
 
-Content parts are named HTML fragments gathered per page and serialised into the `{parts_html}` token. At runtime, `ContentPage.razor` splices each part's `InnerHtml` into the matching `x-part` slot in the layout.
+Content parts are named HTML fragments gathered per page and serialised into the `{parts_html}` token. At runtime, `ContentPage.razor` splices each part's `InnerHtml` into the matching `x-slot` slot in the layout.
 
 ### Sources
 
@@ -374,11 +374,11 @@ Parts come from three sources, resolved and merged per page:
 
 1. **`_name.md` scoped files** — A Markdown file whose name starts with `_` is a *shared part file*. It is never published as a standalone page and never listed in the sitemap. The stem (without the `_` prefix) is the part name. Scope resolution: starting from the page's own directory, walk upward to `/content/`; the deepest matching file wins. For a page at `content/products/widget.md`, the pipeline checks `content/products/_footer.md` first, then `content/_footer.md`. The element name is derived from the part name per the **Element name convention** below; the file's frontmatter may override it via an `element_name` field.
 
-2. **`[Part]` shortcode** — Described in the **`[Part]` shortcode special handling** subsection above. The `Name` parameter becomes the part name; `ElementName` (if set) overrides the element name convention.
+2. **`[Slot]` shortcode** — Described in the **`[Slot]` shortcode special handling** subsection above. The `Name` parameter becomes the part name; `ElementName` (if set) overrides the element name convention.
 
 3. **Auto-generated nav** — If no `_nav.md` resolves at any scope level for a given page, the pipeline auto-generates a Bootstrap navbar as the `nav` part. The generated HTML follows the same navigation structure rules previously used for `NavMenu.razor` generation: brand link to `/`, flat top-level pages as `<li class="nav-item">` items (excluding the home page), subdirectory dropdowns as `<li class="nav-item dropdown">` items with a non-navigating toggle button. The effective `scraibe.site.displayName` value from `.config.json` is used as the `navbar-brand` text.
 
-   **Critical**: the generated HTML must be the **inner content** of the `<nav>` slot only — do **not** wrap it in another `<nav>` element. The layout's `<nav x-part="nav">` element is the sole root; the pipeline fills its children. Wrapping in a second `<nav>` produces two nested `<nav>` elements in the final page.
+   **Critical**: the generated HTML must be the **inner content** of the `<nav>` slot only — do **not** wrap it in another `<nav>` element. The layout's `<nav x-slot="nav">` element is the sole root; the pipeline fills its children. Wrapping in a second `<nav>` produces two nested `<nav>` elements in the final page.
 
 ### Element name convention
 
@@ -394,33 +394,33 @@ The HTML element used to wrap a part in the generated HTML follows this rule, ap
 
 ### Generated HTML structure
 
-All parts are serialised as sibling elements immediately after `</main>`, each carrying `hidden` and `x-part`:
+All parts are serialised as sibling elements immediately after `</main>`, each carrying `hidden` and `x-slot`:
 
 ```html
-<nav hidden x-part="nav">
+<nav hidden x-slot="nav">
   <!-- Bootstrap navbar inner content only — NO wrapping <nav> element.
-       The layout slot <nav x-part="nav"> is the root; only its children go here.
+       The layout slot <nav x-slot="nav"> is the root; only its children go here.
        Correct:   <div class="container"><a class="navbar-brand" ...> ... </div>
        Wrong:     <nav class="navbar ..."><div class="container"> ... </div></nav> -->
 </nav>
-<footer hidden x-part="footer">...from _footer.md...</footer>
-<aside hidden x-part="right-panel">...from [Part Name="right-panel"]...</aside>
+<footer hidden x-slot="footer">...from _footer.md...</footer>
+<aside hidden x-slot="right-panel">...from [Slot Name="right-panel"]...</aside>
 ```
 
-The `<main>` element itself carries `x-part="main"` and `hidden`. When a page has no parts beyond `main`, `{parts_html}` is replaced with an empty string.
+The `<main>` element itself carries `x-slot="main"` and `hidden`. When a page has no parts beyond `main`, `{parts_html}` is replaced with an empty string.
 
 ### Part verification (fatal errors)
 
 1. A referenced layout file does not exist. The pipeline looks for `{ComponentLibraryPath}/wwwroot/Layouts/{Name}.html` using the PascalCase-normalised name; the lookup is case-insensitive to tolerate OS differences.
 2. A layout file has more than one root element.
-3. A layout file has no elements with an `x-part` attribute (at least one slot is required).
-4. The same `x-part` name appears more than once in a layout file.
-5. The same part name is defined more than once for a given page (across `_name.md` files and `[Part]` blocks combined).
+3. A layout file has no elements with an `x-slot` attribute (at least one slot is required).
+4. The same `x-slot` name appears more than once in a layout file.
+5. The same part name is defined more than once for a given page (across `_name.md` files and `[Slot]` blocks combined).
 
 ### Not errors
 
 - A page defines a part that has no matching slot in the layout — the part is still emitted in the generated HTML (for crawlers) but is silently ignored at runtime.
-- A layout slot has no matching part — replaced at runtime with an HTML comment: `<!-- x-part="name": no content found -->`.
+- A layout slot has no matching part — replaced at runtime with an HTML comment: `<!-- x-slot="name": no content found -->`.
 
 ## Sitemap generation
 

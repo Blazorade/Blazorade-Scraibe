@@ -107,7 +107,7 @@ Content of slide 2.
 
 ## Page layouts and content parts
 
-Each published page is rendered inside a **layout** — a static HTML file in the component library (`{ComponentLibraryPath}/wwwroot/Layouts/`) that defines named `x-part` slots. The layout controls the page chrome: navbar, footer, columns, and any other structural elements.
+Each published page is rendered inside a **layout** — a static HTML file in the component library (`{ComponentLibraryPath}/wwwroot/Layouts/`) that defines named `x-slot` slots. The layout controls the page chrome: navbar, footer, columns, and any other structural elements.
 
 ### Choosing a layout
 
@@ -120,8 +120,8 @@ layout: landing   # uses Landing.html
 
 Available layouts are the `.html` files in `{ComponentLibraryPath}/wwwroot/Layouts/`. The two built-in layouts are:
 
-- **Default** — Bootstrap navbar (`x-part="nav"`), content area (`x-part="main"`), and footer (`x-part="footer"`).
-- **Landing** — Full-width content only (`x-part="main"`). No nav, no footer.
+- **Default** — Bootstrap navbar (`x-slot="nav"`), content area (`x-slot="main"`), and footer (`x-slot="footer"`).
+- **Landing** — Full-width content only (`x-slot="main"`). No nav, no footer.
 
 ### `_name.md` shared part files
 
@@ -133,19 +133,19 @@ Examples:
 
 The element used to wrap the part in the generated HTML follows the **element name convention** (e.g. `_footer.md` → `<footer>`, `_nav.md` → `<nav>`, anything else → `<aside>`). Add `element_name: div` to the file's frontmatter to override.
 
-### `[Part]` shortcode
+### `[Slot]` shortcode
 
-The `[Part]` shortcode adds a named part inline in a content page body. The part is extracted entirely from the primary content flow — nothing appears in its place in the page body. It is only valid at the top level of a page (not nested inside other shortcodes).
+The `[Slot]` shortcode adds a named part inline in a content page body. The part is extracted entirely from the primary content flow — nothing appears in its place in the page body. It is only valid at the top level of a page (not nested inside other shortcodes).
 
 ```
-[Part Name="right-panel"]
+[Slot Name="right-panel"]
 ## Related Links
 - [Item one](https://example.com/item-one)
-[/Part]
+[/Slot]
 ```
 
 Parameters:
-- `Name` (required) — the part name; must match an `x-part` slot in the layout, or the part is emitted in the static HTML for crawlers but not rendered visually.
+- `Name` (required) — the part name; must match an `x-slot` slot in the layout, or the part is emitted in the static HTML for crawlers but not rendered visually.
 - `ElementName` (optional) — overrides the element name convention for the generated HTML wrapper.
 
 ### Auto-generated nav

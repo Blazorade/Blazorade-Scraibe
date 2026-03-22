@@ -163,5 +163,6 @@ If a shortcode component cannot be resolved at runtime, the static content path 
 ## Tips
 
 - Prefer the inline form for very short child content; use multi-line for anything longer or nested.
+- Use the [Slot shortcode](slot.md) when you need to define named layout slot content inline in a page.
 - Reserve `home.md` files for directory landing pages; avoid naming conflicts between files and folders with the same stem.
 - If a shortcode name is not recognised, the text passes through unchanged, making authoring failures obvious during preview.
