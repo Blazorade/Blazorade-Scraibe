@@ -102,13 +102,11 @@ Read [Architecture positioning](core/architecture-positioning.md) for the full m
 ## Related repository workflows
 
 - todo/home.md - Active tasks, backlog, and completed task flow.
-- playbooks/home.md - Site-specific repeatable procedures.
 
 ## Project structure
 
 ```text
 content/                  Markdown source files
-playbooks/                Site-specific procedures
 todo/                     Task-tracking documents
 templates/                Scaffolding templates
 tools/                    Publish script and supporting tools

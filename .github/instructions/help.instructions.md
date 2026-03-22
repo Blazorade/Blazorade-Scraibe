@@ -39,8 +39,3 @@ This file is the authoritative index of capabilities. When the user asks what yo
 ## Todos
 
 - **Log, review, and close todo items** stored in `/todo`. Useful for tracking content ideas, feature requests, or anything to revisit later.
-
-## Playbooks
-
-- **Discover and run playbooks** — site-specific repeatable procedures stored in `/playbooks`. I read `playbooks/home.md` to find the right one, then load and follow it.
-- **Create new playbooks** — if you have a procedure you repeat often, I can codify it as a playbook.
