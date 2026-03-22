@@ -65,6 +65,12 @@ public static class ConfigKeys
     public const string ScraibeNavigationContextPinned = "scraibe.navigation.context.pinned";
 
     /// <summary>
+    /// Schema type values included in default navigation generation.
+    /// Value is typically an array of strings, for example <c>["WebPage", "Article"]</c>.
+    /// </summary>
+    public const string ScraibeNavigationIncludedSchemaTypes = "scraibe.navigation.includedSchemaTypes";
+
+    /// <summary>
     /// Default layout name to apply when a page does not specify one explicitly.
     /// </summary>
     public const string ScraibeLayoutDefault = "scraibe.layout.default";

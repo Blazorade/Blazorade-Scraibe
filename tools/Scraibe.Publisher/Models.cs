@@ -33,6 +33,7 @@ record Frontmatter(
     string Title,
     string? Description,
     string? Slug,          // override for the output filename
+    string SchemaType,     // navigation schema-type metadata; defaults to WebPage when omitted
     string? Keywords,
     string? Author,
     string? Date,          // ISO date string if explicitly set in frontmatter

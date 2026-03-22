@@ -21,6 +21,7 @@ Every content file should start with a YAML frontmatter block, delimited by `---
 title: Page Title           # Required. Used in <title>, <h1>, and og:title.
 description: Short text     # Used in <meta name="description"> and og:description.
 slug: my-custom-url         # Overrides the filename-derived URL slug.
+schema_type: WebPage        # Navigation schema type. Defaults to WebPage when omitted.
 keywords: foo, bar, baz     # Injected into <meta name="keywords">.
 author: Jane Smith          # Injected into <meta name="author">.
 date: 2026-02-20            # Publication date (YYYY-MM-DD). Once set, never overwritten by the pipeline.
@@ -31,6 +32,16 @@ priority: 0.8               # Sitemap priority (0.0–1.0). Defaults to 0.8.
 ```
 
 If `title` is absent, it is derived from the first `#` heading in the body. If no heading exists either, the filename is used.
+
+### The `schema_type` field
+
+`schema_type` controls whether a page is included in default navigation.
+
+- If omitted, the page defaults to `WebPage`.
+- Navigation includes the page only when its effective `schema_type` appears in `scraibe.navigation.includedSchemaTypes`.
+- For navigation filtering, `schema_type` is a string value and can be custom (for example `Foo`) as long as the same value is included in configuration.
+
+For configuration details, see [Folder configuration](folder-configuration.md).
 
 ### The `date` field
 

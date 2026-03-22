@@ -2,6 +2,7 @@ using Scraibe.Abstractions.Navigation;
 using Scraibe.Abstractions.Configuration;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Globalization;
 
 namespace Scraibe.Publisher;
 
@@ -19,22 +20,27 @@ static class NavGenerator
         string displayName,
         IReadOnlyDictionary<string, object?> effectiveConfiguration)
     {
+        var includedSchemaTypes = GetIncludedSchemaTypes(effectiveConfiguration);
+        var navPages = allPages
+            .Where(p => IsIncludedInNavigation(p, includedSchemaTypes))
+            .ToList();
+
         var currentFolderPath = GetFolderPath(currentPage.RelativePath);
         var stickyContextFolderPath = ResolveStickyContextFolderPath(currentPage);
         var navigationFolderPath = stickyContextFolderPath ?? currentFolderPath;
         var childrenDepth = GetChildrenDepth(effectiveConfiguration);
 
-        var flatPages = allPages
+        var flatPages = navPages
             .Where(p => IsDirectChildOfFolder(p, navigationFolderPath) && !IsHome(p.RelativePath))
             .OrderBy(p => p.Frontmatter.Title)
             .ToList();
 
-        var currentFolderHomePage = allPages
+        var currentFolderHomePage = navPages
             .FirstOrDefault(p =>
                 IsDirectChildOfFolder(p, navigationFolderPath)
                 && IsHome(p.RelativePath));
 
-        var childFolders = allPages
+        var childFolders = navPages
             .Select(p => GetImmediateChildFolder(p, navigationFolderPath))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name!)
@@ -68,10 +74,10 @@ static class NavGenerator
             var childFolderPath = navigationFolderPath.Length == 0
                 ? childFolderName
                 : $"{navigationFolderPath}/{childFolderName}";
-            items.Add(BuildFolderItem(childFolderName, childFolderPath, allPages, childrenDepth));
+            items.Add(BuildFolderItem(childFolderName, childFolderPath, navPages, childrenDepth));
         }
 
-        var ancestors = BuildAncestors(navigationFolderPath, allPages, displayName);
+        var ancestors = BuildAncestors(navigationFolderPath, navPages, displayName);
 
         return new NavigationModel
         {
@@ -83,10 +89,10 @@ static class NavGenerator
     private static NavigationItem BuildFolderItem(
         string folderSegment,
         string folderPath,
-        IReadOnlyList<PageInfo> allPages,
+        IReadOnlyList<PageInfo> navPages,
         int depthRemaining)
     {
-        var directChildPages = allPages
+        var directChildPages = navPages
             .Where(p => IsDirectChildOfFolder(p, folderPath))
             .OrderBy(p => p.Frontmatter.Title)
             .ToList();
@@ -112,7 +118,7 @@ static class NavGenerator
             });
         }
 
-        var childFolders = allPages
+        var childFolders = navPages
             .Select(p => GetImmediateChildFolder(p, folderPath))
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Select(name => name!)
@@ -123,10 +129,97 @@ static class NavGenerator
         foreach (var childFolderName in childFolders)
         {
             var childFolderPath = $"{folderPath}/{childFolderName}";
-            folderItem.Children.Add(BuildFolderItem(childFolderName, childFolderPath, allPages, depthRemaining - 1));
+            folderItem.Children.Add(BuildFolderItem(childFolderName, childFolderPath, navPages, depthRemaining - 1));
         }
 
         return folderItem;
+    }
+
+    private static bool IsIncludedInNavigation(PageInfo page, HashSet<string> includedSchemaTypes)
+    {
+        var schemaType = page.Frontmatter.SchemaType;
+        if (string.IsNullOrWhiteSpace(schemaType))
+            schemaType = "WebPage";
+
+        return includedSchemaTypes.Contains(schemaType);
+    }
+
+    private static HashSet<string> GetIncludedSchemaTypes(IReadOnlyDictionary<string, object?> effectiveConfiguration)
+    {
+        if (!effectiveConfiguration.TryGetValue(ConfigKeys.ScraibeNavigationIncludedSchemaTypes, out var raw)
+            || raw is null)
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "WebPage" };
+        }
+
+        var values = ExtractStringValues(raw)
+            .Select(v => v.Trim())
+            .Where(v => v.Length > 0)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return values;
+    }
+
+    private static IEnumerable<string> ExtractStringValues(object? raw)
+    {
+        switch (raw)
+        {
+            case null:
+                yield break;
+            case string text:
+                yield return text;
+                yield break;
+            case JsonElement json:
+                if (json.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in json.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.String)
+                            yield return item.GetString() ?? string.Empty;
+                        else if (item.ValueKind == JsonValueKind.Number)
+                            yield return item.ToString();
+                    }
+                    yield break;
+                }
+
+                if (json.ValueKind == JsonValueKind.String)
+                {
+                    yield return json.GetString() ?? string.Empty;
+                    yield break;
+                }
+
+                if (json.ValueKind == JsonValueKind.Number)
+                {
+                    yield return json.ToString();
+                    yield break;
+                }
+
+                yield break;
+            case IEnumerable<object?> objectEnumerable:
+                foreach (var item in objectEnumerable)
+                {
+                    if (item is null) continue;
+
+                    if (item is string itemText)
+                    {
+                        yield return itemText;
+                        continue;
+                    }
+
+                    if (item is JsonElement itemJson)
+                    {
+                        foreach (var value in ExtractStringValues(itemJson))
+                            yield return value;
+                        continue;
+                    }
+
+                    yield return Convert.ToString(item, CultureInfo.InvariantCulture) ?? string.Empty;
+                }
+                yield break;
+            default:
+                yield return Convert.ToString(raw, CultureInfo.InvariantCulture) ?? string.Empty;
+                yield break;
+        }
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

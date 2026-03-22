@@ -68,11 +68,16 @@ static class FrontmatterParser
             double.TryParse(priStr, System.Globalization.NumberStyles.Float,
                 System.Globalization.CultureInfo.InvariantCulture, out priority);
 
+        var schemaType = raw.GetValueOrDefault("schema_type", "WebPage");
+        if (string.IsNullOrWhiteSpace(schemaType))
+            schemaType = "WebPage";
+
         return (
             new Frontmatter(
                 Title:       title,
                 Description: raw.GetValueOrDefault("description"),
                 Slug:        raw.GetValueOrDefault("slug"),
+                SchemaType:  schemaType,
                 Keywords:    raw.GetValueOrDefault("keywords"),
                 Author:      raw.GetValueOrDefault("author"),
                 Date:        raw.GetValueOrDefault("date"),

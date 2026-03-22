@@ -116,6 +116,7 @@ These keys are currently used by the framework:
 - `scraibe.layout.default`: Default layout name when page frontmatter does not define `layout`. See [page layouts](../site-building/page-layouts.md) and [content authoring](./content-authoring.md).
 - `scraibe.publish.excludedContent`: Array of content-relative paths that publish skips entirely. See [publishing](../operations/publishing.md).
 - `scraibe.navigation.provider.default`: Default navigation provider name when the active layout does not set `x-provider` on its `x-slot="nav"` slot. See [page layouts](../site-building/page-layouts.md) and [publishing](../operations/publishing.md).
+- `scraibe.navigation.includedSchemaTypes`: Array of schema type strings that are included in default navigation. If omitted, the effective default is `['WebPage']`.
 - `scraibe.content.slot.provider.default`: Default slot content provider name when a non-navigation layout slot does not set `x-provider`. If both are missing, publish fails for that slot.
 - `scraibe.navigation.children.depth`: Number of descendant folder levels to include under navigation item children. `0` means no descendant folder expansion, `1` includes one level, and larger values include deeper nesting. If omitted or invalid, the effective default is `1`. Negative values are clamped to `0`.
 - `scraibe.navigation.context.pinned`: Enables pinned navigation context from the folder where it is set. Supports boolean values (`true`/`false`) and boolean strings (`"true"`/`"false"`, case-insensitive).
@@ -132,8 +133,11 @@ If frontmatter `layout` is missing on a page, publish resolves layout from `scra
 Navigation behavior is controlled by three primary keys that can be used together:
 
 - `scraibe.navigation.provider.default`: selects the navigation provider to render markup when the layout does not explicitly pick one.
+- `scraibe.navigation.includedSchemaTypes`: selects which page `schema_type` values are included in default navigation output.
 - `scraibe.navigation.children.depth`: controls how many descendant folder levels are included in navigation item trees.
 - `scraibe.navigation.context.pinned`: controls whether descendant pages keep using an ancestor folder as their navigation context.
+
+`scraibe.navigation.includedSchemaTypes` is matched case-insensitively. Any string value is allowed for navigation filtering. A page whose effective `schema_type` is not present in this array is excluded from default navigation.
 
 In practice, use these keys as a set: choose the provider, choose how deep child links should go, then choose whether folder context should stay anchored. Provider rendering details still belong to the selected navigation provider implementation.
 

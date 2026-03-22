@@ -127,6 +127,13 @@ Published URLs mirror the `/content` directory structure. The `.html` extension 
 
 The top navigation bar is regenerated from scratch on every publish run and embedded directly inside each static `.html` file. Top-level pages get a direct link. Subdirectories get a dropdown whose label comes from the `title` field in the subdirectory's `home.md` frontmatter.
 
+Navigation inclusion is schema-type-aware:
+
+- If a page omits `schema_type`, its effective value is `WebPage`.
+- A page is included in default navigation only when its effective `schema_type` appears in `scraibe.navigation.includedSchemaTypes`.
+- If `scraibe.navigation.includedSchemaTypes` is not configured, the effective default is `['WebPage']`.
+- Schema type matching for navigation is case-insensitive and supports custom string values (for example `Foo`).
+
 Because the navigation is part of each static file rather than a separate component, crawlers and AI bots see the full site structure on every page without executing any JavaScript.
 
 For navigation structure controls and configuration keys, see [Folder configuration](../authoring/folder-configuration.md).
